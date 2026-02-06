@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -13,10 +12,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { updateCurrentPrice } from "@/actions/transactions";
 import { Holding } from "@/lib/calculations";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
-import { TrendingUp, TrendingDown, RefreshCw, Wallet, Zap, Loader2, Check, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Zap, Loader2, Check, AlertCircle } from "lucide-react";
 
 interface HoldingsTableProps {
   holdings: Holding[];
@@ -25,9 +23,6 @@ interface HoldingsTableProps {
 type RefreshStatus = "idle" | "loading" | "success" | "error";
 
 export function HoldingsTable({ holdings }: HoldingsTableProps) {
-  const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
-  const [newPrice, setNewPrice] = useState("");
-  const [isPending, startTransition] = useTransition();
   const [refreshStatus, setRefreshStatus] = useState<RefreshStatus>("idle");
   const [refreshInfo, setRefreshInfo] = useState("");
   const router = useRouter();
@@ -44,7 +39,6 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
       setRefreshInfo(`Updated ${data.updated} price(s)`);
       router.refresh();
 
-      // Reset status after 3 seconds
       setTimeout(() => {
         setRefreshStatus("idle");
         setRefreshInfo("");
@@ -58,16 +52,6 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
       }, 3000);
     }
   }, [router]);
-
-  const handleUpdatePrice = (symbol: string) => {
-    if (!newPrice) return;
-
-    startTransition(async () => {
-      await updateCurrentPrice(symbol, newPrice);
-      setEditingSymbol(null);
-      setNewPrice("");
-    });
-  };
 
   return (
     <Card className="overflow-hidden">
@@ -163,51 +147,8 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
                   <TableCell className="text-right">
                     {formatCurrency(h.avgCost)}
                   </TableCell>
-                  <TableCell className="text-right">
-                    {editingSymbol === h.symbol ? (
-                      <div className="flex items-center gap-2 justify-end">
-                        <Input
-                          type="number"
-                          step="0.00000001"
-                          value={newPrice}
-                          onChange={(e) => setNewPrice(e.target.value)}
-                          className="w-28 h-9"
-                          placeholder="Price"
-                        />
-                        <Button
-                          size="sm"
-                          onClick={() => handleUpdatePrice(h.symbol)}
-                          disabled={isPending}
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setEditingSymbol(null);
-                            setNewPrice("");
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 justify-end">
-                        <span className="font-medium">{formatCurrency(h.currentPrice)}</span>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={() => {
-                            setEditingSymbol(h.symbol);
-                            setNewPrice(h.currentPrice.toString());
-                          }}
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
+                  <TableCell className="text-right font-medium">
+                    {formatCurrency(h.currentPrice)}
                   </TableCell>
                   <TableCell className="text-right font-semibold">
                     {formatCurrency(h.currentValue)}
