@@ -1,70 +1,84 @@
 /**
  * Price fetching service
- * - Crypto: Binance public API (no key needed)
- * - Stocks: yahoo-finance2 (no key needed)
+ * - Crypto: Binance → CoinGecko fallback
+ * - Stocks: yahoo-finance2
  */
 
 import YahooFinance from "yahoo-finance2";
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
-// ============ Crypto: Binance API ============
+// ============ Crypto: Binance API (primary) ============
 
 interface BinanceTickerPrice {
   symbol: string;
   price: string;
 }
 
-/**
- * Fetch a single crypto price from Binance
- * Symbol should be like "BTC", "ETH" — we append "USDT"
- */
-export async function fetchCryptoPrice(symbol: string): Promise<number | null> {
-  try {
-    const pair = `${symbol.toUpperCase()}USDT`;
-    const res = await fetch(
-      `https://api.binance.com/api/v3/ticker/price?symbol=${pair}`,
-      { cache: "no-store" }
-    );
-    if (!res.ok) return null;
-    const data: BinanceTickerPrice = await res.json();
-    return parseFloat(data.price);
-  } catch {
-    return null;
-  }
-}
+// Symbol → CoinGecko ID mapping for fallback
+const COINGECKO_ID_MAP: Record<string, string> = {
+  BTC: "bitcoin",
+  ETH: "ethereum",
+  SOL: "solana",
+  BNB: "binancecoin",
+  XRP: "ripple",
+  ADA: "cardano",
+  DOGE: "dogecoin",
+  DOT: "polkadot",
+  AVAX: "avalanche-2",
+  MATIC: "matic-network",
+  LINK: "chainlink",
+  UNI: "uniswap",
+  AAVE: "aave",
+  ATOM: "cosmos",
+  LTC: "litecoin",
+  ARB: "arbitrum",
+  OP: "optimism",
+  APT: "aptos",
+  SUI: "sui",
+  NEAR: "near",
+  FIL: "filecoin",
+  PEPE: "pepe",
+  SHIB: "shiba-inu",
+  WIF: "dogwifcoin",
+  TRX: "tron",
+  TON: "the-open-network",
+};
 
-/**
- * Fetch multiple crypto prices from Binance in one request
- */
-export async function fetchCryptoPrices(
+async function fetchCryptoPricesFromBinance(
   symbols: string[]
 ): Promise<Map<string, number>> {
   const result = new Map<string, number>();
   if (symbols.length === 0) return result;
 
   try {
+    // Try batch request first
     const pairs = symbols.map((s) => `"${s.toUpperCase()}USDT"`);
-    const res = await fetch(
-      `https://api.binance.com/api/v3/ticker/price?symbols=[${pairs.join(",")}]`,
-      { cache: "no-store" }
-    );
-    if (!res.ok) {
-      // If batch fails, try individually
-      throw new Error("batch failed");
-    }
+    const url = `https://api.binance.com/api/v3/ticker/price?symbols=${encodeURIComponent(`[${pairs.join(",")}]`)}`;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Binance batch failed: ${res.status}`);
 
     const data: BinanceTickerPrice[] = await res.json();
     for (const item of data) {
       const sym = item.symbol.replace(/USDT$/, "");
       result.set(sym, parseFloat(item.price));
     }
-  } catch {
+  } catch (e) {
+    console.warn("[Binance] Batch request failed, trying individually:", (e as Error).message);
     // Fallback: try individually
     for (const symbol of symbols) {
-      const price = await fetchCryptoPrice(symbol);
-      if (price !== null) {
-        result.set(symbol.toUpperCase(), price);
+      try {
+        const pair = `${symbol.toUpperCase()}USDT`;
+        const res = await fetch(
+          `https://api.binance.com/api/v3/ticker/price?symbol=${pair}`,
+          { cache: "no-store" }
+        );
+        if (res.ok) {
+          const data: BinanceTickerPrice = await res.json();
+          result.set(symbol.toUpperCase(), parseFloat(data.price));
+        }
+      } catch {
+        // skip
       }
     }
   }
@@ -72,30 +86,74 @@ export async function fetchCryptoPrices(
   return result;
 }
 
-// ============ Stocks: yahoo-finance2 ============
+// ============ Crypto: CoinGecko (fallback) ============
 
-/**
- * Fetch a single stock price from Yahoo Finance
- */
-export async function fetchStockPrice(symbol: string): Promise<number | null> {
-  try {
-    const quote = await yf.quote(symbol);
-    return quote.regularMarketPrice ?? null;
-  } catch {
-    return null;
+async function fetchCryptoPricesFromCoinGecko(
+  symbols: string[]
+): Promise<Map<string, number>> {
+  const result = new Map<string, number>();
+  if (symbols.length === 0) return result;
+
+  // Map symbols to CoinGecko IDs
+  const idToSymbol = new Map<string, string>();
+  const ids: string[] = [];
+  for (const sym of symbols) {
+    const id = COINGECKO_ID_MAP[sym.toUpperCase()] || sym.toLowerCase();
+    ids.push(id);
+    idToSymbol.set(id, sym.toUpperCase());
   }
+
+  try {
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(",")}&vs_currencies=usd`;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`CoinGecko failed: ${res.status}`);
+
+    const data: Record<string, { usd?: number }> = await res.json();
+    for (const [id, priceData] of Object.entries(data)) {
+      const sym = idToSymbol.get(id);
+      if (sym && priceData.usd) {
+        result.set(sym, priceData.usd);
+      }
+    }
+  } catch (e) {
+    console.warn("[CoinGecko] Request failed:", (e as Error).message);
+  }
+
+  return result;
 }
 
 /**
- * Fetch multiple stock prices from Yahoo Finance
+ * Fetch crypto prices: try Binance first, then CoinGecko for any missing symbols
  */
+export async function fetchCryptoPrices(
+  symbols: string[]
+): Promise<Map<string, number>> {
+  if (symbols.length === 0) return new Map();
+
+  // Try Binance first
+  const result = await fetchCryptoPricesFromBinance(symbols);
+
+  // Find missing symbols and fallback to CoinGecko
+  const missing = symbols.filter((s) => !result.has(s.toUpperCase()));
+  if (missing.length > 0) {
+    console.log(`[PriceService] Binance missed: ${missing.join(", ")}. Trying CoinGecko...`);
+    const fallback = await fetchCryptoPricesFromCoinGecko(missing);
+    fallback.forEach((price, symbol) => {
+      result.set(symbol, price);
+    });
+  }
+
+  return result;
+}
+
+// ============ Stocks: yahoo-finance2 ============
+
 export async function fetchStockPrices(
   symbols: string[]
 ): Promise<Map<string, number>> {
   const result = new Map<string, number>();
   if (symbols.length === 0) return result;
 
-  // yahoo-finance2 supports batch via array
   try {
     const quotes = await yf.quote(symbols);
     if (Array.isArray(quotes)) {
@@ -108,9 +166,13 @@ export async function fetchStockPrices(
   } catch {
     // Fallback: fetch individually
     for (const symbol of symbols) {
-      const price = await fetchStockPrice(symbol);
-      if (price !== null) {
-        result.set(symbol.toUpperCase(), price);
+      try {
+        const quote = await yf.quote(symbol);
+        if (quote.regularMarketPrice) {
+          result.set(symbol.toUpperCase(), quote.regularMarketPrice);
+        }
+      } catch {
+        // skip
       }
     }
   }
@@ -123,7 +185,7 @@ export async function fetchStockPrices(
 export interface PriceResult {
   symbol: string;
   price: number;
-  source: "binance" | "yahoo";
+  source: "binance" | "coingecko" | "yahoo";
 }
 
 /**
