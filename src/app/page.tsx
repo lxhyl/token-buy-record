@@ -61,52 +61,45 @@ export default async function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-blue-50">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500 text-white">
-                    <BarChart3 className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-blue-700">{holdings.length}</p>
-                    <p className="text-sm text-blue-600">Total Assets</p>
-                  </div>
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-blue-50">
+                <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white">
+                  <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
                 </div>
-
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-purple-50">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500 text-white">
-                    <TrendingUp className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-purple-700">{transactions.length}</p>
-                    <p className="text-sm text-purple-600">Transactions</p>
-                  </div>
+                <div>
+                  <p className="text-xl md:text-2xl font-bold text-blue-700">{holdings.length}</p>
+                  <p className="text-xs md:text-sm text-blue-600">Assets</p>
                 </div>
               </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-pink-50">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-500 text-white">
-                    <Coins className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-pink-700">
-                      {holdings.filter((h) => h.assetType === "crypto").length}
-                    </p>
-                    <p className="text-sm text-pink-600">Crypto</p>
-                  </div>
+              <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-purple-50">
+                <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500 text-white">
+                  <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
                 </div>
-
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-cyan-50">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500 text-white">
-                    <BarChart3 className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-cyan-700">
-                      {holdings.filter((h) => h.assetType === "stock").length}
-                    </p>
-                    <p className="text-sm text-cyan-600">Stocks</p>
-                  </div>
+                <div>
+                  <p className="text-xl md:text-2xl font-bold text-purple-700">{transactions.length}</p>
+                  <p className="text-xs md:text-sm text-purple-600">Trades</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-pink-50">
+                <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-pink-500 text-white">
+                  <Coins className="h-4 w-4 md:h-5 md:w-5" />
+                </div>
+                <div>
+                  <p className="text-xl md:text-2xl font-bold text-pink-700">
+                    {holdings.filter((h) => h.assetType === "crypto").length}
+                  </p>
+                  <p className="text-xs md:text-sm text-pink-600">Crypto</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-cyan-50">
+                <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500 text-white">
+                  <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
+                </div>
+                <div>
+                  <p className="text-xl md:text-2xl font-bold text-cyan-700">
+                    {holdings.filter((h) => h.assetType === "stock").length}
+                  </p>
+                  <p className="text-xs md:text-sm text-cyan-600">Stocks</p>
                 </div>
               </div>
             </div>
