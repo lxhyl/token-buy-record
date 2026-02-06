@@ -1,17 +1,17 @@
 "use client";
 
 import {
-  LineChart as RechartsLineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { TrendingUp } from "lucide-react";
 
 interface DataPoint {
   date: string;
@@ -30,55 +30,96 @@ export function PortfolioLineChart({
   if (data.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
+        <CardHeader className="border-b bg-muted/30">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <CardTitle>{title}</CardTitle>
+          </div>
         </CardHeader>
-        <CardContent>
-          <p className="text-center text-muted-foreground py-8">
-            No data available
-          </p>
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
+              <TrendingUp className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground">No data available</p>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white rounded-xl shadow-lg border p-3">
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-lg font-semibold text-foreground mt-1">
+            {formatCurrency(payload[0].value)}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+      <CardHeader className="border-b bg-muted/30">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+            <TrendingUp className="h-5 w-5" />
+          </div>
+          <CardTitle>{title}</CardTitle>
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="h-[300px]">
+      <CardContent className="pt-6">
+        <div className="h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
-            <RechartsLineChart
+            <AreaChart
               data={data}
               margin={{
-                top: 5,
-                right: 30,
-                left: 20,
-                bottom: 5,
+                top: 10,
+                right: 10,
+                left: 0,
+                bottom: 0,
               }}
             >
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="date" className="text-xs" />
+              <defs>
+                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#e5e7eb"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="date"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "#9ca3af" }}
+                dy={10}
+              />
               <YAxis
-                tickFormatter={(value) => formatCurrency(value)}
-                className="text-xs"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "#9ca3af" }}
+                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                dx={-10}
               />
-              <Tooltip
-                formatter={(value: number) => [formatCurrency(value), "Value"]}
-                labelFormatter={(label) => `Date: ${label}`}
-              />
-              <Legend />
-              <Line
+              <Tooltip content={<CustomTooltip />} />
+              <Area
                 type="monotone"
                 dataKey="value"
                 stroke="#3b82f6"
                 strokeWidth={2}
-                dot={false}
-                name="Portfolio Value"
+                fill="url(#colorValue)"
               />
-            </RechartsLineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </CardContent>

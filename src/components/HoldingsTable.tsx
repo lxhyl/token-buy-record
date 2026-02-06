@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { updateCurrentPrice } from "@/actions/transactions";
 import { Holding } from "@/lib/calculations";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
-import { TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, RefreshCw, Wallet } from "lucide-react";
 
 interface HoldingsTableProps {
   holdings: Holding[];
@@ -37,55 +37,64 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Current Holdings</CardTitle>
+    <Card className="overflow-hidden">
+      <CardHeader className="border-b bg-muted/30">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+            <Wallet className="h-5 w-5" />
+          </div>
+          <CardTitle>Current Holdings</CardTitle>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {holdings.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">
-            No holdings yet. Add buy transactions to see your portfolio.
-          </p>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
+              <Wallet className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <p className="text-lg font-medium text-muted-foreground">
+              No holdings yet
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Add buy transactions to see your portfolio
+            </p>
+          </div>
         ) : (
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Symbol</TableHead>
-                <TableHead>Type</TableHead>
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Asset</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
                 <TableHead className="text-right">Avg Cost</TableHead>
                 <TableHead className="text-right">Current Price</TableHead>
                 <TableHead className="text-right">Value</TableHead>
                 <TableHead className="text-right">P&L</TableHead>
-                <TableHead className="text-right">P&L %</TableHead>
                 <TableHead className="text-right">Annual %</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {holdings.map((h) => (
                 <TableRow key={h.symbol}>
-                  <TableCell className="font-medium">
-                    <div>
-                      <div>{h.symbol}</div>
-                      {h.name && (
-                        <div className="text-xs text-muted-foreground">
-                          {h.name}
-                        </div>
-                      )}
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl font-bold text-white ${
+                        h.assetType === "crypto"
+                          ? "bg-gradient-to-br from-purple-500 to-pink-500"
+                          : "bg-gradient-to-br from-blue-500 to-cyan-500"
+                      }`}>
+                        {h.symbol.slice(0, 2)}
+                      </div>
+                      <div>
+                        <div className="font-semibold">{h.symbol}</div>
+                        {h.name && (
+                          <div className="text-xs text-muted-foreground">
+                            {h.name}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        h.assetType === "crypto"
-                          ? "bg-purple-100 text-purple-800"
-                          : "bg-blue-100 text-blue-800"
-                      }`}
-                    >
-                      {h.assetType}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right font-medium">
                     {formatNumber(h.quantity, 8)}
                   </TableCell>
                   <TableCell className="text-right">
@@ -99,7 +108,7 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
                           step="0.00000001"
                           value={newPrice}
                           onChange={(e) => setNewPrice(e.target.value)}
-                          className="w-24 h-8"
+                          className="w-28 h-9"
                           placeholder="Price"
                         />
                         <Button
@@ -122,53 +131,44 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
                       </div>
                     ) : (
                       <div className="flex items-center gap-2 justify-end">
-                        {formatCurrency(h.currentPrice)}
+                        <span className="font-medium">{formatCurrency(h.currentPrice)}</span>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-6 w-6"
+                          className="h-8 w-8"
                           onClick={() => {
                             setEditingSymbol(h.symbol);
                             setNewPrice(h.currentPrice.toString());
                           }}
                         >
-                          <RefreshCw className="h-3 w-3" />
+                          <RefreshCw className="h-4 w-4" />
                         </Button>
                       </div>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right font-semibold">
                     {formatCurrency(h.currentValue)}
                   </TableCell>
-                  <TableCell
-                    className={`text-right ${
-                      h.unrealizedPnL >= 0 ? "text-green-600" : "text-red-600"
-                    }`}
-                  >
-                    <div className="flex items-center justify-end gap-1">
+                  <TableCell className="text-right">
+                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
+                      h.unrealizedPnL >= 0
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-red-50 text-red-700"
+                    }`}>
                       {h.unrealizedPnL >= 0 ? (
-                        <TrendingUp className="h-4 w-4" />
+                        <TrendingUp className="h-3.5 w-3.5" />
                       ) : (
-                        <TrendingDown className="h-4 w-4" />
+                        <TrendingDown className="h-3.5 w-3.5" />
                       )}
-                      {formatCurrency(Math.abs(h.unrealizedPnL))}
+                      <span>{formatCurrency(Math.abs(h.unrealizedPnL))}</span>
+                      <span className="text-xs opacity-75">
+                        ({h.unrealizedPnLPercent >= 0 ? "+" : ""}{formatPercent(h.unrealizedPnLPercent)})
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell
-                    className={`text-right ${
-                      h.unrealizedPnLPercent >= 0
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }`}
-                  >
-                    {h.unrealizedPnLPercent >= 0 ? "+" : ""}
-                    {formatPercent(h.unrealizedPnLPercent)}
-                  </TableCell>
-                  <TableCell
-                    className={`text-right ${
-                      h.annualizedReturn >= 0 ? "text-green-600" : "text-red-600"
-                    }`}
-                  >
+                  <TableCell className={`text-right font-medium ${
+                    h.annualizedReturn >= 0 ? "text-emerald-600" : "text-red-600"
+                  }`}>
                     {h.annualizedReturn >= 0 ? "+" : ""}
                     {formatPercent(h.annualizedReturn)}
                   </TableCell>

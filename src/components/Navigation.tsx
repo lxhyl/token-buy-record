@@ -8,6 +8,7 @@ import {
   ArrowLeftRight,
   Wallet,
   BarChart3,
+  TrendingUp,
 } from "lucide-react";
 
 const navItems = [
@@ -21,13 +22,19 @@ export function Navigation() {
   const pathname = usePathname();
 
   return (
-    <nav className="border-b">
+    <nav className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-xl">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="text-xl font-bold">
-            Trade Tracker
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25 transition-transform group-hover:scale-105">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              TradeTracker
+            </span>
           </Link>
-          <div className="flex items-center space-x-1">
+
+          <div className="flex items-center gap-1 rounded-2xl bg-secondary/50 p-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive =
@@ -39,10 +46,10 @@ export function Navigation() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                    "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      ? "bg-white text-primary shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/50"
                   )}
                 >
                   <Icon className="h-4 w-4" />

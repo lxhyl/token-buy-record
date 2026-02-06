@@ -1,84 +1,100 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
 import { PortfolioSummary } from "@/lib/calculations";
 import { formatCurrency, formatPercent } from "@/lib/utils";
-import { TrendingUp, TrendingDown, DollarSign, PiggyBank } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, PiggyBank, Wallet, Target } from "lucide-react";
 
 interface StatsCardsProps {
   summary: PortfolioSummary;
 }
 
 export function StatsCards({ summary }: StatsCardsProps) {
+  const cards = [
+    {
+      title: "Total Invested",
+      value: formatCurrency(summary.totalInvested),
+      icon: DollarSign,
+      gradient: "from-blue-500 to-blue-600",
+      shadowColor: "shadow-blue-500/25",
+      bgLight: "bg-blue-50",
+      iconColor: "text-blue-600",
+    },
+    {
+      title: "Current Value",
+      value: formatCurrency(summary.totalCurrentValue),
+      icon: PiggyBank,
+      gradient: "from-purple-500 to-purple-600",
+      shadowColor: "shadow-purple-500/25",
+      bgLight: "bg-purple-50",
+      iconColor: "text-purple-600",
+    },
+    {
+      title: "Unrealized P&L",
+      value: `${summary.totalUnrealizedPnL >= 0 ? "+" : ""}${formatCurrency(summary.totalUnrealizedPnL)}`,
+      subtitle: `${summary.totalPnLPercent >= 0 ? "+" : ""}${formatPercent(summary.totalPnLPercent)}`,
+      icon: summary.totalUnrealizedPnL >= 0 ? TrendingUp : TrendingDown,
+      gradient: summary.totalUnrealizedPnL >= 0
+        ? "from-emerald-500 to-teal-500"
+        : "from-red-500 to-rose-500",
+      shadowColor: summary.totalUnrealizedPnL >= 0
+        ? "shadow-emerald-500/25"
+        : "shadow-red-500/25",
+      bgLight: summary.totalUnrealizedPnL >= 0 ? "bg-emerald-50" : "bg-red-50",
+      iconColor: summary.totalUnrealizedPnL >= 0 ? "text-emerald-600" : "text-red-600",
+      valueColor: summary.totalUnrealizedPnL >= 0 ? "text-emerald-600" : "text-red-600",
+    },
+    {
+      title: "Realized P&L",
+      value: `${summary.totalRealizedPnL >= 0 ? "+" : ""}${formatCurrency(summary.totalRealizedPnL)}`,
+      icon: Target,
+      gradient: summary.totalRealizedPnL >= 0
+        ? "from-amber-500 to-orange-500"
+        : "from-red-500 to-rose-500",
+      shadowColor: summary.totalRealizedPnL >= 0
+        ? "shadow-amber-500/25"
+        : "shadow-red-500/25",
+      bgLight: summary.totalRealizedPnL >= 0 ? "bg-amber-50" : "bg-red-50",
+      iconColor: summary.totalRealizedPnL >= 0 ? "text-amber-600" : "text-red-600",
+      valueColor: summary.totalRealizedPnL >= 0 ? "text-amber-600" : "text-red-600",
+    },
+  ];
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Invested</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {formatCurrency(summary.totalInvested)}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Current Value</CardTitle>
-          <PiggyBank className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {formatCurrency(summary.totalCurrentValue)}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Unrealized P&L</CardTitle>
-          {summary.totalUnrealizedPnL >= 0 ? (
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          ) : (
-            <TrendingDown className="h-4 w-4 text-red-600" />
-          )}
-        </CardHeader>
-        <CardContent>
+      {cards.map((card, index) => {
+        const Icon = card.icon;
+        return (
           <div
-            className={`text-2xl font-bold ${
-              summary.totalUnrealizedPnL >= 0 ? "text-green-600" : "text-red-600"
-            }`}
+            key={card.title}
+            className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+            style={{ animationDelay: `${index * 100}ms` }}
           >
-            {summary.totalUnrealizedPnL >= 0 ? "+" : ""}
-            {formatCurrency(summary.totalUnrealizedPnL)}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {summary.totalPnLPercent >= 0 ? "+" : ""}
-            {formatPercent(summary.totalPnLPercent)}
-          </p>
-        </CardContent>
-      </Card>
+            {/* Background decoration */}
+            <div className={`absolute -right-4 -top-4 h-24 w-24 rounded-full ${card.bgLight} opacity-50 transition-transform group-hover:scale-150`} />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Realized P&L</CardTitle>
-          {summary.totalRealizedPnL >= 0 ? (
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          ) : (
-            <TrendingDown className="h-4 w-4 text-red-600" />
-          )}
-        </CardHeader>
-        <CardContent>
-          <div
-            className={`text-2xl font-bold ${
-              summary.totalRealizedPnL >= 0 ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {summary.totalRealizedPnL >= 0 ? "+" : ""}
-            {formatCurrency(summary.totalRealizedPnL)}
+            <div className="relative">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm font-medium text-muted-foreground">
+                  {card.title}
+                </span>
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${card.bgLight}`}>
+                  <Icon className={`h-5 w-5 ${card.iconColor}`} />
+                </div>
+              </div>
+
+              <div className={`text-2xl font-bold tracking-tight ${card.valueColor || "text-foreground"}`}>
+                {card.value}
+              </div>
+
+              {card.subtitle && (
+                <p className={`mt-1 text-sm font-medium ${card.valueColor}`}>
+                  {card.subtitle}
+                </p>
+              )}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        );
+      })}
     </div>
   );
 }
