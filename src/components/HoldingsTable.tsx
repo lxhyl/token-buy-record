@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,16 +16,48 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { updateCurrentPrice } from "@/actions/transactions";
 import { Holding } from "@/lib/calculations";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
-import { TrendingUp, TrendingDown, RefreshCw, Wallet } from "lucide-react";
+import { TrendingUp, TrendingDown, RefreshCw, Wallet, Zap, Loader2, Check, AlertCircle } from "lucide-react";
 
 interface HoldingsTableProps {
   holdings: Holding[];
 }
 
+type RefreshStatus = "idle" | "loading" | "success" | "error";
+
 export function HoldingsTable({ holdings }: HoldingsTableProps) {
   const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
   const [newPrice, setNewPrice] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [refreshStatus, setRefreshStatus] = useState<RefreshStatus>("idle");
+  const [refreshInfo, setRefreshInfo] = useState("");
+  const router = useRouter();
+
+  const handleRefreshAllPrices = useCallback(async () => {
+    setRefreshStatus("loading");
+    setRefreshInfo("");
+    try {
+      const res = await fetch("/api/prices");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to fetch prices");
+
+      setRefreshStatus("success");
+      setRefreshInfo(`Updated ${data.updated} price(s)`);
+      router.refresh();
+
+      // Reset status after 3 seconds
+      setTimeout(() => {
+        setRefreshStatus("idle");
+        setRefreshInfo("");
+      }, 3000);
+    } catch {
+      setRefreshStatus("error");
+      setRefreshInfo("Failed to fetch prices");
+      setTimeout(() => {
+        setRefreshStatus("idle");
+        setRefreshInfo("");
+      }, 3000);
+    }
+  }, [router]);
 
   const handleUpdatePrice = (symbol: string) => {
     if (!newPrice) return;
@@ -39,11 +72,41 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
   return (
     <Card className="overflow-hidden">
       <CardHeader className="border-b bg-muted/30">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white">
-            <Wallet className="h-5 w-5" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+              <Wallet className="h-5 w-5" />
+            </div>
+            <CardTitle>Current Holdings</CardTitle>
           </div>
-          <CardTitle>Current Holdings</CardTitle>
+          {holdings.length > 0 && (
+            <div className="flex items-center gap-2">
+              {refreshInfo && (
+                <span className={`text-sm ${
+                  refreshStatus === "success" ? "text-emerald-600" :
+                  refreshStatus === "error" ? "text-red-600" : "text-muted-foreground"
+                }`}>
+                  {refreshStatus === "success" && <Check className="inline h-3.5 w-3.5 mr-1" />}
+                  {refreshStatus === "error" && <AlertCircle className="inline h-3.5 w-3.5 mr-1" />}
+                  {refreshInfo}
+                </span>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleRefreshAllPrices}
+                disabled={refreshStatus === "loading"}
+                className="gap-2"
+              >
+                {refreshStatus === "loading" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Zap className="h-4 w-4" />
+                )}
+                {refreshStatus === "loading" ? "Fetching..." : "Refresh Prices"}
+              </Button>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="p-0">
