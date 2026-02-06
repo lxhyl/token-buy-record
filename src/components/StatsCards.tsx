@@ -60,13 +60,13 @@ export function StatsCards({ summary }: StatsCardsProps) {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (
           <div
             key={card.title}
-            className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+            className="group relative overflow-hidden rounded-2xl bg-white p-4 md:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
             style={{ animationDelay: `${index * 100}ms` }}
           >
             {/* Background decoration */}
@@ -82,7 +82,7 @@ export function StatsCards({ summary }: StatsCardsProps) {
                 </div>
               </div>
 
-              <div className={`text-2xl font-bold tracking-tight ${card.valueColor || "text-foreground"}`}>
+              <div className={`text-lg md:text-2xl font-bold tracking-tight ${card.valueColor || "text-foreground"}`}>
                 {card.value}
               </div>
 

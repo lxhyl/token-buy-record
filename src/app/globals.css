@@ -129,3 +129,15 @@
 .animate-slide-in {
   animation: slideIn 0.3s ease-out forwards;
 }
+
+/* Mobile bottom safe area for bottom tab bar */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent body scroll bounce on iOS */
+@supports (-webkit-touch-callout: none) {
+  html {
+    height: -webkit-fill-available;
+  }
+}

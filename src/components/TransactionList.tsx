@@ -34,18 +34,19 @@ export function TransactionList({ transactions }: TransactionListProps) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="border-b bg-muted/30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white">
-              <History className="h-5 w-5" />
+      <CardHeader className="border-b bg-muted/30 px-4 md:px-6">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            <div className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white">
+              <History className="h-4 w-4 md:h-5 md:w-5" />
             </div>
-            <CardTitle>Transaction History</CardTitle>
+            <CardTitle className="text-base md:text-lg truncate">Transaction History</CardTitle>
           </div>
-          <Link href="/transactions/new">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Transaction
+          <Link href="/transactions/new" className="shrink-0">
+            <Button size="sm" className="md:h-10 md:px-4">
+              <Plus className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Add Transaction</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           </Link>
         </div>
@@ -70,6 +71,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
             </Link>
           </div>
         ) : (
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
@@ -150,6 +152,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -25,19 +25,20 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
             Dashboard
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-sm md:text-base text-muted-foreground mt-1">
             Overview of your trading portfolio
           </p>
         </div>
-        <Link href="/transactions/new">
-          <Button size="lg">
-            <Plus className="h-5 w-5 mr-2" />
-            Add Transaction
+        <Link href="/transactions/new" className="shrink-0">
+          <Button size="sm" className="md:h-11 md:px-6">
+            <Plus className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Add Transaction</span>
+            <span className="sm:hidden">Add</span>
           </Button>
         </Link>
       </div>
@@ -46,7 +47,7 @@ export default async function DashboardPage() {
       <StatsCards summary={summary} />
 
       {/* Charts Row */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
         <AllocationPieChart data={allocationData} />
 
         {/* Quick Stats Card */}

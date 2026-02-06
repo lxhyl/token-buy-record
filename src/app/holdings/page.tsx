@@ -16,10 +16,10 @@ export default async function HoldingsPage() {
   const summary = calculatePortfolioSummary(holdings);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Holdings</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl md:text-3xl font-bold">Holdings</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Current portfolio positions and performance
         </p>
       </div>

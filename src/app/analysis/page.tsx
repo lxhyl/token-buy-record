@@ -31,7 +31,6 @@ export default async function AnalysisPage() {
   const allocationData = calculateAllocationData(holdings);
   const tradeAnalysis = analyzeTradePatterns(transactions);
 
-  // Calculate portfolio value history (simplified - based on transaction dates)
   const sortedTransactions = [...transactions].sort(
     (a, b) =>
       new Date(a.tradeDate).getTime() - new Date(b.tradeDate).getTime()
@@ -45,7 +44,7 @@ export default async function AnalysisPage() {
     if (t.tradeType === "buy") {
       runningValue += amount;
     } else {
-      runningValue -= amount * 0.5; // Simplified - show net effect
+      runningValue -= amount * 0.5;
     }
 
     const dateStr = new Date(t.tradeDate).toLocaleDateString();
@@ -57,7 +56,6 @@ export default async function AnalysisPage() {
     }
   });
 
-  // Sort holdings by P&L for ranking
   const sortedByPnL = [...holdings].sort(
     (a, b) => b.unrealizedPnL - a.unrealizedPnL
   );
@@ -66,25 +64,25 @@ export default async function AnalysisPage() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Analysis</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl md:text-3xl font-bold">Analysis</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Detailed portfolio analysis and insights
         </p>
       </div>
 
       <StatsCards summary={summary} />
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         <AllocationPieChart data={allocationData} />
         <PortfolioLineChart data={portfolioHistory} />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>P&L Ranking (by Amount)</CardTitle>
+            <CardTitle className="text-base md:text-lg">P&L Ranking (by Amount)</CardTitle>
           </CardHeader>
           <CardContent>
             {sortedByPnL.length === 0 ? (
@@ -92,6 +90,7 @@ export default async function AnalysisPage() {
                 No holdings to analyze
               </p>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -123,13 +122,14 @@ export default async function AnalysisPage() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>P&L Ranking (by Percentage)</CardTitle>
+            <CardTitle className="text-base md:text-lg">P&L Ranking (by Percentage)</CardTitle>
           </CardHeader>
           <CardContent>
             {sortedByPnLPercent.length === 0 ? (
@@ -137,6 +137,7 @@ export default async function AnalysisPage() {
                 No holdings to analyze
               </p>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -164,6 +165,7 @@ export default async function AnalysisPage() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -171,24 +173,25 @@ export default async function AnalysisPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Trade Pattern Analysis</CardTitle>
+          <CardTitle className="text-base md:text-lg">Trade Pattern Analysis</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0 md:px-6">
           {tradeAnalysis.length === 0 ? (
             <p className="text-center text-muted-foreground py-4">
               No trades to analyze
             </p>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Symbol</TableHead>
                   <TableHead className="text-right">Buy Trades</TableHead>
                   <TableHead className="text-right">Sell Trades</TableHead>
-                  <TableHead className="text-right">Avg Buy Price</TableHead>
-                  <TableHead className="text-right">Avg Sell Price</TableHead>
-                  <TableHead className="text-right">Buy Volume</TableHead>
-                  <TableHead className="text-right">Sell Volume</TableHead>
+                  <TableHead className="text-right">Avg Buy</TableHead>
+                  <TableHead className="text-right">Avg Sell</TableHead>
+                  <TableHead className="text-right">Buy Vol</TableHead>
+                  <TableHead className="text-right">Sell Vol</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -213,28 +216,30 @@ export default async function AnalysisPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Annualized Returns</CardTitle>
+          <CardTitle className="text-base md:text-lg">Annualized Returns</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0 md:px-6">
           {holdings.length === 0 ? (
             <p className="text-center text-muted-foreground py-4">
               No holdings to analyze
             </p>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Symbol</TableHead>
                   <TableHead className="text-right">First Buy</TableHead>
-                  <TableHead className="text-right">Days Held</TableHead>
-                  <TableHead className="text-right">Total Return</TableHead>
-                  <TableHead className="text-right">Annualized Return</TableHead>
+                  <TableHead className="text-right">Days</TableHead>
+                  <TableHead className="text-right">Return</TableHead>
+                  <TableHead className="text-right">Annual</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -246,7 +251,7 @@ export default async function AnalysisPage() {
                   return (
                     <TableRow key={h.symbol}>
                       <TableCell className="font-medium">{h.symbol}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right whitespace-nowrap">
                         {h.firstBuyDate.toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">{daysHeld}</TableCell>
@@ -275,6 +280,7 @@ export default async function AnalysisPage() {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

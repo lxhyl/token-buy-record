@@ -55,18 +55,18 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="border-b bg-muted/30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white">
-              <Wallet className="h-5 w-5" />
+      <CardHeader className="border-b bg-muted/30 px-4 md:px-6">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            <div className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+              <Wallet className="h-4 w-4 md:h-5 md:w-5" />
             </div>
-            <CardTitle>Current Holdings</CardTitle>
+            <CardTitle className="text-base md:text-lg truncate">Current Holdings</CardTitle>
           </div>
           {holdings.length > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {refreshInfo && (
-                <span className={`text-sm ${
+                <span className={`text-xs md:text-sm hidden sm:inline ${
                   refreshStatus === "success" ? "text-emerald-600" :
                   refreshStatus === "error" ? "text-red-600" : "text-muted-foreground"
                 }`}>
@@ -80,14 +80,15 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
                 variant="outline"
                 onClick={handleRefreshAllPrices}
                 disabled={refreshStatus === "loading"}
-                className="gap-2"
+                className="gap-1.5 text-xs md:text-sm"
               >
                 {refreshStatus === "loading" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Zap className="h-4 w-4" />
+                  <Zap className="h-3.5 w-3.5" />
                 )}
-                {refreshStatus === "loading" ? "Fetching..." : "Refresh Prices"}
+                <span className="hidden sm:inline">{refreshStatus === "loading" ? "Fetching..." : "Refresh Prices"}</span>
+                <span className="sm:hidden">{refreshStatus === "loading" ? "..." : "Refresh"}</span>
               </Button>
             </div>
           )}
@@ -107,6 +108,7 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
             </p>
           </div>
         ) : (
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
@@ -180,6 +182,7 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </CardContent>
     </Card>
