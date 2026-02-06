@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { transactions, currentPrices, NewTransaction } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
+import { fetchAllPrices } from "@/lib/price-service";
 
 export async function createTransaction(formData: FormData) {
   const symbol = formData.get("symbol") as string;
@@ -134,5 +135,70 @@ export async function updateMultiplePrices(
 ) {
   for (const { symbol, price } of prices) {
     await updateCurrentPrice(symbol, price);
+  }
+}
+
+const PRICE_STALE_MS = 60 * 1000; // 1 minute
+
+/**
+ * Get latest prices: auto-fetch from external APIs if stale (>1min),
+ * otherwise return cached DB prices.
+ */
+export async function getLatestPrices() {
+  const allTx = await db.select().from(transactions);
+  const dbPrices = await db.select().from(currentPrices);
+
+  // Build asset list from transactions
+  const assetMap = new Map<string, string>();
+  for (const tx of allTx) {
+    if (!assetMap.has(tx.symbol)) {
+      assetMap.set(tx.symbol, tx.assetType);
+    }
+  }
+
+  if (assetMap.size === 0) return dbPrices;
+
+  // Check if any price is stale or missing
+  const now = Date.now();
+  const dbPriceMap = new Map<string, { price: string; updatedAt: Date | null }>();
+  for (const p of dbPrices) {
+    dbPriceMap.set(p.symbol, { price: p.price, updatedAt: p.updatedAt });
+  }
+
+  let needsRefresh = false;
+  assetMap.forEach((_, symbol) => {
+    const cached = dbPriceMap.get(symbol);
+    if (!cached || !cached.updatedAt || now - cached.updatedAt.getTime() > PRICE_STALE_MS) {
+      needsRefresh = true;
+    }
+  });
+
+  if (!needsRefresh) return dbPrices;
+
+  // Fetch fresh prices from APIs
+  const assets = Array.from(assetMap.entries()).map(([symbol, assetType]) => ({
+    symbol,
+    assetType,
+  }));
+
+  try {
+    const freshPrices = await fetchAllPrices(assets);
+
+    // Upsert into DB using ON CONFLICT
+    for (const { symbol, price } of freshPrices) {
+      await db
+        .insert(currentPrices)
+        .values({ symbol, price: price.toString() })
+        .onConflictDoUpdate({
+          target: currentPrices.symbol,
+          set: { price: price.toString(), updatedAt: new Date() },
+        });
+    }
+
+    // Return updated prices
+    return await db.select().from(currentPrices);
+  } catch (error) {
+    console.error("Failed to fetch latest prices, using cached:", error);
+    return dbPrices;
   }
 }

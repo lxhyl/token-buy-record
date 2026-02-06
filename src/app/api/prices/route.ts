@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { transactions, currentPrices } from "@/lib/schema";
-import { eq } from "drizzle-orm";
 import { fetchAllPrices } from "@/lib/price-service";
 
 /**
@@ -30,24 +29,15 @@ export async function GET() {
     // 2. Fetch latest prices from external APIs
     const priceResults = await fetchAllPrices(assets);
 
-    // 3. Upsert prices into DB
+    // 3. Upsert prices into DB using ON CONFLICT
     for (const { symbol, price } of priceResults) {
-      const existing = await db
-        .select()
-        .from(currentPrices)
-        .where(eq(currentPrices.symbol, symbol));
-
-      if (existing.length > 0) {
-        await db
-          .update(currentPrices)
-          .set({ price: price.toString(), updatedAt: new Date() })
-          .where(eq(currentPrices.symbol, symbol));
-      } else {
-        await db.insert(currentPrices).values({
-          symbol,
-          price: price.toString(),
+      await db
+        .insert(currentPrices)
+        .values({ symbol, price: price.toString() })
+        .onConflictDoUpdate({
+          target: currentPrices.symbol,
+          set: { price: price.toString(), updatedAt: new Date() },
         });
-      }
     }
 
     return NextResponse.json({

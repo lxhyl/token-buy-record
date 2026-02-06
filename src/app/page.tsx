@@ -1,4 +1,4 @@
-import { getTransactions, getCurrentPrices } from "@/actions/transactions";
+import { getTransactions, getLatestPrices } from "@/actions/transactions";
 import {
   calculateHoldings,
   calculatePortfolioSummary,
@@ -15,10 +15,8 @@ import { Plus, Sparkles, TrendingUp, Coins, BarChart3 } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [transactions, currentPrices] = await Promise.all([
-    getTransactions(),
-    getCurrentPrices(),
-  ]);
+  const transactions = await getTransactions();
+  const currentPrices = await getLatestPrices();
 
   const holdings = calculateHoldings(transactions, currentPrices);
   const summary = calculatePortfolioSummary(holdings);
