@@ -118,7 +118,6 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
                 <TableHead className="text-right">Current Price</TableHead>
                 <TableHead className="text-right">Value</TableHead>
                 <TableHead className="text-right">P&L</TableHead>
-                <TableHead className="text-right">Annual %</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -171,12 +170,6 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
                         ({h.unrealizedPnLPercent >= 0 ? "+" : ""}{formatPercent(h.unrealizedPnLPercent)})
                       </span>
                     </div>
-                  </TableCell>
-                  <TableCell className={`text-right font-medium ${
-                    h.annualizedReturn >= 0 ? "text-emerald-600" : "text-red-600"
-                  }`}>
-                    {h.annualizedReturn >= 0 ? "+" : ""}
-                    {formatPercent(h.annualizedReturn)}
                   </TableCell>
                 </TableRow>
               ))}

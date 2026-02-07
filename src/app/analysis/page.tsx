@@ -221,69 +221,6 @@ export default async function AnalysisPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base md:text-lg">Annualized Returns</CardTitle>
-        </CardHeader>
-        <CardContent className="px-0 md:px-6">
-          {holdings.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">
-              No holdings to analyze
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Symbol</TableHead>
-                  <TableHead className="text-right">First Buy</TableHead>
-                  <TableHead className="text-right">Days</TableHead>
-                  <TableHead className="text-right">Return</TableHead>
-                  <TableHead className="text-right">Annual</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {holdings.map((h) => {
-                  const daysHeld = Math.floor(
-                    (new Date().getTime() - h.firstBuyDate.getTime()) /
-                      (1000 * 60 * 60 * 24)
-                  );
-                  return (
-                    <TableRow key={h.symbol}>
-                      <TableCell className="font-medium">{h.symbol}</TableCell>
-                      <TableCell className="text-right whitespace-nowrap">
-                        {h.firstBuyDate.toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">{daysHeld}</TableCell>
-                      <TableCell
-                        className={`text-right ${
-                          h.unrealizedPnLPercent >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {h.unrealizedPnLPercent >= 0 ? "+" : ""}
-                        {formatPercent(h.unrealizedPnLPercent)}
-                      </TableCell>
-                      <TableCell
-                        className={`text-right ${
-                          h.annualizedReturn >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {h.annualizedReturn >= 0 ? "+" : ""}
-                        {formatPercent(h.annualizedReturn)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }

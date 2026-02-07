@@ -13,7 +13,6 @@ export interface Holding {
   unrealizedPnLPercent: number;
   realizedPnL: number;
   firstBuyDate: Date;
-  annualizedReturn: number;
 }
 
 export interface PortfolioSummary {
@@ -144,16 +143,6 @@ export function calculateHoldings(
     }
     realizedPnL = sellsTotal - costOfSold;
 
-    // Calculate annualized return
-    const firstBuyDate = data.firstBuyDate || new Date();
-    const daysSinceFirstBuy = Math.max(
-      1,
-      (new Date().getTime() - firstBuyDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    const totalReturn = unrealizedPnLPercent / 100;
-    const annualizedReturn =
-      (Math.pow(1 + totalReturn, 365 / daysSinceFirstBuy) - 1) * 100;
-
     holdings.push({
       symbol: data.symbol,
       name: data.name,
@@ -166,8 +155,7 @@ export function calculateHoldings(
       unrealizedPnL,
       unrealizedPnLPercent,
       realizedPnL,
-      firstBuyDate,
-      annualizedReturn: isFinite(annualizedReturn) ? annualizedReturn : 0,
+      firstBuyDate: data.firstBuyDate || new Date(),
     });
   });
 
