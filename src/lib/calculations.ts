@@ -202,6 +202,8 @@ export interface TradeAnalysis {
   avgSellPrice: number;
   buyVolume: number;
   sellVolume: number;
+  buyVolumeUsd: number;
+  sellVolumeUsd: number;
 }
 
 export function analyzeTradePatterns(
@@ -241,17 +243,11 @@ export function analyzeTradePatterns(
   analysisMap.forEach((data) => {
     const buyVolume = data.buys.reduce((sum, b) => sum + b.quantity, 0);
     const sellVolume = data.sells.reduce((sum, s) => sum + s.quantity, 0);
+    const buyVolumeUsd = data.buys.reduce((sum, b) => sum + b.quantity * b.price, 0);
+    const sellVolumeUsd = data.sells.reduce((sum, s) => sum + s.quantity * s.price, 0);
 
-    const avgBuyPrice =
-      buyVolume > 0
-        ? data.buys.reduce((sum, b) => sum + b.quantity * b.price, 0) / buyVolume
-        : 0;
-
-    const avgSellPrice =
-      sellVolume > 0
-        ? data.sells.reduce((sum, s) => sum + s.quantity * s.price, 0) /
-          sellVolume
-        : 0;
+    const avgBuyPrice = buyVolume > 0 ? buyVolumeUsd / buyVolume : 0;
+    const avgSellPrice = sellVolume > 0 ? sellVolumeUsd / sellVolume : 0;
 
     results.push({
       symbol: data.symbol,
@@ -261,6 +257,8 @@ export function analyzeTradePatterns(
       avgSellPrice,
       buyVolume,
       sellVolume,
+      buyVolumeUsd,
+      sellVolumeUsd,
     });
   });
 

@@ -191,7 +191,9 @@ export default async function AnalysisPage() {
                   <TableHead className="text-right">Avg Buy</TableHead>
                   <TableHead className="text-right">Avg Sell</TableHead>
                   <TableHead className="text-right">Buy Vol</TableHead>
+                  <TableHead className="text-right">Buy USD</TableHead>
                   <TableHead className="text-right">Sell Vol</TableHead>
+                  <TableHead className="text-right">Sell USD</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -210,7 +212,13 @@ export default async function AnalysisPage() {
                       {formatNumber(a.buyVolume, 4)}
                     </TableCell>
                     <TableCell className="text-right">
+                      {formatCurrency(a.buyVolumeUsd)}
+                    </TableCell>
+                    <TableCell className="text-right">
                       {a.sellVolume > 0 ? formatNumber(a.sellVolume, 4) : "-"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {a.sellVolumeUsd > 0 ? formatCurrency(a.sellVolumeUsd) : "-"}
                     </TableCell>
                   </TableRow>
                 ))}
