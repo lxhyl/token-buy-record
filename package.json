@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "drizzle-kit push --force && next build",
+    "build": "node migrate.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
@@ -25,7 +25,6 @@
     "recharts": "^2.13.3",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
-    "drizzle-kit": "^0.28.0",
     "ws": "^8.19.0",
     "yahoo-finance2": "^3.13.0"
   },
@@ -33,6 +32,7 @@
     "@types/node": "^20.17.6",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "drizzle-kit": "^0.28.0",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.18",
     "postcss": "^8.4.49",
