@@ -14,7 +14,6 @@ import { createCurrencyFormatter } from "@/lib/utils";
 import {
   SupportedCurrency,
   ExchangeRates,
-  CURRENCY_CONFIG,
   convertAmount,
 } from "@/lib/currency";
 import { TrendingUp } from "lucide-react";
@@ -38,7 +37,6 @@ export function PortfolioLineChart({
   rates,
 }: LineChartProps) {
   const fc = createCurrencyFormatter(currency, rates);
-  const config = CURRENCY_CONFIG[currency];
   if (data.length === 0) {
     return (
       <Card>
@@ -122,7 +120,7 @@ export function PortfolioLineChart({
                 tick={{ fontSize: 12, fill: "#9ca3af" }}
                 tickFormatter={(value) => {
                   const converted = convertAmount(value, currency, rates);
-                  return `${config.symbol}${(converted / 1000).toFixed(0)}k`;
+                  return `${(converted / 1000).toFixed(0)}k`;
                 }}
                 dx={-10}
               />
