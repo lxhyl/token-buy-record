@@ -8,6 +8,7 @@ import {
   ArrowLeftRight,
   Wallet,
   BarChart3,
+  Settings,
   TrendingUp,
 } from "lucide-react";
 
@@ -16,6 +17,7 @@ const navItems = [
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/holdings", label: "Holdings", icon: Wallet },
   { href: "/analysis", label: "Analysis", icon: BarChart3 },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Navigation() {

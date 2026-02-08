@@ -8,7 +8,8 @@ import {
   Tooltip,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency, formatPercent } from "@/lib/utils";
+import { createCurrencyFormatter, formatPercent } from "@/lib/utils";
+import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { PieChart as PieIcon } from "lucide-react";
 
 interface AllocationData {
@@ -20,6 +21,8 @@ interface AllocationData {
 interface PieChartProps {
   data: AllocationData[];
   title?: string;
+  currency: SupportedCurrency;
+  rates: ExchangeRates;
 }
 
 const COLORS = [
@@ -46,7 +49,10 @@ const GRADIENTS = [
 export function AllocationPieChart({
   data,
   title = "Portfolio Allocation",
+  currency,
+  rates,
 }: PieChartProps) {
+  const fc = createCurrencyFormatter(currency, rates);
   if (data.length === 0) {
     return (
       <Card>
@@ -77,7 +83,7 @@ export function AllocationPieChart({
         <div className="bg-white rounded-xl shadow-lg border p-3 min-w-[150px]">
           <p className="font-semibold text-foreground">{data.name}</p>
           <p className="text-sm text-muted-foreground mt-1">
-            {formatCurrency(data.value)}
+            {fc(data.value)}
           </p>
           <p className="text-sm font-medium text-primary mt-0.5">
             {formatPercent(data.percentage)}

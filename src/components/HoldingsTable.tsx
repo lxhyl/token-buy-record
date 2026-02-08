@@ -13,16 +13,20 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Holding } from "@/lib/calculations";
-import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
+import { createCurrencyFormatter, formatNumber, formatPercent } from "@/lib/utils";
+import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { TrendingUp, TrendingDown, Wallet, Zap, Loader2, Check, AlertCircle } from "lucide-react";
 
 interface HoldingsTableProps {
   holdings: Holding[];
+  currency: SupportedCurrency;
+  rates: ExchangeRates;
 }
 
 type RefreshStatus = "idle" | "loading" | "success" | "error";
 
-export function HoldingsTable({ holdings }: HoldingsTableProps) {
+export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps) {
+  const fc = createCurrencyFormatter(currency, rates);
   const [refreshStatus, setRefreshStatus] = useState<RefreshStatus>("idle");
   const [refreshInfo, setRefreshInfo] = useState("");
   const router = useRouter();
@@ -146,13 +150,13 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
                     {formatNumber(h.quantity, 8)}
                   </TableCell>
                   <TableCell className="text-right">
-                    {formatCurrency(h.avgCost)}
+                    {fc(h.avgCost)}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {formatCurrency(h.currentPrice)}
+                    {fc(h.currentPrice)}
                   </TableCell>
                   <TableCell className="text-right font-semibold">
-                    {formatCurrency(h.currentValue)}
+                    {fc(h.currentValue)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
@@ -165,7 +169,7 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
                       ) : (
                         <TrendingDown className="h-3.5 w-3.5" />
                       )}
-                      <span>{formatCurrency(Math.abs(h.unrealizedPnL))}</span>
+                      <span>{fc(Math.abs(h.unrealizedPnL))}</span>
                       <span className="text-xs opacity-75">
                         ({h.unrealizedPnLPercent >= 0 ? "+" : ""}{formatPercent(h.unrealizedPnLPercent)})
                       </span>

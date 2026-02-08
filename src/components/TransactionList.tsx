@@ -14,14 +14,18 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { deleteTransaction } from "@/actions/transactions";
 import { Transaction } from "@/lib/schema";
-import { formatCurrency, formatNumber, formatDate } from "@/lib/utils";
+import { createCurrencyFormatter, formatNumber, formatDate } from "@/lib/utils";
+import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { Pencil, Trash2, Plus, ArrowUpRight, ArrowDownRight, History } from "lucide-react";
 
 interface TransactionListProps {
   transactions: Transaction[];
+  currency: SupportedCurrency;
+  rates: ExchangeRates;
 }
 
-export function TransactionList({ transactions }: TransactionListProps) {
+export function TransactionList({ transactions, currency, rates }: TransactionListProps) {
+  const fc = createCurrencyFormatter(currency, rates);
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = (id: number) => {
@@ -125,10 +129,10 @@ export function TransactionList({ transactions }: TransactionListProps) {
                     {formatNumber(parseFloat(t.quantity), 8)}
                   </TableCell>
                   <TableCell className="text-right">
-                    {formatCurrency(parseFloat(t.price))}
+                    {fc(parseFloat(t.price))}
                   </TableCell>
                   <TableCell className="text-right font-semibold">
-                    {formatCurrency(parseFloat(t.totalAmount))}
+                    {fc(parseFloat(t.totalAmount))}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">

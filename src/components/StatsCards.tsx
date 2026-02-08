@@ -1,18 +1,23 @@
 "use client";
 
 import { PortfolioSummary } from "@/lib/calculations";
-import { formatCurrency, formatPercent } from "@/lib/utils";
+import { createCurrencyFormatter, formatPercent } from "@/lib/utils";
+import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { TrendingUp, TrendingDown, DollarSign, PiggyBank, Wallet, Target } from "lucide-react";
 
 interface StatsCardsProps {
   summary: PortfolioSummary;
+  currency: SupportedCurrency;
+  rates: ExchangeRates;
 }
 
-export function StatsCards({ summary }: StatsCardsProps) {
+export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
+  const fc = createCurrencyFormatter(currency, rates);
+
   const cards = [
     {
       title: "Total Invested",
-      value: formatCurrency(summary.totalInvested),
+      value: fc(summary.totalInvested),
       icon: DollarSign,
       gradient: "from-blue-500 to-blue-600",
       shadowColor: "shadow-blue-500/25",
@@ -21,7 +26,7 @@ export function StatsCards({ summary }: StatsCardsProps) {
     },
     {
       title: "Current Value",
-      value: formatCurrency(summary.totalCurrentValue),
+      value: fc(summary.totalCurrentValue),
       icon: PiggyBank,
       gradient: "from-purple-500 to-purple-600",
       shadowColor: "shadow-purple-500/25",
@@ -30,7 +35,7 @@ export function StatsCards({ summary }: StatsCardsProps) {
     },
     {
       title: "Unrealized P&L",
-      value: `${summary.totalUnrealizedPnL >= 0 ? "+" : ""}${formatCurrency(summary.totalUnrealizedPnL)}`,
+      value: `${summary.totalUnrealizedPnL >= 0 ? "+" : ""}${fc(summary.totalUnrealizedPnL)}`,
       subtitle: `${summary.totalPnLPercent >= 0 ? "+" : ""}${formatPercent(summary.totalPnLPercent)}`,
       icon: summary.totalUnrealizedPnL >= 0 ? TrendingUp : TrendingDown,
       gradient: summary.totalUnrealizedPnL >= 0
@@ -45,7 +50,7 @@ export function StatsCards({ summary }: StatsCardsProps) {
     },
     {
       title: "Realized P&L",
-      value: `${summary.totalRealizedPnL >= 0 ? "+" : ""}${formatCurrency(summary.totalRealizedPnL)}`,
+      value: `${summary.totalRealizedPnL >= 0 ? "+" : ""}${fc(summary.totalRealizedPnL)}`,
       icon: Target,
       gradient: summary.totalRealizedPnL >= 0
         ? "from-amber-500 to-orange-500"

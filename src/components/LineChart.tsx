@@ -10,7 +10,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
+import { createCurrencyFormatter } from "@/lib/utils";
+import {
+  SupportedCurrency,
+  ExchangeRates,
+  CURRENCY_CONFIG,
+  convertAmount,
+} from "@/lib/currency";
 import { TrendingUp } from "lucide-react";
 
 interface DataPoint {
@@ -21,12 +27,18 @@ interface DataPoint {
 interface LineChartProps {
   data: DataPoint[];
   title?: string;
+  currency: SupportedCurrency;
+  rates: ExchangeRates;
 }
 
 export function PortfolioLineChart({
   data,
   title = "Portfolio Value Over Time",
+  currency,
+  rates,
 }: LineChartProps) {
+  const fc = createCurrencyFormatter(currency, rates);
+  const config = CURRENCY_CONFIG[currency];
   if (data.length === 0) {
     return (
       <Card>
@@ -56,7 +68,7 @@ export function PortfolioLineChart({
         <div className="bg-white rounded-xl shadow-lg border p-3">
           <p className="text-sm text-muted-foreground">{label}</p>
           <p className="text-lg font-semibold text-foreground mt-1">
-            {formatCurrency(payload[0].value)}
+            {fc(payload[0].value)}
           </p>
         </div>
       );
@@ -108,7 +120,10 @@ export function PortfolioLineChart({
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 12, fill: "#9ca3af" }}
-                tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                tickFormatter={(value) => {
+                  const converted = convertAmount(value, currency, rates);
+                  return `${config.symbol}${(converted / 1000).toFixed(0)}k`;
+                }}
                 dx={-10}
               />
               <Tooltip content={<CustomTooltip />} />

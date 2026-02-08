@@ -1,4 +1,6 @@
 import { getTransactions, getLatestPrices } from "@/actions/transactions";
+import { getDisplayCurrency } from "@/actions/settings";
+import { getExchangeRates } from "@/lib/currency";
 import {
   calculateHoldings,
   calculatePortfolioSummary,
@@ -15,8 +17,12 @@ import { Plus, Sparkles, TrendingUp, Coins, BarChart3 } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const transactions = await getTransactions();
-  const currentPrices = await getLatestPrices();
+  const [transactions, currentPrices, currency, rates] = await Promise.all([
+    getTransactions(),
+    getLatestPrices(),
+    getDisplayCurrency(),
+    getExchangeRates(),
+  ]);
 
   const holdings = calculateHoldings(transactions, currentPrices);
   const summary = calculatePortfolioSummary(holdings);
@@ -44,11 +50,11 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <StatsCards summary={summary} />
+      <StatsCards summary={summary} currency={currency} rates={rates} />
 
       {/* Charts Row */}
       <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
-        <AllocationPieChart data={allocationData} />
+        <AllocationPieChart data={allocationData} currency={currency} rates={rates} />
 
         {/* Quick Stats Card */}
         <Card>
@@ -108,7 +114,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Holdings Table */}
-      <HoldingsTable holdings={holdings} />
+      <HoldingsTable holdings={holdings} currency={currency} rates={rates} />
     </div>
   );
 }

@@ -204,6 +204,7 @@ export interface TradeAnalysis {
   sellVolume: number;
   buyVolumeUsd: number;
   sellVolumeUsd: number;
+  totalFees: number;
 }
 
 export function analyzeTradePatterns(
@@ -215,6 +216,7 @@ export function analyzeTradePatterns(
       symbol: string;
       buys: { quantity: number; price: number }[];
       sells: { quantity: number; price: number }[];
+      fees: number;
     }
   >();
 
@@ -224,12 +226,16 @@ export function analyzeTradePatterns(
         symbol: t.symbol,
         buys: [],
         sells: [],
+        fees: 0,
       });
     }
 
     const analysis = analysisMap.get(t.symbol)!;
     const quantity = parseFloat(t.quantity);
     const price = parseFloat(t.price);
+    const fee = parseFloat(t.fee || "0");
+
+    analysis.fees += fee;
 
     if (t.tradeType === "buy") {
       analysis.buys.push({ quantity, price });
@@ -259,6 +265,7 @@ export function analyzeTradePatterns(
       sellVolume,
       buyVolumeUsd,
       sellVolumeUsd,
+      totalFees: data.fees,
     });
   });
 

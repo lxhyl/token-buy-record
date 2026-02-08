@@ -1,4 +1,6 @@
 import { getTransactions, getLatestPrices } from "@/actions/transactions";
+import { getDisplayCurrency } from "@/actions/settings";
+import { getExchangeRates } from "@/lib/currency";
 import {
   calculateHoldings,
   calculatePortfolioSummary,
@@ -9,8 +11,12 @@ import { HoldingsTable } from "@/components/HoldingsTable";
 export const dynamic = "force-dynamic";
 
 export default async function HoldingsPage() {
-  const transactions = await getTransactions();
-  const currentPrices = await getLatestPrices();
+  const [transactions, currentPrices, currency, rates] = await Promise.all([
+    getTransactions(),
+    getLatestPrices(),
+    getDisplayCurrency(),
+    getExchangeRates(),
+  ]);
 
   const holdings = calculateHoldings(transactions, currentPrices);
   const summary = calculatePortfolioSummary(holdings);
@@ -24,8 +30,8 @@ export default async function HoldingsPage() {
         </p>
       </div>
 
-      <StatsCards summary={summary} />
-      <HoldingsTable holdings={holdings} />
+      <StatsCards summary={summary} currency={currency} rates={rates} />
+      <HoldingsTable holdings={holdings} currency={currency} rates={rates} />
     </div>
   );
 }

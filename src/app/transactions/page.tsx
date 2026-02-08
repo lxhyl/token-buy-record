@@ -1,10 +1,16 @@
 import { getTransactions } from "@/actions/transactions";
+import { getDisplayCurrency } from "@/actions/settings";
+import { getExchangeRates } from "@/lib/currency";
 import { TransactionList } from "@/components/TransactionList";
 
 export const dynamic = "force-dynamic";
 
 export default async function TransactionsPage() {
-  const transactions = await getTransactions();
+  const [transactions, currency, rates] = await Promise.all([
+    getTransactions(),
+    getDisplayCurrency(),
+    getExchangeRates(),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -15,7 +21,7 @@ export default async function TransactionsPage() {
         </p>
       </div>
 
-      <TransactionList transactions={transactions} />
+      <TransactionList transactions={transactions} currency={currency} rates={rates} />
     </div>
   );
 }

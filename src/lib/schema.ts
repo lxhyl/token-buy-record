@@ -29,7 +29,15 @@ export const currentPrices = pgTable("current_prices", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const appSettings = pgTable("app_settings", {
+  id: serial("id").primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;
 export type CurrentPrice = typeof currentPrices.$inferSelect;
 export type NewCurrentPrice = typeof currentPrices.$inferInsert;
+export type AppSetting = typeof appSettings.$inferSelect;

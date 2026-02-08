@@ -1,7 +1,32 @@
-const CACHE_NAME = "tradetracker-v1";
+const CACHE_NAME = "tradetracker-v2";
 
-// Install: cache app shell
+// App shell resources to pre-cache on install
+const APP_SHELL = [
+  "/",
+  "/transactions",
+  "/holdings",
+  "/analysis",
+  "/manifest.json",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+];
+
+// Install: pre-cache app shell for instant PWA startup
 self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) =>
+      // Use individual fetches so one failure doesn't block all
+      Promise.allSettled(
+        APP_SHELL.map((url) =>
+          fetch(url).then((response) => {
+            if (response.ok) {
+              return cache.put(url, response);
+            }
+          })
+        )
+      )
+    )
+  );
   self.skipWaiting();
 });
 
@@ -19,7 +44,7 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first strategy for API, cache-first for static assets
+// Fetch handler with optimized strategies
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -32,7 +57,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // For static assets: cache-first
+  // For static assets: cache-first (immutable hashed files)
   if (
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.match(/\.(png|jpg|jpeg|svg|ico|woff2?)$/)
@@ -52,7 +77,37 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // For pages: network-first with cache fallback
+  // For page navigations: stale-while-revalidate
+  // Return cache immediately (no black screen), then update cache in background
+  if (request.mode === "navigate" || request.headers.get("accept")?.includes("text/html")) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        const fetchPromise = fetch(request)
+          .then((response) => {
+            if (response.ok) {
+              const clone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            }
+            return response;
+          })
+          .catch(() => {
+            // Network failed, return cached version or a basic offline fallback
+            if (cached) return cached;
+            return new Response(
+              '<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width"><title>TradeTracker</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:system-ui;color:#64748b"><p>Offline - please check your connection</p></body></html>',
+              { headers: { "Content-Type": "text/html" } }
+            );
+          });
+
+        // If we have a cached version, return it immediately
+        // The fetch in background will update the cache for next time
+        return cached || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // For other resources: network-first with cache fallback
   event.respondWith(
     fetch(request)
       .then((response) => {
