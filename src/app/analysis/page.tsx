@@ -304,9 +304,9 @@ export default async function AnalysisPage() {
                   <TableHead className="text-right">Avg Buy</TableHead>
                   <TableHead className="text-right">Avg Sell</TableHead>
                   <TableHead className="text-right">Buy Vol</TableHead>
-                  <TableHead className="text-right">Buy USD</TableHead>
+                  <TableHead className="text-right">Buy {currency}</TableHead>
                   <TableHead className="text-right">Sell Vol</TableHead>
-                  <TableHead className="text-right">Sell USD</TableHead>
+                  <TableHead className="text-right">Sell {currency}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

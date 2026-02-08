@@ -135,7 +135,7 @@ export function TransactionForm({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="price">Price (USD)</Label>
+                <Label htmlFor="price">Price <span className="text-muted-foreground font-normal">(USD)</span></Label>
                 <Input
                   id="price"
                   name="price"
@@ -148,7 +148,7 @@ export function TransactionForm({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="fee">Fee (USD)</Label>
+                <Label htmlFor="fee">Fee <span className="text-muted-foreground font-normal">(USD)</span></Label>
                 <Input
                   id="fee"
                   name="fee"
