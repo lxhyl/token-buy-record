@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTransaction } from "@/actions/transactions";
+import { getDisplayCurrency } from "@/actions/settings";
+import { getExchangeRates } from "@/lib/currency";
 import { TransactionForm } from "@/components/TransactionForm";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +13,11 @@ interface EditTransactionPageProps {
 export default async function EditTransactionPage({
   params,
 }: EditTransactionPageProps) {
-  const transaction = await getTransaction(parseInt(params.id));
+  const [transaction, currency, rates] = await Promise.all([
+    getTransaction(parseInt(params.id)),
+    getDisplayCurrency(),
+    getExchangeRates(),
+  ]);
 
   if (!transaction) {
     notFound();
@@ -27,7 +33,12 @@ export default async function EditTransactionPage({
       </div>
 
       <div className="max-w-2xl">
-        <TransactionForm transaction={transaction} mode="edit" />
+        <TransactionForm
+          transaction={transaction}
+          mode="edit"
+          currency={currency}
+          rates={rates}
+        />
       </div>
     </div>
   );

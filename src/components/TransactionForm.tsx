@@ -10,21 +10,43 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createTransaction, updateTransaction } from "@/actions/transactions";
 import { Transaction } from "@/lib/schema";
+import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { ArrowDownRight, ArrowUpRight, Bitcoin, TrendingUp, Save, X } from "lucide-react";
 
 interface TransactionFormProps {
   transaction?: Transaction;
   mode?: "create" | "edit";
+  currency: SupportedCurrency;
+  rates: ExchangeRates;
 }
 
 export function TransactionForm({
   transaction,
   mode = "create",
+  currency,
+  rates,
 }: TransactionFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const rate = rates[currency] ?? 1;
+
+  const toUsd = (localValue: number) =>
+    currency === "USD" ? localValue : localValue / rate;
+
+  const toLocal = (usdValue: number) =>
+    currency === "USD" ? usdValue : usdValue * rate;
 
   const handleSubmit = async (formData: FormData) => {
+    // Convert price and fee from display currency to USD before saving
+    const localPrice = parseFloat(formData.get("price") as string);
+    const localFee = parseFloat((formData.get("fee") as string) || "0");
+
+    const usdPrice = toUsd(localPrice);
+    const usdFee = toUsd(localFee);
+
+    formData.set("price", usdPrice.toString());
+    formData.set("fee", usdFee.toString());
+
     startTransition(async () => {
       if (mode === "edit" && transaction) {
         await updateTransaction(transaction.id, formData);
@@ -135,27 +157,35 @@ export function TransactionForm({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="price">Price <span className="text-muted-foreground font-normal">(USD)</span></Label>
+                <Label htmlFor="price">Price <span className="text-muted-foreground font-normal">({currency})</span></Label>
                 <Input
                   id="price"
                   name="price"
                   type="number"
                   step="0.00000001"
                   placeholder="0.00"
-                  defaultValue={transaction?.price || ""}
+                  defaultValue={
+                    transaction?.price
+                      ? toLocal(parseFloat(transaction.price)).toString()
+                      : ""
+                  }
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="fee">Fee <span className="text-muted-foreground font-normal">(USD)</span></Label>
+                <Label htmlFor="fee">Fee <span className="text-muted-foreground font-normal">({currency})</span></Label>
                 <Input
                   id="fee"
                   name="fee"
                   type="number"
                   step="0.01"
                   placeholder="0.00"
-                  defaultValue={transaction?.fee || "0"}
+                  defaultValue={
+                    transaction?.fee
+                      ? toLocal(parseFloat(transaction.fee)).toString()
+                      : "0"
+                  }
                 />
               </div>
 

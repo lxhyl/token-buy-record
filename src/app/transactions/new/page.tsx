@@ -1,6 +1,15 @@
+import { getDisplayCurrency } from "@/actions/settings";
+import { getExchangeRates } from "@/lib/currency";
 import { TransactionForm } from "@/components/TransactionForm";
 
-export default function NewTransactionPage() {
+export const dynamic = "force-dynamic";
+
+export default async function NewTransactionPage() {
+  const [currency, rates] = await Promise.all([
+    getDisplayCurrency(),
+    getExchangeRates(),
+  ]);
+
   return (
     <div className="space-y-8">
       <div>
@@ -11,7 +20,7 @@ export default function NewTransactionPage() {
       </div>
 
       <div className="max-w-2xl">
-        <TransactionForm />
+        <TransactionForm currency={currency} rates={rates} />
       </div>
     </div>
   );
