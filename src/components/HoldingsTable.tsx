@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Holding } from "@/lib/calculations";
 import { createCurrencyFormatter, formatNumber, formatPercent } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
-import { TrendingUp, TrendingDown, Wallet, Zap, Loader2, Check, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Zap, Loader2, Check, AlertCircle, Coins } from "lucide-react";
 
 interface HoldingsTableProps {
   holdings: Holding[];
@@ -25,8 +25,19 @@ interface HoldingsTableProps {
 
 type RefreshStatus = "idle" | "loading" | "success" | "error";
 
+const assetGradient = (assetType: string) => {
+  switch (assetType) {
+    case "crypto": return "bg-gradient-to-br from-purple-500 to-pink-500";
+    case "stock": return "bg-gradient-to-br from-blue-500 to-cyan-500";
+    case "deposit": return "bg-gradient-to-br from-green-500 to-emerald-500";
+    case "bond": return "bg-gradient-to-br from-amber-500 to-yellow-500";
+    default: return "bg-gradient-to-br from-gray-500 to-slate-500";
+  }
+};
+
 export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps) {
   const fc = createCurrencyFormatter(currency, rates);
+  const hasIncome = holdings.some((h) => h.totalIncome > 0);
   const [refreshStatus, setRefreshStatus] = useState<RefreshStatus>("idle");
   const [refreshInfo, setRefreshInfo] = useState("");
   const router = useRouter();
@@ -121,6 +132,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                 <TableHead className="text-right">Avg Cost</TableHead>
                 <TableHead className="text-right">Current Price</TableHead>
                 <TableHead className="text-right">Value</TableHead>
+                {hasIncome && <TableHead className="text-right">Income</TableHead>}
                 <TableHead className="text-right">P&L</TableHead>
               </TableRow>
             </TableHeader>
@@ -129,11 +141,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                 <TableRow key={h.symbol}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl font-bold text-white ${
-                        h.assetType === "crypto"
-                          ? "bg-gradient-to-br from-purple-500 to-pink-500"
-                          : "bg-gradient-to-br from-blue-500 to-cyan-500"
-                      }`}>
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl font-bold text-white ${assetGradient(h.assetType)}`}>
                         {h.symbol.slice(0, 2)}
                       </div>
                       <div>
@@ -147,17 +155,27 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                     </div>
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {formatNumber(h.quantity, 8)}
+                    {h.quantity > 0 ? formatNumber(h.quantity, 8) : "-"}
                   </TableCell>
                   <TableCell className="text-right">
-                    {fc(h.avgCost)}
+                    {h.avgCost > 0 ? fc(h.avgCost) : "-"}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {fc(h.currentPrice)}
+                    {h.currentPrice > 0 ? fc(h.currentPrice) : "-"}
                   </TableCell>
                   <TableCell className="text-right font-semibold">
-                    {fc(h.currentValue)}
+                    {h.currentValue > 0 ? fc(h.currentValue) : "-"}
                   </TableCell>
+                  {hasIncome && (
+                    <TableCell className="text-right">
+                      {h.totalIncome > 0 ? (
+                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium bg-amber-50 text-amber-700">
+                          <Coins className="h-3.5 w-3.5" />
+                          {fc(h.totalIncome)}
+                        </div>
+                      ) : "-"}
+                    </TableCell>
+                  )}
                   <TableCell className="text-right">
                     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
                       h.unrealizedPnL >= 0

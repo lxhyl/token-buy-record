@@ -7,12 +7,15 @@ import {
   text,
 } from "drizzle-orm/pg-core";
 
+export const ASSET_TYPES = ["crypto", "stock", "deposit", "bond"] as const;
+export const TRADE_TYPES = ["buy", "sell", "income"] as const;
+
 export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
   symbol: varchar("symbol", { length: 20 }).notNull(),
   name: varchar("name", { length: 100 }),
-  assetType: varchar("asset_type", { length: 10 }).notNull(), // 'stock' | 'crypto'
-  tradeType: varchar("trade_type", { length: 10 }).notNull(), // 'buy' | 'sell'
+  assetType: varchar("asset_type", { length: 10 }).notNull(), // 'crypto' | 'stock' | 'deposit' | 'bond'
+  tradeType: varchar("trade_type", { length: 10 }).notNull(), // 'buy' | 'sell' | 'income'
   quantity: decimal("quantity", { precision: 18, scale: 8 }).notNull(),
   price: decimal("price", { precision: 18, scale: 8 }).notNull(),
   totalAmount: decimal("total_amount", { precision: 18, scale: 2 }).notNull(),

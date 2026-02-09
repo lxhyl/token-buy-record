@@ -26,6 +26,7 @@ export interface Holding {
   unrealizedPnL: number;
   unrealizedPnLPercent: number;
   realizedPnL: number;
+  totalIncome: number;
   firstBuyDate: Date;
 }
 
@@ -34,6 +35,7 @@ export interface PortfolioSummary {
   totalCurrentValue: number;
   totalUnrealizedPnL: number;
   totalRealizedPnL: number;
+  totalIncome: number;
   totalPnL: number;
   totalPnLPercent: number;
 }
@@ -56,6 +58,7 @@ export function calculateHoldings(
       assetType: string;
       buys: { quantity: number; priceUsd: number; date: Date }[];
       sells: { quantity: number; priceUsd: number }[];
+      incomeTotal: number;
       firstBuyDate: Date | null;
     }
   >();
@@ -69,6 +72,7 @@ export function calculateHoldings(
         assetType: t.assetType,
         buys: [],
         sells: [],
+        incomeTotal: 0,
         firstBuyDate: null,
       });
     }
@@ -80,7 +84,18 @@ export function calculateHoldings(
     const priceUsd = toUsd(rawPrice, txCurrency, rates);
     const date = new Date(t.tradeDate);
 
-    if (t.tradeType === "buy") {
+    if (t.tradeType === "income") {
+      // Income: add totalAmount as income
+      const rawTotal = parseFloat(t.totalAmount);
+      holding.incomeTotal += toUsd(rawTotal, txCurrency, rates);
+      // Asset income (staking rewards etc.) — quantity > 0 means tokens received
+      if (quantity > 0) {
+        holding.buys.push({ quantity, priceUsd, date });
+        if (!holding.firstBuyDate || date < holding.firstBuyDate) {
+          holding.firstBuyDate = date;
+        }
+      }
+    } else if (t.tradeType === "buy") {
       holding.buys.push({ quantity, priceUsd, date });
       if (!holding.firstBuyDate || date < holding.firstBuyDate) {
         holding.firstBuyDate = date;
@@ -98,7 +113,7 @@ export function calculateHoldings(
     const totalSold = data.sells.reduce((sum, s) => sum + s.quantity, 0);
     const remainingQty = totalBought - totalSold;
 
-    if (remainingQty <= 0.00000001) return; // Skip if no holdings
+    if (remainingQty <= 0.00000001 && data.incomeTotal <= 0) return; // Skip if no holdings and no income
 
     // Calculate average cost using FIFO for remaining shares
     let totalCost = 0;
@@ -161,6 +176,7 @@ export function calculateHoldings(
       unrealizedPnL,
       unrealizedPnLPercent,
       realizedPnL,
+      totalIncome: data.incomeTotal,
       firstBuyDate: data.firstBuyDate || new Date(),
     });
   });
@@ -176,7 +192,8 @@ export function calculatePortfolioSummary(holdings: Holding[]): PortfolioSummary
     0
   );
   const totalRealizedPnL = holdings.reduce((sum, h) => sum + h.realizedPnL, 0);
-  const totalPnL = totalUnrealizedPnL + totalRealizedPnL;
+  const totalIncome = holdings.reduce((sum, h) => sum + h.totalIncome, 0);
+  const totalPnL = totalUnrealizedPnL + totalRealizedPnL + totalIncome;
   const totalPnLPercent =
     totalInvested > 0 ? (totalUnrealizedPnL / totalInvested) * 100 : 0;
 
@@ -185,6 +202,7 @@ export function calculatePortfolioSummary(holdings: Holding[]): PortfolioSummary
     totalCurrentValue,
     totalUnrealizedPnL,
     totalRealizedPnL,
+    totalIncome,
     totalPnL,
     totalPnLPercent,
   };
@@ -204,6 +222,7 @@ export interface TradeAnalysis {
   symbol: string;
   totalBuys: number;
   totalSells: number;
+  totalIncomes: number;
   avgBuyPrice: number;
   avgSellPrice: number;
   buyVolume: number;
@@ -211,6 +230,7 @@ export interface TradeAnalysis {
   buyVolumeUsd: number;
   sellVolumeUsd: number;
   totalFees: number;
+  totalIncomeUsd: number;
 }
 
 export function analyzeTradePatterns(
@@ -224,6 +244,8 @@ export function analyzeTradePatterns(
       buys: { quantity: number; priceUsd: number }[];
       sells: { quantity: number; priceUsd: number }[];
       fees: number;
+      incomeCount: number;
+      incomeUsd: number;
     }
   >();
 
@@ -234,6 +256,8 @@ export function analyzeTradePatterns(
         buys: [],
         sells: [],
         fees: 0,
+        incomeCount: 0,
+        incomeUsd: 0,
       });
     }
 
@@ -247,7 +271,11 @@ export function analyzeTradePatterns(
 
     analysis.fees += feeUsd;
 
-    if (t.tradeType === "buy") {
+    if (t.tradeType === "income") {
+      analysis.incomeCount++;
+      const rawTotal = parseFloat(t.totalAmount);
+      analysis.incomeUsd += toUsd(rawTotal, txCurrency, rates);
+    } else if (t.tradeType === "buy") {
       analysis.buys.push({ quantity, priceUsd });
     } else {
       analysis.sells.push({ quantity, priceUsd });
@@ -269,6 +297,7 @@ export function analyzeTradePatterns(
       symbol: data.symbol,
       totalBuys: data.buys.length,
       totalSells: data.sells.length,
+      totalIncomes: data.incomeCount,
       avgBuyPrice,
       avgSellPrice,
       buyVolume,
@@ -276,6 +305,7 @@ export function analyzeTradePatterns(
       buyVolumeUsd,
       sellVolumeUsd,
       totalFees: data.fees,
+      totalIncomeUsd: data.incomeUsd,
     });
   });
 

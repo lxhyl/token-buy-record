@@ -12,7 +12,7 @@ import { HoldingsTable } from "@/components/HoldingsTable";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Sparkles, TrendingUp, Coins, BarChart3 } from "lucide-react";
+import { Plus, Sparkles, TrendingUp, Coins, BarChart3, Landmark, PiggyBank } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -67,48 +67,77 @@ export default async function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
-              <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-blue-50">
-                <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white">
-                  <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
+            {(() => {
+              const depositCount = holdings.filter((h) => h.assetType === "deposit").length;
+              const bondCount = holdings.filter((h) => h.assetType === "bond").length;
+              const hasExtra = depositCount > 0 || bondCount > 0;
+              return (
+                <div className={`grid grid-cols-2 gap-3 md:gap-4 ${hasExtra ? "md:grid-cols-3" : ""}`}>
+                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-blue-50">
+                    <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white">
+                      <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xl md:text-2xl font-bold text-blue-700">{holdings.length}</p>
+                      <p className="text-xs md:text-sm text-blue-600">Assets</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-purple-50">
+                    <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500 text-white">
+                      <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xl md:text-2xl font-bold text-purple-700">{transactions.length}</p>
+                      <p className="text-xs md:text-sm text-purple-600">Trades</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-pink-50">
+                    <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-pink-500 text-white">
+                      <Coins className="h-4 w-4 md:h-5 md:w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xl md:text-2xl font-bold text-pink-700">
+                        {holdings.filter((h) => h.assetType === "crypto").length}
+                      </p>
+                      <p className="text-xs md:text-sm text-pink-600">Crypto</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-cyan-50">
+                    <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500 text-white">
+                      <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xl md:text-2xl font-bold text-cyan-700">
+                        {holdings.filter((h) => h.assetType === "stock").length}
+                      </p>
+                      <p className="text-xs md:text-sm text-cyan-600">Stocks</p>
+                    </div>
+                  </div>
+                  {depositCount > 0 && (
+                    <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-green-50">
+                      <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-green-500 text-white">
+                        <PiggyBank className="h-4 w-4 md:h-5 md:w-5" />
+                      </div>
+                      <div>
+                        <p className="text-xl md:text-2xl font-bold text-green-700">{depositCount}</p>
+                        <p className="text-xs md:text-sm text-green-600">Deposits</p>
+                      </div>
+                    </div>
+                  )}
+                  {bondCount > 0 && (
+                    <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-amber-50">
+                      <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white">
+                        <Landmark className="h-4 w-4 md:h-5 md:w-5" />
+                      </div>
+                      <div>
+                        <p className="text-xl md:text-2xl font-bold text-amber-700">{bondCount}</p>
+                        <p className="text-xs md:text-sm text-amber-600">Bonds</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <p className="text-xl md:text-2xl font-bold text-blue-700">{holdings.length}</p>
-                  <p className="text-xs md:text-sm text-blue-600">Assets</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-purple-50">
-                <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500 text-white">
-                  <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
-                </div>
-                <div>
-                  <p className="text-xl md:text-2xl font-bold text-purple-700">{transactions.length}</p>
-                  <p className="text-xs md:text-sm text-purple-600">Trades</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-pink-50">
-                <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-pink-500 text-white">
-                  <Coins className="h-4 w-4 md:h-5 md:w-5" />
-                </div>
-                <div>
-                  <p className="text-xl md:text-2xl font-bold text-pink-700">
-                    {holdings.filter((h) => h.assetType === "crypto").length}
-                  </p>
-                  <p className="text-xs md:text-sm text-pink-600">Crypto</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-cyan-50">
-                <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500 text-white">
-                  <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
-                </div>
-                <div>
-                  <p className="text-xl md:text-2xl font-bold text-cyan-700">
-                    {holdings.filter((h) => h.assetType === "stock").length}
-                  </p>
-                  <p className="text-xs md:text-sm text-cyan-600">Stocks</p>
-                </div>
-              </div>
-            </div>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>

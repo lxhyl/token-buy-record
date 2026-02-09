@@ -15,7 +15,7 @@ export default async function NewTransactionPage() {
       <div>
         <h1 className="text-3xl font-bold">Add Transaction</h1>
         <p className="text-muted-foreground">
-          Record a new buy or sell transaction
+          Record a new transaction
         </p>
       </div>
 

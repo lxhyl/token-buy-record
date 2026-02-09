@@ -16,7 +16,7 @@ import { deleteTransaction } from "@/actions/transactions";
 import { Transaction } from "@/lib/schema";
 import { createCurrencyFormatter, formatNumber, formatDate } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
-import { Pencil, Trash2, Plus, ArrowUpRight, ArrowDownRight, History } from "lucide-react";
+import { Pencil, Trash2, Plus, ArrowUpRight, ArrowDownRight, History, Coins } from "lucide-react";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -99,6 +99,10 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                       <div className={`flex h-9 w-9 items-center justify-center rounded-lg font-bold text-white text-xs ${
                         t.assetType === "crypto"
                           ? "bg-gradient-to-br from-purple-500 to-pink-500"
+                          : t.assetType === "deposit"
+                          ? "bg-gradient-to-br from-green-500 to-emerald-500"
+                          : t.assetType === "bond"
+                          ? "bg-gradient-to-br from-amber-500 to-yellow-500"
                           : "bg-gradient-to-br from-blue-500 to-cyan-500"
                       }`}>
                         {t.symbol.slice(0, 2)}
@@ -115,10 +119,14 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
                       t.tradeType === "buy"
                         ? "bg-emerald-50 text-emerald-700"
+                        : t.tradeType === "income"
+                        ? "bg-amber-50 text-amber-700"
                         : "bg-red-50 text-red-700"
                     }`}>
                       {t.tradeType === "buy" ? (
                         <ArrowDownRight className="h-3 w-3" />
+                      ) : t.tradeType === "income" ? (
+                        <Coins className="h-3 w-3" />
                       ) : (
                         <ArrowUpRight className="h-3 w-3" />
                       )}
@@ -126,10 +134,10 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                     </div>
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {formatNumber(parseFloat(t.quantity), 8)}
+                    {parseFloat(t.quantity) > 0 ? formatNumber(parseFloat(t.quantity), 8) : "-"}
                   </TableCell>
                   <TableCell className="text-right">
-                    {fc(parseFloat(t.price))}
+                    {parseFloat(t.price) > 0 ? fc(parseFloat(t.price)) : "-"}
                   </TableCell>
                   <TableCell className="text-right font-semibold">
                     {fc(parseFloat(t.totalAmount))}

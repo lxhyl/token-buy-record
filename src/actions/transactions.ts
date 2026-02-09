@@ -18,10 +18,17 @@ export async function createTransaction(formData: FormData) {
   const tradeDate = formData.get("tradeDate") as string;
   const notes = formData.get("notes") as string;
 
-  const totalAmount = (
-    parseFloat(quantity) * parseFloat(price) +
-    parseFloat(fee || "0")
-  ).toFixed(2);
+  let totalAmount: string;
+  if (tradeType === "income" && parseFloat(quantity) === 0) {
+    // Cash income (dividends, interest): totalAmount from incomeAmount field
+    const incomeAmount = formData.get("incomeAmount") as string;
+    totalAmount = parseFloat(incomeAmount || "0").toFixed(2);
+  } else {
+    totalAmount = (
+      parseFloat(quantity) * parseFloat(price) +
+      parseFloat(fee || "0")
+    ).toFixed(2);
+  }
 
   await db.insert(transactions).values({
     symbol: symbol.toUpperCase(),
@@ -55,10 +62,16 @@ export async function updateTransaction(id: number, formData: FormData) {
   const tradeDate = formData.get("tradeDate") as string;
   const notes = formData.get("notes") as string;
 
-  const totalAmount = (
-    parseFloat(quantity) * parseFloat(price) +
-    parseFloat(fee || "0")
-  ).toFixed(2);
+  let totalAmount: string;
+  if (tradeType === "income" && parseFloat(quantity) === 0) {
+    const incomeAmount = formData.get("incomeAmount") as string;
+    totalAmount = parseFloat(incomeAmount || "0").toFixed(2);
+  } else {
+    totalAmount = (
+      parseFloat(quantity) * parseFloat(price) +
+      parseFloat(fee || "0")
+    ).toFixed(2);
+  }
 
   await db
     .update(transactions)
@@ -179,11 +192,13 @@ export async function getLatestPrices() {
 
   if (!needsRefresh) return dbPrices;
 
-  // Fetch fresh prices from APIs
-  const assets = Array.from(assetMap.entries()).map(([symbol, assetType]) => ({
-    symbol,
-    assetType,
-  }));
+  // Fetch fresh prices from APIs (skip deposit/bond — no market prices)
+  const assets = Array.from(assetMap.entries())
+    .filter(([_, assetType]) => assetType === "crypto" || assetType === "stock")
+    .map(([symbol, assetType]) => ({
+      symbol,
+      assetType,
+    }));
 
   try {
     const freshPrices = await fetchAllPrices(assets);

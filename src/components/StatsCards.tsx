@@ -3,7 +3,7 @@
 import { PortfolioSummary } from "@/lib/calculations";
 import { createCurrencyFormatter, formatPercent } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
-import { TrendingUp, TrendingDown, DollarSign, PiggyBank, Wallet, Target } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, PiggyBank, Wallet, Target, Coins } from "lucide-react";
 
 interface StatsCardsProps {
   summary: PortfolioSummary;
@@ -62,10 +62,24 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
       iconColor: summary.totalRealizedPnL >= 0 ? "text-amber-600" : "text-red-600",
       valueColor: summary.totalRealizedPnL >= 0 ? "text-amber-600" : "text-red-600",
     },
+    ...(summary.totalIncome > 0
+      ? [
+          {
+            title: "Total Income",
+            value: `+${fc(summary.totalIncome)}`,
+            icon: Coins,
+            gradient: "from-amber-500 to-yellow-500",
+            shadowColor: "shadow-amber-500/25",
+            bgLight: "bg-amber-50",
+            iconColor: "text-amber-600",
+            valueColor: "text-amber-600",
+          },
+        ]
+      : []),
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
+    <div className={`grid grid-cols-2 gap-3 md:gap-4 ${cards.length > 4 ? "md:grid-cols-3 lg:grid-cols-5" : "lg:grid-cols-4"}`}>
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (

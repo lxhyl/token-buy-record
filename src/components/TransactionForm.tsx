@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createTransaction, updateTransaction } from "@/actions/transactions";
 import { Transaction } from "@/lib/schema";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
-import { ArrowDownRight, ArrowUpRight, Bitcoin, TrendingUp, Save, X } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, TrendingUp, Save, X, DollarSign, Coins } from "lucide-react";
 
 interface TransactionFormProps {
   transaction?: Transaction;
@@ -28,6 +28,17 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [assetType, setAssetType] = useState(transaction?.assetType || "crypto");
+  const [tradeType, setTradeType] = useState(transaction?.tradeType || "buy");
+  const [incomeMode, setIncomeMode] = useState<"cash" | "asset">(
+    // Infer from existing transaction: if income with quantity=0, it's cash
+    transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
+      ? "cash"
+      : "asset"
+  );
+
+  const isIncome = tradeType === "income";
+  const isCashIncome = isIncome && incomeMode === "cash";
 
   const handleSubmit = async (formData: FormData) => {
     startTransition(async () => {
@@ -45,9 +56,21 @@ export function TransactionForm({
     return new Date(date).toISOString().split("T")[0];
   };
 
-  // Default currency for new transactions is the display currency;
-  // for editing, use the transaction's stored currency.
   const defaultCurrency = transaction?.currency || currency;
+
+  const symbolPlaceholder = {
+    crypto: "BTC, ETH, SOL...",
+    stock: "AAPL, TSLA, NVDA...",
+    deposit: "ABC Bank 1Y, Savings...",
+    bond: "US10Y, Corp Bond...",
+  }[assetType] || "Symbol";
+
+  const namePlaceholder = {
+    crypto: "Bitcoin, Ethereum...",
+    stock: "Apple Inc, Tesla...",
+    deposit: "1-Year Fixed Deposit...",
+    bond: "US Treasury 10Y...",
+  }[assetType] || "Name";
 
   return (
     <Card className="overflow-hidden">
@@ -78,7 +101,7 @@ export function TransactionForm({
                 <Input
                   id="symbol"
                   name="symbol"
-                  placeholder="BTC, AAPL, ETH..."
+                  placeholder={symbolPlaceholder}
                   defaultValue={transaction?.symbol || ""}
                   required
                 />
@@ -89,7 +112,7 @@ export function TransactionForm({
                 <Input
                   id="name"
                   name="name"
-                  placeholder="Bitcoin, Apple Inc..."
+                  placeholder={namePlaceholder}
                   defaultValue={transaction?.name || ""}
                 />
               </div>
@@ -99,12 +122,15 @@ export function TransactionForm({
                 <Select
                   id="assetType"
                   name="assetType"
-                  defaultValue={transaction?.assetType || "crypto"}
+                  value={assetType}
+                  onChange={(e) => setAssetType(e.target.value)}
                   required
                   className="h-11"
                 >
                   <option value="crypto">Crypto</option>
                   <option value="stock">Stock</option>
+                  <option value="deposit">Deposit</option>
+                  <option value="bond">Bond</option>
                 </Select>
               </div>
 
@@ -113,35 +139,129 @@ export function TransactionForm({
                 <Select
                   id="tradeType"
                   name="tradeType"
-                  defaultValue={transaction?.tradeType || "buy"}
+                  value={tradeType}
+                  onChange={(e) => setTradeType(e.target.value)}
                   required
                   className="h-11"
                 >
                   <option value="buy">Buy</option>
                   <option value="sell">Sell</option>
+                  <option value="income">Income</option>
                 </Select>
               </div>
             </div>
           </div>
 
+          {/* Income Mode Toggle */}
+          {isIncome && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                Income Type
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIncomeMode("cash")}
+                  className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+                    incomeMode === "cash"
+                      ? "border-amber-500 bg-amber-50"
+                      : "border-muted hover:border-amber-300"
+                  }`}
+                >
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                    incomeMode === "cash" ? "bg-amber-500 text-white" : "bg-muted text-muted-foreground"
+                  }`}>
+                    <DollarSign className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-sm">Cash Income</p>
+                    <p className="text-xs text-muted-foreground">Dividends, interest, coupons</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIncomeMode("asset")}
+                  className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+                    incomeMode === "asset"
+                      ? "border-amber-500 bg-amber-50"
+                      : "border-muted hover:border-amber-300"
+                  }`}
+                >
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                    incomeMode === "asset" ? "bg-amber-500 text-white" : "bg-muted text-muted-foreground"
+                  }`}>
+                    <Coins className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-sm">Asset Income</p>
+                    <p className="text-xs text-muted-foreground">Staking rewards, distributions</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Trade Details */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Trade Details
+              {isIncome ? "Income Details" : "Trade Details"}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="quantity">Quantity</Label>
-                <Input
-                  id="quantity"
-                  name="quantity"
-                  type="number"
-                  step="0.00000001"
-                  placeholder="0.00"
-                  defaultValue={transaction?.quantity || ""}
-                  required
-                />
-              </div>
+              {isCashIncome ? (
+                <>
+                  {/* Cash income: hide quantity/price, show income amount */}
+                  <input type="hidden" name="quantity" value="0" />
+                  <input type="hidden" name="price" value="0" />
+                  <div className="space-y-2">
+                    <Label htmlFor="incomeAmount">Income Amount</Label>
+                    <Input
+                      id="incomeAmount"
+                      name="incomeAmount"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      defaultValue={
+                        transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
+                          ? transaction?.totalAmount || ""
+                          : ""
+                      }
+                      required
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="quantity">
+                      {isIncome ? "Quantity Received" : "Quantity"}
+                    </Label>
+                    <Input
+                      id="quantity"
+                      name="quantity"
+                      type="number"
+                      step="0.00000001"
+                      placeholder="0.00"
+                      defaultValue={transaction?.quantity || ""}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="price">
+                      {isIncome ? "Market Price at Receipt" : "Price"}
+                    </Label>
+                    <Input
+                      id="price"
+                      name="price"
+                      type="number"
+                      step="0.00000001"
+                      placeholder="0.00"
+                      defaultValue={transaction?.price || ""}
+                      required
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="currency">Currency</Label>
@@ -157,33 +277,25 @@ export function TransactionForm({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="price">Price</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  step="0.00000001"
-                  placeholder="0.00"
-                  defaultValue={transaction?.price || ""}
-                  required
-                />
-              </div>
+              {!isCashIncome && (
+                <div className="space-y-2">
+                  <Label htmlFor="fee">Fee</Label>
+                  <Input
+                    id="fee"
+                    name="fee"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    defaultValue={transaction?.fee || "0"}
+                  />
+                </div>
+              )}
+              {isCashIncome && <input type="hidden" name="fee" value="0" />}
 
               <div className="space-y-2">
-                <Label htmlFor="fee">Fee</Label>
-                <Input
-                  id="fee"
-                  name="fee"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  defaultValue={transaction?.fee || "0"}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tradeDate">Trade Date</Label>
+                <Label htmlFor="tradeDate">
+                  {isIncome ? "Income Date" : "Trade Date"}
+                </Label>
                 <Input
                   id="tradeDate"
                   name="tradeDate"
@@ -216,6 +328,11 @@ export function TransactionForm({
             <Button type="submit" disabled={isPending} className="flex-1 md:flex-none">
               {isPending ? (
                 "Saving..."
+              ) : isIncome ? (
+                <>
+                  <Coins className="h-4 w-4 mr-2" />
+                  {mode === "create" ? "Record Income" : "Update Income"}
+                </>
               ) : mode === "create" ? (
                 <>
                   <ArrowDownRight className="h-4 w-4 mr-2" />

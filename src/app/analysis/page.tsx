@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatNumber, formatPercent, createCurrencyFormatter } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Receipt } from "lucide-react";
+import { TrendingUp, TrendingDown, Receipt, Coins } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +47,7 @@ export default async function AnalysisPage() {
 
   sortedTransactions.forEach((t) => {
     const amount = parseFloat(t.totalAmount);
-    if (t.tradeType === "buy") {
+    if (t.tradeType === "buy" || t.tradeType === "income") {
       runningValue += amount;
     } else {
       runningValue -= amount * 0.5;
@@ -284,6 +284,60 @@ export default async function AnalysisPage() {
         );
       })()}
 
+      {/* Income Summary */}
+      {(() => {
+        const totalIncome = tradeAnalysis.reduce((sum, a) => sum + a.totalIncomeUsd, 0);
+        if (totalIncome <= 0) return null;
+        const incomeBySymbol = [...tradeAnalysis]
+          .filter((a) => a.totalIncomeUsd > 0)
+          .sort((a, b) => b.totalIncomeUsd - a.totalIncomeUsd);
+        return (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 text-white">
+                  <Coins className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base md:text-lg">Income Summary</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Total income: <span className="font-semibold text-amber-600">{fc(totalIncome)}</span>
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Asset</TableHead>
+                      <TableHead className="text-right">Entries</TableHead>
+                      <TableHead className="text-right">Income</TableHead>
+                      <TableHead className="text-right">% of Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {incomeBySymbol.map((a) => (
+                      <TableRow key={a.symbol}>
+                        <TableCell className="font-medium">{a.symbol}</TableCell>
+                        <TableCell className="text-right">{a.totalIncomes}</TableCell>
+                        <TableCell className="text-right text-amber-600 font-medium">
+                          {fc(a.totalIncomeUsd)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatPercent((a.totalIncomeUsd / totalIncome) * 100)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base md:text-lg">Trade Pattern Analysis</CardTitle>
@@ -301,12 +355,14 @@ export default async function AnalysisPage() {
                   <TableHead>Symbol</TableHead>
                   <TableHead className="text-right">Buy Trades</TableHead>
                   <TableHead className="text-right">Sell Trades</TableHead>
+                  <TableHead className="text-right">Income</TableHead>
                   <TableHead className="text-right">Avg Buy</TableHead>
                   <TableHead className="text-right">Avg Sell</TableHead>
                   <TableHead className="text-right">Buy Vol</TableHead>
                   <TableHead className="text-right">Buy {currency}</TableHead>
                   <TableHead className="text-right">Sell Vol</TableHead>
                   <TableHead className="text-right">Sell {currency}</TableHead>
+                  <TableHead className="text-right">Income {currency}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -315,6 +371,7 @@ export default async function AnalysisPage() {
                     <TableCell className="font-medium">{a.symbol}</TableCell>
                     <TableCell className="text-right">{a.totalBuys}</TableCell>
                     <TableCell className="text-right">{a.totalSells}</TableCell>
+                    <TableCell className="text-right">{a.totalIncomes > 0 ? a.totalIncomes : "-"}</TableCell>
                     <TableCell className="text-right">
                       {fc(a.avgBuyPrice)}
                     </TableCell>
@@ -332,6 +389,9 @@ export default async function AnalysisPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       {a.sellVolumeUsd > 0 ? fc(a.sellVolumeUsd) : "-"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}
                     </TableCell>
                   </TableRow>
                 ))}

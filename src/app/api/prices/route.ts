@@ -17,10 +17,12 @@ export async function GET() {
       }
     }
 
-    const assets = Array.from(assetMap.entries()).map(([symbol, assetType]) => ({
-      symbol,
-      assetType,
-    }));
+    const assets = Array.from(assetMap.entries())
+      .filter(([_, assetType]) => assetType === "crypto" || assetType === "stock")
+      .map(([symbol, assetType]) => ({
+        symbol,
+        assetType,
+      }));
 
     if (assets.length === 0) {
       return NextResponse.json({ updated: 0, prices: [] });
