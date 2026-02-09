@@ -18,7 +18,7 @@ export default async function HoldingsPage() {
     getExchangeRates(),
   ]);
 
-  const holdings = calculateHoldings(transactions, currentPrices);
+  const holdings = calculateHoldings(transactions, currentPrices, rates);
   const summary = calculatePortfolioSummary(holdings);
 
   return (

@@ -59,4 +59,17 @@ await sql`
   END $$
 `;
 
+// Add currency column to transactions if missing
+await sql`
+  DO $$ BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'transactions' AND column_name = 'currency'
+    ) THEN
+      ALTER TABLE "transactions"
+        ADD COLUMN "currency" varchar(10) NOT NULL DEFAULT 'USD';
+    END IF;
+  END $$
+`;
+
 console.log("Migrations complete");

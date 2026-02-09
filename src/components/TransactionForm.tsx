@@ -28,25 +28,8 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const rate = rates[currency] ?? 1;
-
-  const toUsd = (localValue: number) =>
-    currency === "USD" ? localValue : localValue / rate;
-
-  const toLocal = (usdValue: number) =>
-    currency === "USD" ? usdValue : usdValue * rate;
 
   const handleSubmit = async (formData: FormData) => {
-    // Convert price and fee from display currency to USD before saving
-    const localPrice = parseFloat(formData.get("price") as string);
-    const localFee = parseFloat((formData.get("fee") as string) || "0");
-
-    const usdPrice = toUsd(localPrice);
-    const usdFee = toUsd(localFee);
-
-    formData.set("price", usdPrice.toString());
-    formData.set("fee", usdFee.toString());
-
     startTransition(async () => {
       if (mode === "edit" && transaction) {
         await updateTransaction(transaction.id, formData);
@@ -61,6 +44,10 @@ export function TransactionForm({
     if (!date) return "";
     return new Date(date).toISOString().split("T")[0];
   };
+
+  // Default currency for new transactions is the display currency;
+  // for editing, use the transaction's stored currency.
+  const defaultCurrency = transaction?.currency || currency;
 
   return (
     <Card className="overflow-hidden">
@@ -157,35 +144,41 @@ export function TransactionForm({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="price">Price <span className="text-muted-foreground font-normal">({currency})</span></Label>
+                <Label htmlFor="currency">Currency</Label>
+                <Select
+                  id="currency"
+                  name="currency"
+                  defaultValue={defaultCurrency}
+                  className="h-11"
+                >
+                  <option value="USD">USD</option>
+                  <option value="CNY">CNY</option>
+                  <option value="HKD">HKD</option>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="price">Price</Label>
                 <Input
                   id="price"
                   name="price"
                   type="number"
                   step="0.00000001"
                   placeholder="0.00"
-                  defaultValue={
-                    transaction?.price
-                      ? toLocal(parseFloat(transaction.price)).toString()
-                      : ""
-                  }
+                  defaultValue={transaction?.price || ""}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="fee">Fee <span className="text-muted-foreground font-normal">({currency})</span></Label>
+                <Label htmlFor="fee">Fee</Label>
                 <Input
                   id="fee"
                   name="fee"
                   type="number"
                   step="0.01"
                   placeholder="0.00"
-                  defaultValue={
-                    transaction?.fee
-                      ? toLocal(parseFloat(transaction.fee)).toString()
-                      : "0"
-                  }
+                  defaultValue={transaction?.fee || "0"}
                 />
               </div>
 

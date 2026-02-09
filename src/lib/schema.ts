@@ -17,6 +17,7 @@ export const transactions = pgTable("transactions", {
   price: decimal("price", { precision: 18, scale: 8 }).notNull(),
   totalAmount: decimal("total_amount", { precision: 18, scale: 2 }).notNull(),
   fee: decimal("fee", { precision: 18, scale: 2 }).default("0"),
+  currency: varchar("currency", { length: 10 }).default("USD").notNull(),
   tradeDate: timestamp("trade_date").notNull(),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),

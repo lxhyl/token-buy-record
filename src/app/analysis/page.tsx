@@ -32,10 +32,10 @@ export default async function AnalysisPage() {
     getExchangeRates(),
   ]);
 
-  const holdings = calculateHoldings(transactions, currentPrices);
+  const holdings = calculateHoldings(transactions, currentPrices, rates);
   const summary = calculatePortfolioSummary(holdings);
   const allocationData = calculateAllocationData(holdings);
-  const tradeAnalysis = analyzeTradePatterns(transactions);
+  const tradeAnalysis = analyzeTradePatterns(transactions, rates);
 
   const sortedTransactions = [...transactions].sort(
     (a, b) =>

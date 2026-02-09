@@ -14,6 +14,7 @@ export async function createTransaction(formData: FormData) {
   const quantity = formData.get("quantity") as string;
   const price = formData.get("price") as string;
   const fee = formData.get("fee") as string;
+  const currency = (formData.get("currency") as string) || "USD";
   const tradeDate = formData.get("tradeDate") as string;
   const notes = formData.get("notes") as string;
 
@@ -31,6 +32,7 @@ export async function createTransaction(formData: FormData) {
     price,
     totalAmount,
     fee: fee || "0",
+    currency,
     tradeDate: new Date(tradeDate),
     notes: notes || null,
   });
@@ -49,6 +51,7 @@ export async function updateTransaction(id: number, formData: FormData) {
   const quantity = formData.get("quantity") as string;
   const price = formData.get("price") as string;
   const fee = formData.get("fee") as string;
+  const currency = (formData.get("currency") as string) || "USD";
   const tradeDate = formData.get("tradeDate") as string;
   const notes = formData.get("notes") as string;
 
@@ -68,6 +71,7 @@ export async function updateTransaction(id: number, formData: FormData) {
       price,
       totalAmount,
       fee: fee || "0",
+      currency,
       tradeDate: new Date(tradeDate),
       notes: notes || null,
     })
