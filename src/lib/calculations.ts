@@ -142,13 +142,6 @@ export function calculateHoldings(
       totalCost += buy.quantity * buy.priceUsd;
     }
 
-    const avgCost = totalCost / remainingQty;
-    const currentPrice = priceMap.get(data.symbol) || avgCost;
-    const currentValue = remainingQty * currentPrice;
-    const unrealizedPnL = currentValue - totalCost;
-    const unrealizedPnLPercent =
-      totalCost > 0 ? (unrealizedPnL / totalCost) * 100 : 0;
-
     // Calculate realized P&L
     const sellsTotal = data.sells.reduce(
       (sum, s) => sum + s.quantity * s.priceUsd,
@@ -164,11 +157,23 @@ export function calculateHoldings(
     }
     const realizedPnL = sellsTotal - costOfSold;
 
+    // Position-derived metrics: only meaningful when there's an active position
+    const hasPosition = remainingQty > 0.00000001;
+    const effectiveQty = hasPosition ? remainingQty : 0;
+    const avgCost = hasPosition ? totalCost / remainingQty : 0;
+    const currentPrice = hasPosition
+      ? (priceMap.get(data.symbol) ?? avgCost)
+      : 0;
+    const currentValue = effectiveQty * currentPrice;
+    const unrealizedPnL = hasPosition ? currentValue - totalCost : 0;
+    const unrealizedPnLPercent =
+      totalCost > 0 ? (unrealizedPnL / totalCost) * 100 : 0;
+
     holdings.push({
       symbol: data.symbol,
       name: data.name,
       assetType: data.assetType,
-      quantity: remainingQty,
+      quantity: effectiveQty,
       avgCost,
       totalCost,
       currentPrice,
