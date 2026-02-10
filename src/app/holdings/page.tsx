@@ -3,10 +3,12 @@ import { getDisplayCurrency } from "@/actions/settings";
 import { getExchangeRates } from "@/lib/currency";
 import {
   calculateHoldings,
+  calculateFixedIncomeHoldings,
   calculatePortfolioSummary,
 } from "@/lib/calculations";
 import { StatsCards } from "@/components/StatsCards";
 import { HoldingsTable } from "@/components/HoldingsTable";
+import { FixedIncomeTable } from "@/components/FixedIncomeTable";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +21,8 @@ export default async function HoldingsPage() {
   ]);
 
   const holdings = calculateHoldings(transactions, currentPrices, rates);
-  const summary = calculatePortfolioSummary(holdings);
+  const fixedIncomeHoldings = calculateFixedIncomeHoldings(transactions, rates);
+  const summary = calculatePortfolioSummary(holdings, fixedIncomeHoldings);
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -32,6 +35,9 @@ export default async function HoldingsPage() {
 
       <StatsCards summary={summary} currency={currency} rates={rates} />
       <HoldingsTable holdings={holdings} currency={currency} rates={rates} />
+      {fixedIncomeHoldings.length > 0 && (
+        <FixedIncomeTable holdings={fixedIncomeHoldings} currency={currency} rates={rates} />
+      )}
     </div>
   );
 }

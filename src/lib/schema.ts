@@ -9,6 +9,7 @@ import {
 
 export const ASSET_TYPES = ["crypto", "stock", "deposit", "bond"] as const;
 export const TRADE_TYPES = ["buy", "sell", "income"] as const;
+export const SUB_TYPES = ["fixed", "demand"] as const;
 
 export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
@@ -23,6 +24,9 @@ export const transactions = pgTable("transactions", {
   currency: varchar("currency", { length: 10 }).default("USD").notNull(),
   tradeDate: timestamp("trade_date").notNull(),
   notes: text("notes"),
+  interestRate: decimal("interest_rate", { precision: 8, scale: 4 }),
+  maturityDate: timestamp("maturity_date"),
+  subType: varchar("sub_type", { length: 20 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

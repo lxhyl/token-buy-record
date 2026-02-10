@@ -72,4 +72,43 @@ await sql`
   END $$
 `;
 
+// Add interest_rate column to transactions if missing
+await sql`
+  DO $$ BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'transactions' AND column_name = 'interest_rate'
+    ) THEN
+      ALTER TABLE "transactions"
+        ADD COLUMN "interest_rate" numeric(8, 4);
+    END IF;
+  END $$
+`;
+
+// Add maturity_date column to transactions if missing
+await sql`
+  DO $$ BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'transactions' AND column_name = 'maturity_date'
+    ) THEN
+      ALTER TABLE "transactions"
+        ADD COLUMN "maturity_date" timestamp;
+    END IF;
+  END $$
+`;
+
+// Add sub_type column to transactions if missing
+await sql`
+  DO $$ BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'transactions' AND column_name = 'sub_type'
+    ) THEN
+      ALTER TABLE "transactions"
+        ADD COLUMN "sub_type" varchar(20);
+    END IF;
+  END $$
+`;
+
 console.log("Migrations complete");

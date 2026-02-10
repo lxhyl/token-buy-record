@@ -3,12 +3,14 @@ import { getDisplayCurrency } from "@/actions/settings";
 import { getExchangeRates } from "@/lib/currency";
 import {
   calculateHoldings,
+  calculateFixedIncomeHoldings,
   calculatePortfolioSummary,
   calculateAllocationData,
 } from "@/lib/calculations";
 import { StatsCards } from "@/components/StatsCards";
 import { AllocationPieChart } from "@/components/PieChart";
 import { HoldingsTable } from "@/components/HoldingsTable";
+import { FixedIncomeTable } from "@/components/FixedIncomeTable";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,8 +27,9 @@ export default async function DashboardPage() {
   ]);
 
   const holdings = calculateHoldings(transactions, currentPrices, rates);
-  const summary = calculatePortfolioSummary(holdings);
-  const allocationData = calculateAllocationData(holdings);
+  const fixedIncomeHoldings = calculateFixedIncomeHoldings(transactions, rates);
+  const summary = calculatePortfolioSummary(holdings, fixedIncomeHoldings);
+  const allocationData = calculateAllocationData(holdings, fixedIncomeHoldings);
 
   return (
     <div className="space-y-8">
@@ -68,8 +71,8 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="pt-6">
             {(() => {
-              const depositCount = holdings.filter((h) => h.assetType === "deposit").length;
-              const bondCount = holdings.filter((h) => h.assetType === "bond").length;
+              const depositCount = fixedIncomeHoldings.filter((h) => h.assetType === "deposit").length;
+              const bondCount = fixedIncomeHoldings.filter((h) => h.assetType === "bond").length;
               const hasExtra = depositCount > 0 || bondCount > 0;
               return (
                 <div className={`grid grid-cols-2 gap-3 md:gap-4 ${hasExtra ? "md:grid-cols-3" : ""}`}>
@@ -144,6 +147,11 @@ export default async function DashboardPage() {
 
       {/* Holdings Table */}
       <HoldingsTable holdings={holdings} currency={currency} rates={rates} />
+
+      {/* Fixed-Income Holdings */}
+      {fixedIncomeHoldings.length > 0 && (
+        <FixedIncomeTable holdings={fixedIncomeHoldings} currency={currency} rates={rates} />
+      )}
     </div>
   );
 }

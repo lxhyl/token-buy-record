@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createTransaction, updateTransaction } from "@/actions/transactions";
 import { Transaction } from "@/lib/schema";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
-import { ArrowDownRight, ArrowUpRight, TrendingUp, Save, X, DollarSign, Coins } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, TrendingUp, Save, X, DollarSign, Coins, Landmark, PiggyBank } from "lucide-react";
 
 interface TransactionFormProps {
   transaction?: Transaction;
@@ -30,6 +30,7 @@ export function TransactionForm({
   const [isPending, startTransition] = useTransition();
   const [assetType, setAssetType] = useState(transaction?.assetType || "crypto");
   const [tradeType, setTradeType] = useState(transaction?.tradeType || "buy");
+  const [subType, setSubType] = useState(transaction?.subType || "fixed");
   const [incomeMode, setIncomeMode] = useState<"cash" | "asset">(
     // Infer from existing transaction: if income with quantity=0, it's cash
     transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
@@ -39,6 +40,8 @@ export function TransactionForm({
 
   const isIncome = tradeType === "income";
   const isCashIncome = isIncome && incomeMode === "cash";
+  const isFixedIncome = assetType === "deposit" || assetType === "bond";
+  const showMaturity = isFixedIncome && (subType === "fixed" || assetType === "bond");
 
   const handleSubmit = async (formData: FormData) => {
     startTransition(async () => {
@@ -152,8 +155,8 @@ export function TransactionForm({
             </div>
           </div>
 
-          {/* Income Mode Toggle */}
-          {isIncome && (
+          {/* Income Mode Toggle — only for non-fixed-income assets */}
+          {isIncome && !isFixedIncome && (
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                 Income Type
@@ -201,13 +204,113 @@ export function TransactionForm({
             </div>
           )}
 
+          {/* Deposit Sub-type Toggle */}
+          {isFixedIncome && assetType === "deposit" && tradeType === "buy" && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                Deposit Type
+              </h3>
+              <input type="hidden" name="subType" value={subType} />
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSubType("fixed")}
+                  className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+                    subType === "fixed"
+                      ? "border-green-500 bg-green-50"
+                      : "border-muted hover:border-green-300"
+                  }`}
+                >
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                    subType === "fixed" ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"
+                  }`}>
+                    <Landmark className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-sm">Fixed-term</p>
+                    <p className="text-xs text-muted-foreground">定期存款</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSubType("demand")}
+                  className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+                    subType === "demand"
+                      ? "border-green-500 bg-green-50"
+                      : "border-muted hover:border-green-300"
+                  }`}
+                >
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                    subType === "demand" ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"
+                  }`}>
+                    <PiggyBank className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-sm">Demand</p>
+                    <p className="text-xs text-muted-foreground">活期存款</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Trade Details */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              {isIncome ? "Income Details" : "Trade Details"}
+              {isFixedIncome
+                ? tradeType === "buy" ? "Deposit Details" : tradeType === "sell" ? "Withdrawal Details" : "Income Details"
+                : isIncome ? "Income Details" : "Trade Details"}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {isCashIncome ? (
+              {isFixedIncome && tradeType !== "income" ? (
+                <>
+                  {/* Fixed-income buy/sell: single amount field */}
+                  <input type="hidden" name="quantity" value="1" />
+                  <input type="hidden" name="price" value="0" />
+                  <input type="hidden" name="fee" value="0" />
+                  <div className="space-y-2">
+                    <Label htmlFor="incomeAmount">
+                      {tradeType === "buy" ? "Principal Amount" : "Withdrawal Amount"}
+                    </Label>
+                    <Input
+                      id="incomeAmount"
+                      name="incomeAmount"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      defaultValue={
+                        transaction && (transaction.assetType === "deposit" || transaction.assetType === "bond")
+                          ? transaction.totalAmount || ""
+                          : ""
+                      }
+                      required
+                    />
+                  </div>
+                </>
+              ) : isFixedIncome && tradeType === "income" ? (
+                <>
+                  {/* Fixed-income income: cash income flow */}
+                  <input type="hidden" name="quantity" value="0" />
+                  <input type="hidden" name="price" value="0" />
+                  <input type="hidden" name="fee" value="0" />
+                  <div className="space-y-2">
+                    <Label htmlFor="incomeAmount">Income Amount</Label>
+                    <Input
+                      id="incomeAmount"
+                      name="incomeAmount"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      defaultValue={
+                        transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
+                          ? transaction?.totalAmount || ""
+                          : ""
+                      }
+                      required
+                    />
+                  </div>
+                </>
+              ) : isCashIncome ? (
                 <>
                   {/* Cash income: hide quantity/price, show income amount */}
                   <input type="hidden" name="quantity" value="0" />
@@ -277,7 +380,7 @@ export function TransactionForm({
                 </Select>
               </div>
 
-              {!isCashIncome && (
+              {!isCashIncome && !isFixedIncome && (
                 <div className="space-y-2">
                   <Label htmlFor="fee">Fee</Label>
                   <Input
@@ -290,11 +393,42 @@ export function TransactionForm({
                   />
                 </div>
               )}
-              {isCashIncome && <input type="hidden" name="fee" value="0" />}
+              {(isCashIncome && !isFixedIncome) && <input type="hidden" name="fee" value="0" />}
+
+              {/* Interest Rate — for deposit/bond buy */}
+              {isFixedIncome && tradeType === "buy" && (
+                <div className="space-y-2">
+                  <Label htmlFor="interestRate">Interest Rate (%)</Label>
+                  <Input
+                    id="interestRate"
+                    name="interestRate"
+                    type="number"
+                    step="0.01"
+                    placeholder="3.50"
+                    defaultValue={transaction?.interestRate || ""}
+                  />
+                </div>
+              )}
+
+              {/* Maturity Date — for fixed deposits and bonds */}
+              {showMaturity && tradeType === "buy" && (
+                <div className="space-y-2">
+                  <Label htmlFor="maturityDate">Maturity Date</Label>
+                  <Input
+                    id="maturityDate"
+                    name="maturityDate"
+                    type="date"
+                    defaultValue={formatDateForInput(transaction?.maturityDate || null)}
+                    className="h-11"
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="tradeDate">
-                  {isIncome ? "Income Date" : "Trade Date"}
+                  {isFixedIncome
+                    ? tradeType === "buy" ? "Deposit Date" : tradeType === "sell" ? "Withdrawal Date" : "Income Date"
+                    : isIncome ? "Income Date" : "Trade Date"}
                 </Label>
                 <Input
                   id="tradeDate"

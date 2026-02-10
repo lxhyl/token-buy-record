@@ -18,9 +18,14 @@ export async function createTransaction(formData: FormData) {
   const tradeDate = formData.get("tradeDate") as string;
   const notes = formData.get("notes") as string;
 
+  const interestRateRaw = formData.get("interestRate") as string;
+  const maturityDateRaw = formData.get("maturityDate") as string;
+  const subType = formData.get("subType") as string;
+
+  const isFixedIncome = assetType === "deposit" || assetType === "bond";
   let totalAmount: string;
-  if (tradeType === "income" && parseFloat(quantity) === 0) {
-    // Cash income (dividends, interest): totalAmount from incomeAmount field
+  if (isFixedIncome || (tradeType === "income" && parseFloat(quantity) === 0)) {
+    // Fixed-income or cash income: totalAmount from incomeAmount field
     const incomeAmount = formData.get("incomeAmount") as string;
     totalAmount = parseFloat(incomeAmount || "0").toFixed(2);
   } else {
@@ -42,6 +47,9 @@ export async function createTransaction(formData: FormData) {
     currency,
     tradeDate: new Date(tradeDate),
     notes: notes || null,
+    interestRate: interestRateRaw ? parseFloat(interestRateRaw).toFixed(4) : null,
+    maturityDate: maturityDateRaw ? new Date(maturityDateRaw) : null,
+    subType: subType || null,
   });
 
   revalidatePath("/");
@@ -61,9 +69,13 @@ export async function updateTransaction(id: number, formData: FormData) {
   const currency = (formData.get("currency") as string) || "USD";
   const tradeDate = formData.get("tradeDate") as string;
   const notes = formData.get("notes") as string;
+  const interestRateRaw = formData.get("interestRate") as string;
+  const maturityDateRaw = formData.get("maturityDate") as string;
+  const subType = formData.get("subType") as string;
 
+  const isFixedIncome = assetType === "deposit" || assetType === "bond";
   let totalAmount: string;
-  if (tradeType === "income" && parseFloat(quantity) === 0) {
+  if (isFixedIncome || (tradeType === "income" && parseFloat(quantity) === 0)) {
     const incomeAmount = formData.get("incomeAmount") as string;
     totalAmount = parseFloat(incomeAmount || "0").toFixed(2);
   } else {
@@ -87,6 +99,9 @@ export async function updateTransaction(id: number, formData: FormData) {
       currency,
       tradeDate: new Date(tradeDate),
       notes: notes || null,
+      interestRate: interestRateRaw ? parseFloat(interestRateRaw).toFixed(4) : null,
+      maturityDate: maturityDateRaw ? new Date(maturityDateRaw) : null,
+      subType: subType || null,
     })
     .where(eq(transactions.id, id));
 

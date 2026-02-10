@@ -3,6 +3,7 @@ import { getDisplayCurrency } from "@/actions/settings";
 import { getExchangeRates } from "@/lib/currency";
 import {
   calculateHoldings,
+  calculateFixedIncomeHoldings,
   calculatePortfolioSummary,
   calculateAllocationData,
   analyzeTradePatterns,
@@ -33,8 +34,9 @@ export default async function AnalysisPage() {
   ]);
 
   const holdings = calculateHoldings(transactions, currentPrices, rates);
-  const summary = calculatePortfolioSummary(holdings);
-  const allocationData = calculateAllocationData(holdings);
+  const fixedIncomeHoldings = calculateFixedIncomeHoldings(transactions, rates);
+  const summary = calculatePortfolioSummary(holdings, fixedIncomeHoldings);
+  const allocationData = calculateAllocationData(holdings, fixedIncomeHoldings);
   const tradeAnalysis = analyzeTradePatterns(transactions, rates);
 
   const sortedTransactions = [...transactions].sort(
@@ -64,10 +66,14 @@ export default async function AnalysisPage() {
 
   const fc = createCurrencyFormatter(currency, rates);
 
-  const sortedByPnL = [...holdings].sort(
+  // Filter out fixed-income from P&L rankings (no unrealized P&L)
+  const marketHoldings = holdings.filter(
+    (h) => h.assetType !== "deposit" && h.assetType !== "bond"
+  );
+  const sortedByPnL = [...marketHoldings].sort(
     (a, b) => b.unrealizedPnL - a.unrealizedPnL
   );
-  const sortedByPnLPercent = [...holdings].sort(
+  const sortedByPnLPercent = [...marketHoldings].sort(
     (a, b) => b.unrealizedPnLPercent - a.unrealizedPnLPercent
   );
 
