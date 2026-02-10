@@ -5,23 +5,20 @@ import { db } from "@/lib/db";
 import { transactions, currentPrices } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { fetchAllPrices } from "@/lib/price-service";
-import { auth } from "@/lib/auth";
+import { getUserId } from "@/lib/auth-utils";
 
 /**
  * GET /api/prices - Fetch latest prices for all held assets and update DB
  */
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getUserId();
 
     // 1. Get unique symbols from user's transactions
     const allTx = await db
       .select()
       .from(transactions)
-      .where(eq(transactions.userId, session.user.id));
+      .where(eq(transactions.userId, userId));
 
     const assetMap = new Map<string, string>();
     for (const tx of allTx) {

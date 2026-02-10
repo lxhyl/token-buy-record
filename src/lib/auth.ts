@@ -13,9 +13,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   }),
   providers: [Google],
   session: { strategy: "jwt" },
-  pages: {
-    signIn: "/",
-  },
   callbacks: {
     jwt({ token, user }) {
       if (user?.id) {
@@ -29,37 +26,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return session;
     },
-    authorized({ auth: session, request }) {
-      const { pathname } = request.nextUrl;
-
-      // Public routes
-      if (
-        pathname === "/" ||
-        pathname.startsWith("/api/auth")
-      ) {
-        return true;
-      }
-
-      // Everything else requires auth
-      return !!session?.user;
-    },
   },
   events: {
     async signIn({ user, isNewUser }) {
       if (!user.id) return;
 
-      // On first sign-in, claim all legacy rows
+      // On first sign-in, claim legacy + anonymous rows
       try {
         if (isNewUser) {
-          await db
-            .update(transactions)
-            .set({ userId: user.id })
-            .where(eq(transactions.userId, "legacy"));
+          for (const owner of ["legacy", "anonymous"]) {
+            await db
+              .update(transactions)
+              .set({ userId: user.id })
+              .where(eq(transactions.userId, owner));
 
-          await db
-            .update(appSettings)
-            .set({ userId: user.id })
-            .where(eq(appSettings.userId, "legacy"));
+            await db
+              .update(appSettings)
+              .set({ userId: user.id })
+              .where(eq(appSettings.userId, owner));
+          }
         }
       } catch (error) {
         console.error("Failed to claim legacy data:", error);

@@ -10,7 +10,6 @@ import {
   Settings,
   TrendingUp,
 } from "lucide-react";
-import { UserMenu } from "@/components/UserMenu";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -61,15 +60,13 @@ export function Navigation() {
                 );
               })}
             </div>
-
-            <UserMenu />
           </div>
         </div>
       </nav>
 
       {/* Mobile: compact top header + bottom tab bar */}
       <nav className="sticky top-0 z-50 border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl md:hidden">
-        <div className="flex h-12 items-center justify-between px-4">
+        <div className="flex h-12 items-center justify-center px-4">
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 text-white">
               <TrendingUp className="h-4 w-4" />
@@ -78,7 +75,6 @@ export function Navigation() {
               TradeTracker
             </span>
           </Link>
-          <UserMenu />
         </div>
       </nav>
 

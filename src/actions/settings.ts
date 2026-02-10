@@ -5,11 +5,11 @@ import { db } from "@/lib/db";
 import { appSettings } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import { SupportedCurrency } from "@/lib/currency";
-import { getRequiredUser } from "@/lib/auth-utils";
+import { getUserId } from "@/lib/auth-utils";
 
 export async function getDisplayCurrency(): Promise<SupportedCurrency> {
   try {
-    const userId = await getRequiredUser();
+    const userId = await getUserId();
 
     const result = await db
       .select()
@@ -32,7 +32,7 @@ export async function getDisplayCurrency(): Promise<SupportedCurrency> {
 }
 
 export async function setDisplayCurrency(currency: SupportedCurrency) {
-  const userId = await getRequiredUser();
+  const userId = await getUserId();
 
   await db
     .insert(appSettings)

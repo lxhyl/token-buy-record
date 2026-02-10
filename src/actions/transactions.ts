@@ -5,10 +5,10 @@ import { db } from "@/lib/db";
 import { transactions, currentPrices } from "@/lib/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { fetchAllPrices } from "@/lib/price-service";
-import { getRequiredUser } from "@/lib/auth-utils";
+import { getUserId } from "@/lib/auth-utils";
 
 export async function createTransaction(formData: FormData) {
-  const userId = await getRequiredUser();
+  const userId = await getUserId();
 
   const symbol = formData.get("symbol") as string;
   const name = formData.get("name") as string;
@@ -63,7 +63,7 @@ export async function createTransaction(formData: FormData) {
 }
 
 export async function updateTransaction(id: number, formData: FormData) {
-  const userId = await getRequiredUser();
+  const userId = await getUserId();
 
   const symbol = formData.get("symbol") as string;
   const name = formData.get("name") as string;
@@ -118,7 +118,7 @@ export async function updateTransaction(id: number, formData: FormData) {
 }
 
 export async function deleteTransaction(id: number) {
-  const userId = await getRequiredUser();
+  const userId = await getUserId();
 
   await db
     .delete(transactions)
@@ -131,7 +131,7 @@ export async function deleteTransaction(id: number) {
 }
 
 export async function getTransactions() {
-  const userId = await getRequiredUser();
+  const userId = await getUserId();
 
   return await db
     .select()
@@ -141,7 +141,7 @@ export async function getTransactions() {
 }
 
 export async function getTransaction(id: number) {
-  const userId = await getRequiredUser();
+  const userId = await getUserId();
 
   const result = await db
     .select()
@@ -192,7 +192,7 @@ const PRICE_STALE_MS = 60 * 1000; // 1 minute
  * otherwise return cached DB prices.
  */
 export async function getLatestPrices() {
-  const userId = await getRequiredUser();
+  const userId = await getUserId();
 
   const allTx = await db
     .select()
