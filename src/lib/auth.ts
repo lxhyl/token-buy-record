@@ -6,6 +6,7 @@ import { users, accounts, transactions, appSettings } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
@@ -48,16 +49,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!user.id) return;
 
       // On first sign-in, claim all legacy rows
-      if (isNewUser) {
-        await db
-          .update(transactions)
-          .set({ userId: user.id })
-          .where(eq(transactions.userId, "legacy"));
+      try {
+        if (isNewUser) {
+          await db
+            .update(transactions)
+            .set({ userId: user.id })
+            .where(eq(transactions.userId, "legacy"));
 
-        await db
-          .update(appSettings)
-          .set({ userId: user.id })
-          .where(eq(appSettings.userId, "legacy"));
+          await db
+            .update(appSettings)
+            .set({ userId: user.id })
+            .where(eq(appSettings.userId, "legacy"));
+        }
+      } catch (error) {
+        console.error("Failed to claim legacy data:", error);
       }
     },
   },
