@@ -375,6 +375,7 @@ export function calculateAllocationData(
 
 export interface TradeAnalysis {
   symbol: string;
+  assetType: string;
   totalBuys: number;
   totalSells: number;
   totalIncomes: number;
@@ -386,6 +387,8 @@ export interface TradeAnalysis {
   sellVolumeUsd: number;
   totalFees: number;
   totalIncomeUsd: number;
+  buyTotalAmountUsd: number;
+  sellTotalAmountUsd: number;
 }
 
 export function analyzeTradePatterns(
@@ -396,11 +399,14 @@ export function analyzeTradePatterns(
     string,
     {
       symbol: string;
+      assetType: string;
       buys: { quantity: number; priceUsd: number }[];
       sells: { quantity: number; priceUsd: number }[];
       fees: number;
       incomeCount: number;
       incomeUsd: number;
+      buyTotalAmountUsd: number;
+      sellTotalAmountUsd: number;
     }
   >();
 
@@ -408,11 +414,14 @@ export function analyzeTradePatterns(
     if (!analysisMap.has(t.symbol)) {
       analysisMap.set(t.symbol, {
         symbol: t.symbol,
+        assetType: t.assetType,
         buys: [],
         sells: [],
         fees: 0,
         incomeCount: 0,
         incomeUsd: 0,
+        buyTotalAmountUsd: 0,
+        sellTotalAmountUsd: 0,
       });
     }
 
@@ -420,20 +429,23 @@ export function analyzeTradePatterns(
     const quantity = parseFloat(t.quantity);
     const rawPrice = parseFloat(t.price);
     const rawFee = parseFloat(t.fee || "0");
+    const rawTotal = parseFloat(t.totalAmount);
     const txCurrency = t.currency || "USD";
     const priceUsd = toUsd(rawPrice, txCurrency, rates);
     const feeUsd = toUsd(rawFee, txCurrency, rates);
+    const totalUsd = toUsd(rawTotal, txCurrency, rates);
 
     analysis.fees += feeUsd;
 
     if (t.tradeType === "income") {
       analysis.incomeCount++;
-      const rawTotal = parseFloat(t.totalAmount);
-      analysis.incomeUsd += toUsd(rawTotal, txCurrency, rates);
+      analysis.incomeUsd += totalUsd;
     } else if (t.tradeType === "buy") {
       analysis.buys.push({ quantity, priceUsd });
+      analysis.buyTotalAmountUsd += totalUsd;
     } else {
       analysis.sells.push({ quantity, priceUsd });
+      analysis.sellTotalAmountUsd += totalUsd;
     }
   });
 
@@ -450,6 +462,7 @@ export function analyzeTradePatterns(
 
     results.push({
       symbol: data.symbol,
+      assetType: data.assetType,
       totalBuys: data.buys.length,
       totalSells: data.sells.length,
       totalIncomes: data.incomeCount,
@@ -461,6 +474,8 @@ export function analyzeTradePatterns(
       sellVolumeUsd,
       totalFees: data.fees,
       totalIncomeUsd: data.incomeUsd,
+      buyTotalAmountUsd: data.buyTotalAmountUsd,
+      sellTotalAmountUsd: data.sellTotalAmountUsd,
     });
   });
 

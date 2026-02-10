@@ -20,7 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatNumber, formatPercent, createCurrencyFormatter } from "@/lib/utils";
+import { TradePatternCard } from "@/components/TradePatternCard";
+import { formatPercent, createCurrencyFormatter } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Receipt, Coins } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -185,13 +186,16 @@ export default async function AnalysisPage() {
         </Card>
       </div>
 
-      {/* Fee Analysis */}
+      {/* Fee Analysis — market assets only (fixed-income has zero fees) */}
       {(() => {
-        const totalFees = tradeAnalysis.reduce((sum, a) => sum + a.totalFees, 0);
-        const feeBySymbol = [...tradeAnalysis]
+        const marketAnalysis = tradeAnalysis.filter(
+          (a) => a.assetType !== "deposit" && a.assetType !== "bond"
+        );
+        const totalFees = marketAnalysis.reduce((sum, a) => sum + a.totalFees, 0);
+        const feeBySymbol = [...marketAnalysis]
           .filter((a) => a.totalFees > 0)
           .sort((a, b) => b.totalFees - a.totalFees);
-        const totalTraded = tradeAnalysis.reduce(
+        const totalTraded = marketAnalysis.reduce(
           (sum, a) => sum + a.buyVolumeUsd + a.sellVolumeUsd,
           0
         );
@@ -262,15 +266,15 @@ export default async function AnalysisPage() {
                       <TableRow className="border-t-2 font-semibold">
                         <TableCell>Total</TableCell>
                         <TableCell className="text-right">
-                          {tradeAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0)}
+                          {marketAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0)}
                         </TableCell>
                         <TableCell className="text-right text-orange-600">
                           {fc(totalFees)}
                         </TableCell>
                         <TableCell className="text-right">
                           {fc(
-                            tradeAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0) > 0
-                              ? totalFees / tradeAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0)
+                            marketAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0) > 0
+                              ? totalFees / marketAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0)
                               : 0
                           )}
                         </TableCell>
@@ -344,69 +348,7 @@ export default async function AnalysisPage() {
         );
       })()}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base md:text-lg">Trade Pattern Analysis</CardTitle>
-        </CardHeader>
-        <CardContent className="px-0 md:px-6">
-          {tradeAnalysis.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">
-              No trades to analyze
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Symbol</TableHead>
-                  <TableHead className="text-right">Buy Trades</TableHead>
-                  <TableHead className="text-right">Sell Trades</TableHead>
-                  <TableHead className="text-right">Income</TableHead>
-                  <TableHead className="text-right">Avg Buy</TableHead>
-                  <TableHead className="text-right">Avg Sell</TableHead>
-                  <TableHead className="text-right">Buy Vol</TableHead>
-                  <TableHead className="text-right">Buy {currency}</TableHead>
-                  <TableHead className="text-right">Sell Vol</TableHead>
-                  <TableHead className="text-right">Sell {currency}</TableHead>
-                  <TableHead className="text-right">Income {currency}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tradeAnalysis.map((a) => (
-                  <TableRow key={a.symbol}>
-                    <TableCell className="font-medium">{a.symbol}</TableCell>
-                    <TableCell className="text-right">{a.totalBuys}</TableCell>
-                    <TableCell className="text-right">{a.totalSells}</TableCell>
-                    <TableCell className="text-right">{a.totalIncomes > 0 ? a.totalIncomes : "-"}</TableCell>
-                    <TableCell className="text-right">
-                      {fc(a.avgBuyPrice)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {a.avgSellPrice > 0 ? fc(a.avgSellPrice) : "-"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatNumber(a.buyVolume, 4)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {fc(a.buyVolumeUsd)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {a.sellVolume > 0 ? formatNumber(a.sellVolume, 4) : "-"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {a.sellVolumeUsd > 0 ? fc(a.sellVolumeUsd) : "-"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <TradePatternCard tradeAnalysis={tradeAnalysis} currency={currency} rates={rates} />
 
     </div>
   );
