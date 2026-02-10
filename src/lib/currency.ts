@@ -29,9 +29,13 @@ export async function getExchangeRates(): Promise<ExchangeRates> {
   }
 
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
     const res = await fetch("https://open.er-api.com/v6/latest/USD", {
       next: { revalidate: 1800 },
+      signal: controller.signal,
     });
+    clearTimeout(timer);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const rates: ExchangeRates = {

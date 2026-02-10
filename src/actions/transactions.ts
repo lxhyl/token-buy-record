@@ -216,7 +216,13 @@ export async function getLatestPrices() {
     }));
 
   try {
-    const freshPrices = await fetchAllPrices(assets);
+    // Overall 10s timeout: if APIs are too slow, use cached prices
+    const freshPrices = await Promise.race([
+      fetchAllPrices(assets),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Price fetch overall timeout")), 10000)
+      ),
+    ]);
 
     // Upsert into DB using ON CONFLICT
     for (const { symbol, price } of freshPrices) {

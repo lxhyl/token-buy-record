@@ -8,6 +8,16 @@ import YahooFinance from "yahoo-finance2";
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
+const API_TIMEOUT_MS = 8000; // 8s timeout for external API calls
+
+function fetchWithTimeout(url: string, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  return fetch(url, { ...init, signal: controller.signal }).finally(() =>
+    clearTimeout(timer)
+  );
+}
+
 // ============ Crypto: Binance API (primary) ============
 
 interface BinanceTickerPrice {
@@ -55,7 +65,7 @@ async function fetchCryptoPricesFromBinance(
     // Try batch request first
     const pairs = symbols.map((s) => `"${s.toUpperCase()}USDT"`);
     const url = `https://api.binance.com/api/v3/ticker/price?symbols=${encodeURIComponent(`[${pairs.join(",")}]`)}`;
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetchWithTimeout(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`Binance batch failed: ${res.status}`);
 
     const data: BinanceTickerPrice[] = await res.json();
@@ -69,7 +79,7 @@ async function fetchCryptoPricesFromBinance(
     for (const symbol of symbols) {
       try {
         const pair = `${symbol.toUpperCase()}USDT`;
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `https://api.binance.com/api/v3/ticker/price?symbol=${pair}`,
           { cache: "no-store" }
         );
@@ -105,7 +115,7 @@ async function fetchCryptoPricesFromCoinGecko(
 
   try {
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(",")}&vs_currencies=usd`;
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetchWithTimeout(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`CoinGecko failed: ${res.status}`);
 
     const data: Record<string, { usd?: number }> = await res.json();
@@ -154,8 +164,16 @@ export async function fetchStockPrices(
   const result = new Map<string, number>();
   if (symbols.length === 0) return result;
 
+  const raceTimeout = <T>(promise: Promise<T>): Promise<T> =>
+    Promise.race([
+      promise,
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Yahoo Finance timeout")), API_TIMEOUT_MS)
+      ),
+    ]);
+
   try {
-    const quotes = await yf.quote(symbols);
+    const quotes = await raceTimeout(yf.quote(symbols));
     if (Array.isArray(quotes)) {
       for (const quote of quotes) {
         if (quote.regularMarketPrice && quote.symbol) {
@@ -164,10 +182,10 @@ export async function fetchStockPrices(
       }
     }
   } catch {
-    // Fallback: fetch individually
+    // Fallback: fetch individually with timeout
     for (const symbol of symbols) {
       try {
-        const quote = await yf.quote(symbol);
+        const quote = await raceTimeout(yf.quote(symbol));
         if (quote.regularMarketPrice) {
           result.set(symbol.toUpperCase(), quote.regularMarketPrice);
         }
