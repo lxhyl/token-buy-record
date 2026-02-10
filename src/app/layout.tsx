@@ -4,6 +4,8 @@ import "./globals.css";
 import { Navigation } from "@/components/Navigation";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { SplashScreen } from "@/components/SplashScreen";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ToastProvider } from "@/components/Toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,8 +27,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
   themeColor: "#3b82f6",
   viewportFit: "cover",
 };
@@ -37,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Inline critical CSS for instant splash screen - prevents black screen on PWA cold start */}
         <style
@@ -105,12 +107,16 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <SplashScreen />
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-          <Navigation />
-          <main className="container mx-auto px-4 py-6 md:py-8 pb-24 md:pb-8">{children}</main>
-        </div>
-        <ServiceWorkerRegister />
+        <ThemeProvider>
+          <ToastProvider>
+            <SplashScreen />
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+              <Navigation />
+              <main className="container mx-auto px-4 py-6 md:py-8 pb-24 md:pb-8">{children}</main>
+            </div>
+            <ServiceWorkerRegister />
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

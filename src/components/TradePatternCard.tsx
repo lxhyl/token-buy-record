@@ -45,10 +45,12 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
         <CardTitle className="text-base md:text-lg">Trade Pattern Analysis</CardTitle>
       </CardHeader>
       <CardContent className="px-0 md:px-6">
-        <div className="flex gap-1 px-4 md:px-0 pb-4">
+        <div className="flex gap-1 px-4 md:px-0 pb-4" role="tablist">
           {TABS.map((tab) => (
             <button
               key={tab.key}
+              role="tab"
+              aria-selected={activeTab === tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 activeTab === tab.key
@@ -74,11 +76,11 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                   <TableHead className="text-right">Buy Trades</TableHead>
                   <TableHead className="text-right">Sell Trades</TableHead>
                   <TableHead className="text-right">Income</TableHead>
-                  <TableHead className="text-right">Avg Buy</TableHead>
-                  <TableHead className="text-right">Avg Sell</TableHead>
-                  <TableHead className="text-right">Buy Vol</TableHead>
+                  <TableHead className="text-right hidden md:table-cell">Avg Buy</TableHead>
+                  <TableHead className="text-right hidden md:table-cell">Avg Sell</TableHead>
+                  <TableHead className="text-right hidden lg:table-cell">Buy Vol</TableHead>
                   <TableHead className="text-right">Buy {currency}</TableHead>
-                  <TableHead className="text-right">Sell Vol</TableHead>
+                  <TableHead className="text-right hidden lg:table-cell">Sell Vol</TableHead>
                   <TableHead className="text-right">Sell {currency}</TableHead>
                   <TableHead className="text-right">Income {currency}</TableHead>
                 </TableRow>
@@ -90,11 +92,11 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                     <TableCell className="text-right">{a.totalBuys}</TableCell>
                     <TableCell className="text-right">{a.totalSells}</TableCell>
                     <TableCell className="text-right">{a.totalIncomes > 0 ? a.totalIncomes : "-"}</TableCell>
-                    <TableCell className="text-right">{fc(a.avgBuyPrice)}</TableCell>
-                    <TableCell className="text-right">{a.avgSellPrice > 0 ? fc(a.avgSellPrice) : "-"}</TableCell>
-                    <TableCell className="text-right">{formatNumber(a.buyVolume, 4)}</TableCell>
+                    <TableCell className="text-right hidden md:table-cell">{fc(a.avgBuyPrice)}</TableCell>
+                    <TableCell className="text-right hidden md:table-cell">{a.avgSellPrice > 0 ? fc(a.avgSellPrice) : "-"}</TableCell>
+                    <TableCell className="text-right hidden lg:table-cell">{formatNumber(a.buyVolume, 4)}</TableCell>
                     <TableCell className="text-right">{fc(a.buyVolumeUsd)}</TableCell>
-                    <TableCell className="text-right">{a.sellVolume > 0 ? formatNumber(a.sellVolume, 4) : "-"}</TableCell>
+                    <TableCell className="text-right hidden lg:table-cell">{a.sellVolume > 0 ? formatNumber(a.sellVolume, 4) : "-"}</TableCell>
                     <TableCell className="text-right">{a.sellVolumeUsd > 0 ? fc(a.sellVolumeUsd) : "-"}</TableCell>
                     <TableCell className="text-right">{a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}</TableCell>
                   </TableRow>

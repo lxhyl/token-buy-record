@@ -12,6 +12,7 @@ import { createTransaction, updateTransaction } from "@/actions/transactions";
 import { Transaction } from "@/lib/schema";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { ArrowDownRight, ArrowUpRight, TrendingUp, Save, X, DollarSign, Coins, Landmark, PiggyBank } from "lucide-react";
+import { useToast } from "@/components/Toast";
 
 interface TransactionFormProps {
   transaction?: Transaction;
@@ -27,6 +28,7 @@ export function TransactionForm({
   rates,
 }: TransactionFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [assetType, setAssetType] = useState(transaction?.assetType || "crypto");
   const [tradeType, setTradeType] = useState(transaction?.tradeType || "buy");
@@ -47,8 +49,10 @@ export function TransactionForm({
     startTransition(async () => {
       if (mode === "edit" && transaction) {
         await updateTransaction(transaction.id, formData);
+        toast("Transaction updated", "success");
       } else {
         await createTransaction(formData);
+        toast("Transaction created", "success");
       }
       router.push("/transactions");
     });

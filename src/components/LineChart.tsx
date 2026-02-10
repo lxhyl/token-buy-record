@@ -63,7 +63,7 @@ export function PortfolioLineChart({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white rounded-xl shadow-lg border p-3">
+        <div className="bg-popover text-popover-foreground rounded-xl shadow-lg border p-3">
           <p className="text-sm text-muted-foreground">{label}</p>
           <p className="text-lg font-semibold text-foreground mt-1">
             {fc(payload[0].value)}
@@ -120,7 +120,13 @@ export function PortfolioLineChart({
                 tick={{ fontSize: 12, fill: "#9ca3af" }}
                 tickFormatter={(value) => {
                   const converted = convertAmount(value, currency, rates);
-                  return `${(converted / 1000).toFixed(0)}k`;
+                  if (Math.abs(converted) >= 1_000_000) {
+                    return `${(converted / 1_000_000).toFixed(1)}M`;
+                  }
+                  if (Math.abs(converted) >= 1_000) {
+                    return `${(converted / 1_000).toFixed(0)}k`;
+                  }
+                  return `${converted.toFixed(0)}`;
                 }}
                 dx={-10}
               />

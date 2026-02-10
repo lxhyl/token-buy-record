@@ -50,10 +50,12 @@ export default async function AnalysisPage() {
 
   sortedTransactions.forEach((t) => {
     const amount = parseFloat(t.totalAmount);
-    if (t.tradeType === "buy" || t.tradeType === "income") {
+    if (t.tradeType === "buy") {
       runningValue += amount;
-    } else {
-      runningValue -= amount * 0.5;
+    } else if (t.tradeType === "sell") {
+      runningValue -= amount;
+    } else if (t.tradeType === "income") {
+      runningValue += amount;
     }
 
     const dateStr = new Date(t.tradeDate).toLocaleDateString();
@@ -91,7 +93,7 @@ export default async function AnalysisPage() {
 
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         <AllocationPieChart data={allocationData} currency={currency} rates={rates} />
-        <PortfolioLineChart data={portfolioHistory} currency={currency} rates={rates} />
+        <PortfolioLineChart data={portfolioHistory} title="Cumulative Investment Over Time" currency={currency} rates={rates} />
       </div>
 
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">

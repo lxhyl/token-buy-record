@@ -42,6 +42,8 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
   const [refreshInfo, setRefreshInfo] = useState("");
   const router = useRouter();
 
+  const [cooldown, setCooldown] = useState(false);
+
   const handleRefreshAllPrices = useCallback(async () => {
     setRefreshStatus("loading");
     setRefreshInfo("");
@@ -53,6 +55,9 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
       setRefreshStatus("success");
       setRefreshInfo(`Updated ${data.updated} price(s)`);
       router.refresh();
+
+      setCooldown(true);
+      setTimeout(() => setCooldown(false), 30000);
 
       setTimeout(() => {
         setRefreshStatus("idle");
@@ -94,7 +99,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                 size="sm"
                 variant="outline"
                 onClick={handleRefreshAllPrices}
-                disabled={refreshStatus === "loading"}
+                disabled={refreshStatus === "loading" || cooldown}
                 className="gap-1.5 text-xs md:text-sm"
               >
                 {refreshStatus === "loading" ? (
@@ -187,7 +192,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                       ) : (
                         <TrendingDown className="h-3.5 w-3.5" />
                       )}
-                      <span>{fc(Math.abs(h.unrealizedPnL))}</span>
+                      <span>{h.unrealizedPnL >= 0 ? "+" : "-"}{fc(Math.abs(h.unrealizedPnL))}</span>
                       <span className="text-xs opacity-75">
                         ({h.unrealizedPnLPercent >= 0 ? "+" : ""}{formatPercent(h.unrealizedPnLPercent)})
                       </span>

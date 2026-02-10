@@ -44,6 +44,11 @@ const GRADIENTS = [
   { start: "#ec4899", end: "#be185d" },
   { start: "#f59e0b", end: "#d97706" },
   { start: "#10b981", end: "#047857" },
+  { start: "#06b6d4", end: "#0e7490" },
+  { start: "#f97316", end: "#c2410c" },
+  { start: "#84cc16", end: "#4d7c0f" },
+  { start: "#6366f1", end: "#4338ca" },
+  { start: "#14b8a6", end: "#0f766e" },
 ];
 
 export function AllocationPieChart({
@@ -80,7 +85,7 @@ export function AllocationPieChart({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white rounded-xl shadow-lg border p-3 min-w-[150px]">
+        <div className="bg-popover text-popover-foreground rounded-xl shadow-lg border p-3 min-w-[150px]">
           <p className="font-semibold text-foreground">{data.name}</p>
           <p className="text-sm text-muted-foreground mt-1">
             {fc(data.value)}
@@ -152,7 +157,7 @@ export function AllocationPieChart({
             <div key={item.name} className="flex items-center gap-2">
               <div
                 className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                style={{ backgroundColor: GRADIENTS[index % GRADIENTS.length].start }}
               />
               <span className="text-sm font-medium">{item.name}</span>
               <span className="text-sm text-muted-foreground">

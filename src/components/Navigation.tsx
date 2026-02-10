@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   ArrowLeftRight,
-  Wallet,
   BarChart3,
   Settings,
   TrendingUp,
@@ -15,7 +14,6 @@ import {
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { href: "/holdings", label: "Holdings", icon: Wallet },
   { href: "/analysis", label: "Analysis", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -26,7 +24,7 @@ export function Navigation() {
   return (
     <>
       {/* Desktop: top nav */}
-      <nav className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-xl hidden md:block">
+      <nav className="sticky top-0 z-50 border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl hidden md:block">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <Link href="/" className="flex items-center gap-2 group">
@@ -52,8 +50,8 @@ export function Navigation() {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200",
                       isActive
-                        ? "bg-white text-primary shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-white/50"
+                        ? "bg-white dark:bg-gray-800 text-primary shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-gray-800/50"
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -67,7 +65,7 @@ export function Navigation() {
       </nav>
 
       {/* Mobile: compact top header + bottom tab bar */}
-      <nav className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-xl md:hidden">
+      <nav className="sticky top-0 z-50 border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl md:hidden">
         <div className="flex h-12 items-center justify-center px-4">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 text-white">
@@ -81,7 +79,7 @@ export function Navigation() {
       </nav>
 
       {/* Mobile bottom tab bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white/90 backdrop-blur-xl md:hidden safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl md:hidden safe-area-bottom">
         <div className="flex items-center justify-around h-16 px-2">
           {navItems.map((item) => {
             const Icon = item.icon;

@@ -1,6 +1,7 @@
 import { getDisplayCurrency } from "@/actions/settings";
 import { getExchangeRates } from "@/lib/currency";
 import { CurrencySettings } from "@/components/CurrencySettings";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,7 @@ export default async function SettingsPage() {
         </p>
       </div>
 
+      <ThemeToggle />
       <CurrencySettings currency={currency} rates={rates} />
     </div>
   );

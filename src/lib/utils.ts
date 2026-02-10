@@ -19,12 +19,12 @@ export function formatCurrency(
   const converted =
     currency !== "USD" && rates ? convertAmount(value, currency, rates) : value;
   const config = CURRENCY_CONFIG[currency];
-  const num = new Intl.NumberFormat("en-US", {
+  const num = new Intl.NumberFormat(config.locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(Math.abs(converted));
   const sign = converted < 0 ? "-" : "";
-  return `${sign}${num}`;
+  return `${sign}${config.symbol}${num}`;
 }
 
 export function createCurrencyFormatter(
