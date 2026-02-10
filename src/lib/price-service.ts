@@ -5,6 +5,7 @@
  */
 
 import YahooFinance from "yahoo-finance2";
+import { getExchangeRates } from "./currency";
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
@@ -172,12 +173,24 @@ export async function fetchStockPrices(
       ),
     ]);
 
+  // Fetch exchange rates for converting non-USD prices
+  const rates = await getExchangeRates();
+
+  const toUsd = (price: number, currency?: string | null): number => {
+    if (!currency || currency === "USD") return price;
+    const rate = rates[currency];
+    return rate ? price / rate : price;
+  };
+
   try {
     const quotes = await raceTimeout(yf.quote(symbols));
     if (Array.isArray(quotes)) {
       for (const quote of quotes) {
         if (quote.regularMarketPrice && quote.symbol) {
-          result.set(quote.symbol.toUpperCase(), quote.regularMarketPrice);
+          result.set(
+            quote.symbol.toUpperCase(),
+            toUsd(quote.regularMarketPrice, quote.currency)
+          );
         }
       }
     }
@@ -187,7 +200,10 @@ export async function fetchStockPrices(
       try {
         const quote = await raceTimeout(yf.quote(symbol));
         if (quote.regularMarketPrice) {
-          result.set(symbol.toUpperCase(), quote.regularMarketPrice);
+          result.set(
+            symbol.toUpperCase(),
+            toUsd(quote.regularMarketPrice, quote.currency)
+          );
         }
       } catch {
         // skip

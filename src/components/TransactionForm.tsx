@@ -63,14 +63,14 @@ export function TransactionForm({
 
   const symbolPlaceholder = {
     crypto: "BTC, ETH, SOL...",
-    stock: "AAPL, TSLA, NVDA...",
+    stock: "AAPL, TSLA, 0700.HK...",
     deposit: "ABC Bank 1Y, Savings...",
     bond: "US10Y, Corp Bond...",
   }[assetType] || "Symbol";
 
   const namePlaceholder = {
     crypto: "Bitcoin, Ethereum...",
-    stock: "Apple Inc, Tesla...",
+    stock: "Apple Inc, Tencent...",
     deposit: "1-Year Fixed Deposit...",
     bond: "US Treasury 10Y...",
   }[assetType] || "Name";

@@ -40,8 +40,7 @@ export async function getExchangeRates(): Promise<ExchangeRates> {
     const data = await res.json();
     const rates: ExchangeRates = {
       USD: 1,
-      CNY: data.rates?.CNY ?? FALLBACK_RATES.CNY,
-      HKD: data.rates?.HKD ?? FALLBACK_RATES.HKD,
+      ...(data.rates ?? {}),
     };
     cachedRates = rates;
     cachedAt = now;
