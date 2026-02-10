@@ -17,6 +17,7 @@ import {
   convertAmount,
 } from "@/lib/currency";
 import { TrendingUp } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
 
 interface DataPoint {
   date: string;
@@ -32,11 +33,13 @@ interface LineChartProps {
 
 export function PortfolioLineChart({
   data,
-  title = "Portfolio Value Over Time",
+  title,
   currency,
   rates,
 }: LineChartProps) {
   const fc = createCurrencyFormatter(currency, rates);
+  const { t } = useI18n();
+  const displayTitle = title || t("analysis.portfolioValue");
   if (data.length === 0) {
     return (
       <Card>
@@ -45,7 +48,7 @@ export function PortfolioLineChart({
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
               <TrendingUp className="h-5 w-5" />
             </div>
-            <CardTitle>{title}</CardTitle>
+            <CardTitle>{displayTitle}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="pt-6">
@@ -53,7 +56,7 @@ export function PortfolioLineChart({
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
               <TrendingUp className="h-8 w-8 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground">No data available</p>
+            <p className="text-muted-foreground">{t("common.noData")}</p>
           </div>
         </CardContent>
       </Card>
@@ -81,7 +84,7 @@ export function PortfolioLineChart({
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
             <TrendingUp className="h-5 w-5" />
           </div>
-          <CardTitle>{title}</CardTitle>
+          <CardTitle>{displayTitle}</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="pt-6">

@@ -4,6 +4,7 @@ import { PortfolioSummary } from "@/lib/calculations";
 import { createCurrencyFormatter, formatPercent } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { TrendingUp, TrendingDown, DollarSign, PiggyBank, Wallet, Target, Coins } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
 
 interface StatsCardsProps {
   summary: PortfolioSummary;
@@ -13,10 +14,11 @@ interface StatsCardsProps {
 
 export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
   const fc = createCurrencyFormatter(currency, rates);
+  const { t } = useI18n();
 
   const cards = [
     {
-      title: "Total Invested",
+      title: t("stats.totalInvested"),
       value: fc(summary.totalInvested),
       icon: DollarSign,
       gradient: "from-blue-500 to-blue-600",
@@ -25,7 +27,7 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
       iconColor: "text-blue-600 dark:text-blue-400",
     },
     {
-      title: "Current Value",
+      title: t("stats.currentValue"),
       value: fc(summary.totalCurrentValue),
       icon: PiggyBank,
       gradient: "from-purple-500 to-purple-600",
@@ -34,7 +36,7 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
       iconColor: "text-purple-600 dark:text-purple-400",
     },
     {
-      title: "Unrealized P&L",
+      title: t("stats.unrealizedPnL"),
       value: `${summary.totalUnrealizedPnL >= 0 ? "+" : ""}${fc(summary.totalUnrealizedPnL)}`,
       subtitle: `${summary.totalPnLPercent >= 0 ? "+" : ""}${formatPercent(summary.totalPnLPercent)}`,
       icon: summary.totalUnrealizedPnL >= 0 ? TrendingUp : TrendingDown,
@@ -49,7 +51,7 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
       valueColor: summary.totalUnrealizedPnL >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
     },
     {
-      title: "Realized P&L",
+      title: t("stats.realizedPnL"),
       value: `${summary.totalRealizedPnL >= 0 ? "+" : ""}${fc(summary.totalRealizedPnL)}`,
       icon: Target,
       gradient: summary.totalRealizedPnL >= 0
@@ -65,7 +67,7 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
     ...(summary.totalIncome > 0
       ? [
           {
-            title: "Total Income",
+            title: t("stats.totalIncome"),
             value: `+${fc(summary.totalIncome)}`,
             icon: Coins,
             gradient: "from-amber-500 to-yellow-500",

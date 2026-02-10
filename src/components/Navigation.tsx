@@ -13,15 +13,18 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
+import { TranslationKey } from "@/lib/i18n";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { href: "/analysis", label: "Analysis", icon: BarChart3 },
-  { href: "/settings", label: "Settings", icon: Settings },
+const navItems: { href: string; labelKey: TranslationKey; icon: typeof LayoutDashboard }[] = [
+  { href: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
+  { href: "/transactions", labelKey: "nav.transactions", icon: ArrowLeftRight },
+  { href: "/analysis", labelKey: "nav.analysis", icon: BarChart3 },
+  { href: "/settings", labelKey: "nav.settings", icon: Settings },
 ];
 
 export function Navigation() {
+  const { t } = useI18n();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -54,7 +57,7 @@ export function Navigation() {
                 <TrendingUp className="h-5 w-5" />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                TradeTracker
+                {t("common.appName")}
               </span>
             </Link>
 
@@ -77,7 +80,7 @@ export function Navigation() {
                     )}
                   >
                     <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
+                    <span>{t(item.labelKey)}</span>
                   </Link>
                 );
               })}
@@ -94,13 +97,13 @@ export function Navigation() {
               <TrendingUp className="h-4 w-4" />
             </div>
             <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              TradeTracker
+              {t("common.appName")}
             </span>
           </Link>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
-            aria-label="Toggle menu"
+            aria-label={t("common.toggleMenu")}
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -127,7 +130,7 @@ export function Navigation() {
                       )}
                     >
                       <Icon className={cn("h-5 w-5", isActive && "stroke-[2.5]")} />
-                      <span>{item.label}</span>
+                      <span>{t(item.labelKey)}</span>
                     </Link>
                   );
                 })}

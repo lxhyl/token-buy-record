@@ -13,6 +13,9 @@ import {
   Zap,
   Globe,
 } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
+import { LandingLanguageToggle } from "@/components/LandingLanguageToggle";
+import { TranslationKey } from "@/lib/i18n";
 
 // ── Mock data ──────────────────────────────────────────────
 const MOCK_HOLDINGS = [
@@ -29,50 +32,13 @@ const MOCK_CHART_DATA = [
   28900, 32600, 35800, 38200, 41500, 39800, 43200, 46800, 45100, 48500, 52100, 56800,
 ];
 
-const FEATURES = [
-  {
-    icon: BarChart3,
-    title: "Real-Time Analytics",
-    desc: "Track P&L, allocation, and trade patterns with live market data",
-    gradient: "from-blue-500 to-cyan-500",
-  },
-  {
-    icon: PieChart,
-    title: "Multi-Asset Support",
-    desc: "Stocks, crypto, bonds, and deposits — all in one unified dashboard",
-    gradient: "from-purple-500 to-pink-500",
-  },
-  {
-    icon: Globe,
-    title: "Multi-Currency",
-    desc: "View your portfolio in USD, CNY, or HKD with live exchange rates",
-    gradient: "from-emerald-500 to-teal-500",
-  },
-  {
-    icon: Smartphone,
-    title: "PWA Ready",
-    desc: "Install on any device. Works offline with a native app experience",
-    gradient: "from-orange-500 to-amber-500",
-  },
-  {
-    icon: Shield,
-    title: "Secure & Private",
-    desc: "Google OAuth login. Your data is yours — scoped per account",
-    gradient: "from-red-500 to-rose-500",
-  },
-  {
-    icon: Zap,
-    title: "Lightning Fast",
-    desc: "Built on Next.js with edge-optimized Neon Postgres for instant loads",
-    gradient: "from-yellow-500 to-orange-500",
-  },
-];
-
-// ── Stat cards used in the hero ────────────────────────────
-const STATS = [
-  { label: "Portfolio Value", value: "$284,520", change: "+12.4%", up: true },
-  { label: "Today's P&L", value: "+$3,842", change: "+1.37%", up: true },
-  { label: "Total Return", value: "+$68,210", change: "+31.5%", up: true },
+const FEATURE_ITEMS: { icon: typeof BarChart3; titleKey: TranslationKey; descKey: TranslationKey; gradient: string }[] = [
+  { icon: BarChart3, titleKey: "landing.featureAnalyticsTitle", descKey: "landing.featureAnalyticsDesc", gradient: "from-blue-500 to-cyan-500" },
+  { icon: PieChart, titleKey: "landing.featureMultiAssetTitle", descKey: "landing.featureMultiAssetDesc", gradient: "from-purple-500 to-pink-500" },
+  { icon: Globe, titleKey: "landing.featureMultiCurrencyTitle", descKey: "landing.featureMultiCurrencyDesc", gradient: "from-emerald-500 to-teal-500" },
+  { icon: Smartphone, titleKey: "landing.featurePWATitle", descKey: "landing.featurePWADesc", gradient: "from-orange-500 to-amber-500" },
+  { icon: Shield, titleKey: "landing.featureSecureTitle", descKey: "landing.featureSecureDesc", gradient: "from-red-500 to-rose-500" },
+  { icon: Zap, titleKey: "landing.featureFastTitle", descKey: "landing.featureFastDesc", gradient: "from-yellow-500 to-orange-500" },
 ];
 
 // ── Sparkline mini-chart (SVG) ─────────────────────────────
@@ -106,6 +72,21 @@ function MiniChart({ data, color }: { data: number[]; color: string }) {
 
 // ── Landing page ───────────────────────────────────────────
 export function LandingPage() {
+  const { t } = useI18n();
+
+  const STATS: { labelKey: TranslationKey; value: string; change: string; up: boolean }[] = [
+    { labelKey: "landing.statPortfolioValue", value: "$284,520", change: "+12.4%", up: true },
+    { labelKey: "landing.statTodayPnL", value: "+$3,842", change: "+1.37%", up: true },
+    { labelKey: "landing.statTotalReturn", value: "+$68,210", change: "+31.5%", up: true },
+  ];
+
+  const ALLOCATION_ITEMS: { labelKey: TranslationKey; color: string; pct: string }[] = [
+    { labelKey: "landing.stocks", color: "bg-blue-500", pct: "42%" },
+    { labelKey: "landing.crypto", color: "bg-purple-500", pct: "28%" },
+    { labelKey: "landing.bonds", color: "bg-amber-500", pct: "18%" },
+    { labelKey: "landing.deposits", color: "bg-emerald-500", pct: "12%" },
+  ];
+
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Top nav bar */}
@@ -119,13 +100,16 @@ export function LandingPage() {
               TradeTracker
             </span>
           </div>
-          <button
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-0.5 active:translate-y-0"
-          >
-            Get Started
-            <ArrowRight className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-3">
+            <LandingLanguageToggle />
+            <button
+              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-0.5 active:translate-y-0"
+            >
+              {t("common.getStarted")}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -141,18 +125,16 @@ export function LandingPage() {
           <div className="max-w-3xl mx-auto text-center mb-16">
             <div className="inline-flex items-center gap-2 rounded-full border bg-white/50 dark:bg-gray-900/50 px-4 py-1.5 text-sm text-muted-foreground mb-6 backdrop-blur-sm animate-fade-in">
               <Zap className="h-3.5 w-3.5 text-amber-500" />
-              Multi-asset portfolio tracking made simple
+              {t("landing.tagline")}
             </div>
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              Track Every Trade.{" "}
+              {t("landing.heroTitle1")}{" "}
               <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                Maximize Returns.
+                {t("landing.heroTitle2")}
               </span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-              A unified dashboard for stocks, crypto, bonds, and deposits.
-              Real-time prices, P&L analytics, multi-currency support — all in a
-              beautiful PWA you can install anywhere.
+              {t("landing.heroDesc")}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
               <button
@@ -165,13 +147,13 @@ export function LandingPage() {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#fff" fillOpacity={0.7} />
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#fff" fillOpacity={0.9} />
                 </svg>
-                Sign in with Google
+                {t("common.signInWithGoogle")}
               </button>
               <a
                 href="#features"
                 className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-gray-200 dark:border-gray-700 px-8 py-3.5 text-base font-semibold text-foreground transition-all hover:bg-secondary/50 hover:-translate-y-0.5 active:translate-y-0"
               >
-                Learn more
+                {t("common.learnMore")}
                 <ChevronRight className="h-4 w-4" />
               </a>
             </div>
@@ -181,11 +163,11 @@ export function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto mb-12">
             {STATS.map((s, i) => (
               <div
-                key={s.label}
+                key={s.labelKey}
                 className="relative rounded-2xl border bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm p-5 animate-fade-in"
                 style={{ animationDelay: `${0.3 + i * 0.1}s` }}
               >
-                <p className="text-sm text-muted-foreground">{s.label}</p>
+                <p className="text-sm text-muted-foreground">{t(s.labelKey)}</p>
                 <p className="text-2xl font-bold mt-1">{s.value}</p>
                 <span className={`text-sm font-medium ${s.up ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                   {s.change}
@@ -219,7 +201,7 @@ export function LandingPage() {
                   <div className="lg:col-span-2 rounded-xl border bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="text-sm text-muted-foreground">Portfolio Value</p>
+                        <p className="text-sm text-muted-foreground">{t("landing.portfolioValue")}</p>
                         <p className="text-2xl font-bold">$284,520.00</p>
                       </div>
                       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
@@ -232,7 +214,7 @@ export function LandingPage() {
                     </div>
                   </div>
                   <div className="rounded-xl border bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 p-4">
-                    <p className="text-sm text-muted-foreground mb-3">Allocation</p>
+                    <p className="text-sm text-muted-foreground mb-3">{t("landing.allocation")}</p>
                     {/* Donut chart mock */}
                     <div className="flex items-center justify-center py-2">
                       <div className="relative w-28 h-28">
@@ -246,15 +228,10 @@ export function LandingPage() {
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-1 text-xs mt-2">
-                      {[
-                        { label: "Stocks", color: "bg-blue-500", pct: "42%" },
-                        { label: "Crypto", color: "bg-purple-500", pct: "28%" },
-                        { label: "Bonds", color: "bg-amber-500", pct: "18%" },
-                        { label: "Deposits", color: "bg-emerald-500", pct: "12%" },
-                      ].map((item) => (
-                        <div key={item.label} className="flex items-center gap-1.5">
+                      {ALLOCATION_ITEMS.map((item) => (
+                        <div key={item.labelKey} className="flex items-center gap-1.5">
                           <div className={`w-2 h-2 rounded-full ${item.color}`} />
-                          <span className="text-muted-foreground">{item.label}</span>
+                          <span className="text-muted-foreground">{t(item.labelKey)}</span>
                           <span className="font-medium ml-auto">{item.pct}</span>
                         </div>
                       ))}
@@ -265,17 +242,17 @@ export function LandingPage() {
                 {/* Holdings table */}
                 <div className="rounded-xl border overflow-hidden">
                   <div className="bg-gray-50/80 dark:bg-gray-800/80 px-4 py-2.5 border-b">
-                    <p className="text-sm font-semibold">Holdings</p>
+                    <p className="text-sm font-semibold">{t("landing.holdings")}</p>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b text-muted-foreground">
-                          <th className="text-left px-4 py-2 font-medium">Asset</th>
-                          <th className="text-right px-4 py-2 font-medium hidden sm:table-cell">Qty</th>
-                          <th className="text-right px-4 py-2 font-medium">Price</th>
-                          <th className="text-right px-4 py-2 font-medium hidden md:table-cell">Avg Cost</th>
-                          <th className="text-right px-4 py-2 font-medium">P&L %</th>
+                          <th className="text-left px-4 py-2 font-medium">{t("landing.asset")}</th>
+                          <th className="text-right px-4 py-2 font-medium hidden sm:table-cell">{t("landing.qty")}</th>
+                          <th className="text-right px-4 py-2 font-medium">{t("landing.price")}</th>
+                          <th className="text-right px-4 py-2 font-medium hidden md:table-cell">{t("landing.avgCost")}</th>
+                          <th className="text-right px-4 py-2 font-medium">{t("landing.pnlPercent")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -328,31 +305,30 @@ export function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">
-              Everything you need to{" "}
+              {t("landing.featuresTitle1")}{" "}
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                track smarter
+                {t("landing.featuresTitle2")}
               </span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Built for traders and investors who want a clean, fast, and private way
-              to monitor their entire portfolio.
+              {t("landing.featuresSubtitle")}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {FEATURES.map((f, i) => {
+            {FEATURE_ITEMS.map((f, i) => {
               const Icon = f.icon;
               return (
                 <div
-                  key={f.title}
+                  key={f.titleKey}
                   className="group rounded-2xl border bg-white dark:bg-gray-900 p-6 transition-all hover:shadow-lg hover:-translate-y-1 animate-fade-in"
                   style={{ animationDelay: `${i * 0.08}s` }}
                 >
                   <div className={`inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${f.gradient} text-white mb-4 shadow-lg transition-transform group-hover:scale-110`}>
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                  <h3 className="text-lg font-semibold mb-2">{t(f.titleKey)}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{t(f.descKey)}</p>
                 </div>
               );
             })}
@@ -365,10 +341,10 @@ export function LandingPage() {
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">
-              Ready to take control of your portfolio?
+              {t("landing.ctaTitle")}
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Join for free. Sign in with your Google account and start tracking in seconds.
+              {t("landing.ctaDesc")}
             </p>
             <button
               onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
@@ -380,7 +356,7 @@ export function LandingPage() {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#fff" fillOpacity={0.7} />
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#fff" fillOpacity={0.9} />
               </svg>
-              Get Started with Google
+              {t("common.getStartedWithGoogle")}
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
@@ -396,7 +372,7 @@ export function LandingPage() {
             </div>
             <span className="font-semibold text-foreground">TradeTracker</span>
           </div>
-          <p>Personal portfolio tracking. Free and open source.</p>
+          <p>{t("landing.footer")}</p>
         </div>
       </footer>
     </div>

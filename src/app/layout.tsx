@@ -5,6 +5,8 @@ import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { SplashScreen } from "@/components/SplashScreen";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/Toast";
+import { I18nProvider } from "@/components/I18nProvider";
+import { getLocaleFromCookie } from "@/actions/settings";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,13 +34,15 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocaleFromCookie();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         {/* Inline critical CSS for instant splash screen - prevents black screen on PWA cold start */}
         <style
@@ -107,13 +111,15 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <ThemeProvider>
-          <ToastProvider>
-            <SplashScreen />
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-              {children}
-            </div>
-            <ServiceWorkerRegister />
-          </ToastProvider>
+          <I18nProvider locale={locale}>
+            <ToastProvider>
+              <SplashScreen />
+              <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+                {children}
+              </div>
+              <ServiceWorkerRegister />
+            </ToastProvider>
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createCurrencyFormatter, formatPercent } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { PieChart as PieIcon } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
 
 interface AllocationData {
   name: string;
@@ -53,11 +54,13 @@ const GRADIENTS = [
 
 export function AllocationPieChart({
   data,
-  title = "Portfolio Allocation",
+  title,
   currency,
   rates,
 }: PieChartProps) {
   const fc = createCurrencyFormatter(currency, rates);
+  const { t } = useI18n();
+  const displayTitle = title || t("holdings.portfolioAllocation");
   if (data.length === 0) {
     return (
       <Card>
@@ -66,7 +69,7 @@ export function AllocationPieChart({
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
               <PieIcon className="h-5 w-5" />
             </div>
-            <CardTitle>{title}</CardTitle>
+            <CardTitle>{displayTitle}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="pt-6">
@@ -74,7 +77,7 @@ export function AllocationPieChart({
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
               <PieIcon className="h-8 w-8 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground">No data available</p>
+            <p className="text-muted-foreground">{t("common.noData")}</p>
           </div>
         </CardContent>
       </Card>
@@ -106,7 +109,7 @@ export function AllocationPieChart({
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
             <PieIcon className="h-5 w-5" />
           </div>
-          <CardTitle>{title}</CardTitle>
+          <CardTitle>{displayTitle}</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="pt-6">

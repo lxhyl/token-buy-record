@@ -13,12 +13,14 @@ import {
 import { TradeAnalysis } from "@/lib/calculations";
 import { createCurrencyFormatter, formatNumber } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
+import { useI18n } from "@/components/I18nProvider";
+import { TranslationKey } from "@/lib/i18n";
 
 type Tab = "market" | "fixed-income";
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: "market", label: "Market" },
-  { key: "fixed-income", label: "Fixed Income" },
+const TABS: { key: Tab; labelKey: TranslationKey }[] = [
+  { key: "market", labelKey: "tradePattern.market" },
+  { key: "fixed-income", labelKey: "tradePattern.fixedIncome" },
 ];
 
 function isFixedIncome(a: TradeAnalysis) {
@@ -34,6 +36,7 @@ interface TradePatternCardProps {
 export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatternCardProps) {
   const [activeTab, setActiveTab] = useState<Tab>("market");
   const fc = createCurrencyFormatter(currency, rates);
+  const { t, tInterpolate } = useI18n();
 
   const filtered = tradeAnalysis.filter((a) =>
     activeTab === "market" ? !isFixedIncome(a) : isFixedIncome(a)
@@ -42,7 +45,7 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base md:text-lg">Trade Pattern Analysis</CardTitle>
+        <CardTitle className="text-base md:text-lg">{t("tradePattern.title")}</CardTitle>
       </CardHeader>
       <CardContent className="px-0 md:px-6">
         <div className="flex gap-1 px-4 md:px-0 pb-4" role="tablist">
@@ -58,31 +61,37 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
-              {tab.label}
+              {t(tab.labelKey)}
             </button>
           ))}
         </div>
 
         {filtered.length === 0 ? (
           <p className="text-center text-muted-foreground py-4">
-            No trades to analyze
+            {t("tradePattern.noTrades")}
           </p>
         ) : activeTab === "market" ? (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Symbol</TableHead>
-                  <TableHead className="text-right">Buy Trades</TableHead>
-                  <TableHead className="text-right">Sell Trades</TableHead>
-                  <TableHead className="text-right">Income</TableHead>
-                  <TableHead className="text-right hidden md:table-cell">Avg Buy</TableHead>
-                  <TableHead className="text-right hidden md:table-cell">Avg Sell</TableHead>
-                  <TableHead className="text-right hidden lg:table-cell">Buy Vol</TableHead>
-                  <TableHead className="text-right">Buy {currency}</TableHead>
-                  <TableHead className="text-right hidden lg:table-cell">Sell Vol</TableHead>
-                  <TableHead className="text-right">Sell {currency}</TableHead>
-                  <TableHead className="text-right">Income {currency}</TableHead>
+                  <TableHead>{t("tradePattern.symbol")}</TableHead>
+                  <TableHead className="text-right">{t("tradePattern.buyTrades")}</TableHead>
+                  <TableHead className="text-right">{t("tradePattern.sellTrades")}</TableHead>
+                  <TableHead className="text-right">{t("tradePattern.income")}</TableHead>
+                  <TableHead className="text-right hidden md:table-cell">{t("tradePattern.avgBuy")}</TableHead>
+                  <TableHead className="text-right hidden md:table-cell">{t("tradePattern.avgSell")}</TableHead>
+                  <TableHead className="text-right hidden lg:table-cell">{t("tradePattern.buyVol")}</TableHead>
+                  <TableHead className="text-right">
+                    {tInterpolate("tradePattern.buyAmount", { currency })}
+                  </TableHead>
+                  <TableHead className="text-right hidden lg:table-cell">{t("tradePattern.sellVol")}</TableHead>
+                  <TableHead className="text-right">
+                    {tInterpolate("tradePattern.sellAmount", { currency })}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {tInterpolate("tradePattern.incomeAmount", { currency })}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -109,14 +118,16 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Symbol</TableHead>
-                  <TableHead className="text-right">Deposits</TableHead>
-                  <TableHead className="text-right">Withdrawals</TableHead>
-                  <TableHead className="text-right">Income</TableHead>
-                  <TableHead className="text-right">Deposited</TableHead>
-                  <TableHead className="text-right">Withdrawn</TableHead>
-                  <TableHead className="text-right">Income {currency}</TableHead>
-                  <TableHead className="text-right">Net</TableHead>
+                  <TableHead>{t("tradePattern.symbol")}</TableHead>
+                  <TableHead className="text-right">{t("tradePattern.depositsCol")}</TableHead>
+                  <TableHead className="text-right">{t("tradePattern.withdrawals")}</TableHead>
+                  <TableHead className="text-right">{t("tradePattern.income")}</TableHead>
+                  <TableHead className="text-right">{t("tradePattern.deposited")}</TableHead>
+                  <TableHead className="text-right">{t("tradePattern.withdrawn")}</TableHead>
+                  <TableHead className="text-right">
+                    {tInterpolate("tradePattern.incomeAmount", { currency })}
+                  </TableHead>
+                  <TableHead className="text-right">{t("tradePattern.net")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

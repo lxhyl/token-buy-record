@@ -5,9 +5,11 @@ import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { User, LogOut } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
 
 export function AccountSection() {
   const { data: session, status } = useSession();
+  const { t } = useI18n();
 
   return (
     <Card>
@@ -16,7 +18,7 @@ export function AccountSection() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white">
             <User className="h-5 w-5" />
           </div>
-          <CardTitle>Account</CardTitle>
+          <CardTitle>{t("settings.account")}</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="pt-6">
@@ -28,7 +30,7 @@ export function AccountSection() {
               {session.user.image ? (
                 <Image
                   src={session.user.image}
-                  alt={session.user.name || "User"}
+                  alt={session.user.name || t("common.user")}
                   width={40}
                   height={40}
                   className="rounded-full"
@@ -49,13 +51,13 @@ export function AccountSection() {
               onClick={() => signOut({ callbackUrl: "/" })}
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Sign out
+              {t("common.signOut")}
             </Button>
           </div>
         ) : (
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Sign in to sync your data across devices
+              {t("settings.signInHint")}
             </p>
             <Button
               variant="outline"
@@ -80,7 +82,7 @@ export function AccountSection() {
                   fill="#EA4335"
                 />
               </svg>
-              Sign in with Google
+              {t("common.signInWithGoogle")}
             </Button>
           </div>
         )}

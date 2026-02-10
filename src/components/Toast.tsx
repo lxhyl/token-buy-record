@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useState } from "react";
 import { X, CheckCircle2, AlertCircle, Info } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
 
 type ToastType = "success" | "error" | "info";
 
@@ -27,6 +28,7 @@ let nextId = 0;
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const { t } = useI18n();
 
   const toast = useCallback((message: string, type: ToastType = "success") => {
     const id = nextId++;
@@ -55,17 +57,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ toast }}>
       {children}
       <div className="fixed bottom-20 md:bottom-6 right-4 z-[100] flex flex-col gap-2 max-w-sm">
-        {toasts.map((t) => (
+        {toasts.map((toastItem) => (
           <div
-            key={t.id}
+            key={toastItem.id}
             className="flex items-center gap-2 bg-popover text-popover-foreground border rounded-xl shadow-lg px-4 py-3 animate-slide-in"
           >
-            <Icon type={t.type} />
-            <span className="text-sm font-medium flex-1">{t.message}</span>
+            <Icon type={toastItem.type} />
+            <span className="text-sm font-medium flex-1">{toastItem.message}</span>
             <button
-              onClick={() => dismiss(t.id)}
+              onClick={() => dismiss(toastItem.id)}
               className="text-muted-foreground hover:text-foreground shrink-0"
-              aria-label="Dismiss notification"
+              aria-label={t("common.dismissNotification")}
             >
               <X className="h-3.5 w-3.5" />
             </button>

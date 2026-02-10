@@ -15,15 +15,18 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Sparkles, TrendingUp, Coins, BarChart3, Landmark, PiggyBank } from "lucide-react";
+import { getDisplayLanguage } from "@/actions/settings";
+import { t } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [transactions, currentPrices, currency, rates] = await Promise.all([
+  const [transactions, currentPrices, currency, rates, locale] = await Promise.all([
     getTransactions(),
     getLatestPrices(),
     getDisplayCurrency(),
     getExchangeRates(),
+    getDisplayLanguage(),
   ]);
 
   const holdings = calculateHoldings(transactions, currentPrices, rates);
@@ -37,17 +40,17 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent">
-            Dashboard
+            {t(locale, "dashboard.title")}
           </h1>
           <p className="text-sm md:text-base text-muted-foreground mt-1">
-            Overview of your trading portfolio
+            {t(locale, "dashboard.subtitle")}
           </p>
         </div>
         <Link href="/transactions/new" className="shrink-0">
           <Button size="sm" className="md:h-11 md:px-6">
             <Plus className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
-            <span className="hidden sm:inline">Add Transaction</span>
-            <span className="sm:hidden">Add</span>
+            <span className="hidden sm:inline">{t(locale, "dashboard.addTransaction")}</span>
+            <span className="sm:hidden">{t(locale, "common.add")}</span>
           </Button>
         </Link>
       </div>
@@ -66,7 +69,7 @@ export default async function DashboardPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white">
                 <Sparkles className="h-5 w-5" />
               </div>
-              <CardTitle>Quick Stats</CardTitle>
+              <CardTitle>{t(locale, "dashboard.quickStats")}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
@@ -82,7 +85,7 @@ export default async function DashboardPage() {
                     </div>
                     <div>
                       <p className="text-xl md:text-2xl font-bold text-blue-700 dark:text-blue-300">{holdings.length}</p>
-                      <p className="text-xs md:text-sm text-blue-600 dark:text-blue-400">Assets</p>
+                      <p className="text-xs md:text-sm text-blue-600 dark:text-blue-400">{t(locale, "dashboard.assets")}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-purple-50 dark:bg-purple-950">
@@ -91,7 +94,7 @@ export default async function DashboardPage() {
                     </div>
                     <div>
                       <p className="text-xl md:text-2xl font-bold text-purple-700 dark:text-purple-300">{transactions.length}</p>
-                      <p className="text-xs md:text-sm text-purple-600 dark:text-purple-400">Trades</p>
+                      <p className="text-xs md:text-sm text-purple-600 dark:text-purple-400">{t(locale, "dashboard.trades")}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-pink-50 dark:bg-pink-950">
@@ -102,7 +105,7 @@ export default async function DashboardPage() {
                       <p className="text-xl md:text-2xl font-bold text-pink-700 dark:text-pink-300">
                         {holdings.filter((h) => h.assetType === "crypto").length}
                       </p>
-                      <p className="text-xs md:text-sm text-pink-600 dark:text-pink-400">Crypto</p>
+                      <p className="text-xs md:text-sm text-pink-600 dark:text-pink-400">{t(locale, "dashboard.crypto")}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-cyan-50 dark:bg-cyan-950">
@@ -113,7 +116,7 @@ export default async function DashboardPage() {
                       <p className="text-xl md:text-2xl font-bold text-cyan-700 dark:text-cyan-300">
                         {holdings.filter((h) => h.assetType === "stock").length}
                       </p>
-                      <p className="text-xs md:text-sm text-cyan-600 dark:text-cyan-400">Stocks</p>
+                      <p className="text-xs md:text-sm text-cyan-600 dark:text-cyan-400">{t(locale, "dashboard.stocks")}</p>
                     </div>
                   </div>
                   {depositCount > 0 && (
@@ -123,7 +126,7 @@ export default async function DashboardPage() {
                       </div>
                       <div>
                         <p className="text-xl md:text-2xl font-bold text-green-700 dark:text-green-300">{depositCount}</p>
-                        <p className="text-xs md:text-sm text-green-600 dark:text-green-400">Deposits</p>
+                        <p className="text-xs md:text-sm text-green-600 dark:text-green-400">{t(locale, "dashboard.deposits")}</p>
                       </div>
                     </div>
                   )}
@@ -134,7 +137,7 @@ export default async function DashboardPage() {
                       </div>
                       <div>
                         <p className="text-xl md:text-2xl font-bold text-amber-700 dark:text-amber-300">{bondCount}</p>
-                        <p className="text-xs md:text-sm text-amber-600 dark:text-amber-400">Bonds</p>
+                        <p className="text-xs md:text-sm text-amber-600 dark:text-amber-400">{t(locale, "dashboard.bonds")}</p>
                       </div>
                     </div>
                   )}

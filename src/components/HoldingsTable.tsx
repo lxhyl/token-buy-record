@@ -16,6 +16,7 @@ import { Holding } from "@/lib/calculations";
 import { createCurrencyFormatter, formatNumber, formatPercent } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { TrendingUp, TrendingDown, Wallet, Zap, Loader2, Check, AlertCircle, Coins } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
 
 interface HoldingsTableProps {
   holdings: Holding[];
@@ -41,6 +42,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
   const [refreshStatus, setRefreshStatus] = useState<RefreshStatus>("idle");
   const [refreshInfo, setRefreshInfo] = useState("");
   const router = useRouter();
+  const { t, tInterpolate } = useI18n();
 
   const [cooldown, setCooldown] = useState(false);
 
@@ -53,7 +55,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
       if (!res.ok) throw new Error(data.error || "Failed to fetch prices");
 
       setRefreshStatus("success");
-      setRefreshInfo(`Updated ${data.updated} price(s)`);
+      setRefreshInfo(tInterpolate("holdings.updatedPrices", { count: data.updated }));
       router.refresh();
 
       setCooldown(true);
@@ -65,13 +67,13 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
       }, 3000);
     } catch {
       setRefreshStatus("error");
-      setRefreshInfo("Failed to fetch prices");
+      setRefreshInfo(t("holdings.fetchFailed"));
       setTimeout(() => {
         setRefreshStatus("idle");
         setRefreshInfo("");
       }, 3000);
     }
-  }, [router]);
+  }, [router, t, tInterpolate]);
 
   return (
     <Card className="overflow-hidden">
@@ -81,7 +83,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
             <div className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white">
               <Wallet className="h-4 w-4 md:h-5 md:w-5" />
             </div>
-            <CardTitle className="text-base md:text-lg truncate">Current Holdings</CardTitle>
+            <CardTitle className="text-base md:text-lg truncate">{t("holdings.title")}</CardTitle>
           </div>
           {holdings.length > 0 && (
             <div className="flex items-center gap-2 shrink-0">
@@ -107,8 +109,8 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                 ) : (
                   <Zap className="h-3.5 w-3.5" />
                 )}
-                <span className="hidden sm:inline">{refreshStatus === "loading" ? "Fetching..." : "Refresh Prices"}</span>
-                <span className="sm:hidden">{refreshStatus === "loading" ? "..." : "Refresh"}</span>
+                <span className="hidden sm:inline">{refreshStatus === "loading" ? t("holdings.fetching") : t("holdings.refreshPrices")}</span>
+                <span className="sm:hidden">{refreshStatus === "loading" ? "..." : t("holdings.refresh")}</span>
               </Button>
             </div>
           )}
@@ -121,10 +123,10 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
               <Wallet className="h-8 w-8 text-muted-foreground" />
             </div>
             <p className="text-lg font-medium text-muted-foreground">
-              No holdings yet
+              {t("holdings.empty")}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              Add buy transactions to see your portfolio
+              {t("holdings.emptyHint")}
             </p>
           </div>
         ) : (
@@ -132,13 +134,13 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead>Asset</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
-                <TableHead className="text-right">Avg Cost</TableHead>
-                <TableHead className="text-right">Current Price</TableHead>
-                <TableHead className="text-right">Value</TableHead>
-                {hasIncome && <TableHead className="text-right">Income</TableHead>}
-                <TableHead className="text-right">P&L</TableHead>
+                <TableHead>{t("holdings.asset")}</TableHead>
+                <TableHead className="text-right">{t("holdings.quantity")}</TableHead>
+                <TableHead className="text-right">{t("holdings.avgCost")}</TableHead>
+                <TableHead className="text-right">{t("holdings.currentPrice")}</TableHead>
+                <TableHead className="text-right">{t("holdings.value")}</TableHead>
+                {hasIncome && <TableHead className="text-right">{t("holdings.income")}</TableHead>}
+                <TableHead className="text-right">{t("holdings.pnl")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

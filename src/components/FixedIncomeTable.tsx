@@ -13,6 +13,7 @@ import { FixedIncomeHolding } from "@/lib/calculations";
 import { createCurrencyFormatter, formatDate } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { PiggyBank, Landmark } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
 
 interface FixedIncomeTableProps {
   holdings: FixedIncomeHolding[];
@@ -20,12 +21,14 @@ interface FixedIncomeTableProps {
   rates: ExchangeRates;
 }
 
+import { TranslationKey } from "@/lib/i18n";
+
 function getStatus(maturityDate: Date | null): {
-  label: string;
+  labelKey: TranslationKey;
   className: string;
 } {
   if (!maturityDate) {
-    return { label: "Active", className: "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300" };
+    return { labelKey: "fixedIncome.active", className: "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300" };
   }
 
   const now = new Date();
@@ -33,12 +36,12 @@ function getStatus(maturityDate: Date | null): {
   const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
   if (diffDays < 0) {
-    return { label: "Matured", className: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400" };
+    return { labelKey: "fixedIncome.matured", className: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400" };
   }
   if (diffDays < 30) {
-    return { label: "Maturing Soon", className: "bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300" };
+    return { labelKey: "fixedIncome.maturingSoon", className: "bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300" };
   }
-  return { label: "Active", className: "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300" };
+  return { labelKey: "fixedIncome.active", className: "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300" };
 }
 
 export function FixedIncomeTable({
@@ -47,6 +50,7 @@ export function FixedIncomeTable({
   rates,
 }: FixedIncomeTableProps) {
   const fc = createCurrencyFormatter(currency, rates);
+  const { t } = useI18n();
 
   return (
     <Card className="overflow-hidden">
@@ -56,7 +60,7 @@ export function FixedIncomeTable({
             <PiggyBank className="h-4 w-4 md:h-5 md:w-5" />
           </div>
           <CardTitle className="text-base md:text-lg truncate">
-            Fixed-Income Holdings
+            {t("fixedIncome.title")}
           </CardTitle>
         </div>
       </CardHeader>
@@ -67,10 +71,10 @@ export function FixedIncomeTable({
               <PiggyBank className="h-8 w-8 text-muted-foreground" />
             </div>
             <p className="text-lg font-medium text-muted-foreground">
-              No fixed-income assets yet
+              {t("fixedIncome.empty")}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              Add deposit or bond transactions to see them here
+              {t("fixedIncome.emptyHint")}
             </p>
           </div>
         ) : (
@@ -78,13 +82,13 @@ export function FixedIncomeTable({
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead>Asset</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Principal</TableHead>
-                  <TableHead className="text-right">Rate</TableHead>
-                  <TableHead className="text-right">Income</TableHead>
-                  <TableHead className="text-right">Maturity</TableHead>
-                  <TableHead className="text-right">Status</TableHead>
+                  <TableHead>{t("fixedIncome.asset")}</TableHead>
+                  <TableHead>{t("fixedIncome.type")}</TableHead>
+                  <TableHead className="text-right">{t("fixedIncome.principal")}</TableHead>
+                  <TableHead className="text-right">{t("fixedIncome.rate")}</TableHead>
+                  <TableHead className="text-right">{t("fixedIncome.income")}</TableHead>
+                  <TableHead className="text-right">{t("fixedIncome.maturity")}</TableHead>
+                  <TableHead className="text-right">{t("fixedIncome.status")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -127,11 +131,11 @@ export function FixedIncomeTable({
                                 : "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
                             }`}
                           >
-                            {h.subType === "demand" ? "活期" : "定期"}
+                            {h.subType === "demand" ? t("fixedIncome.demand") : t("fixedIncome.fixed")}
                           </span>
                         ) : (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
-                            Bond
+                            {t("fixedIncome.bond")}
                           </span>
                         )}
                       </TableCell>
@@ -161,7 +165,7 @@ export function FixedIncomeTable({
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.className}`}
                         >
-                          {status.label}
+                          {t(status.labelKey)}
                         </span>
                       </TableCell>
                     </TableRow>

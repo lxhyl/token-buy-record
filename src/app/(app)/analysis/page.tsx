@@ -23,15 +23,18 @@ import {
 import { TradePatternCard } from "@/components/TradePatternCard";
 import { formatPercent, createCurrencyFormatter } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Receipt, Coins } from "lucide-react";
+import { getDisplayLanguage } from "@/actions/settings";
+import { t } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
 export default async function AnalysisPage() {
-  const [transactions, currentPrices, currency, rates] = await Promise.all([
+  const [transactions, currentPrices, currency, rates, locale] = await Promise.all([
     getTransactions(),
     getLatestPrices(),
     getDisplayCurrency(),
     getExchangeRates(),
+    getDisplayLanguage(),
   ]);
 
   const holdings = calculateHoldings(transactions, currentPrices, rates);
@@ -83,9 +86,9 @@ export default async function AnalysisPage() {
   return (
     <div className="space-y-6 md:space-y-8">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold">Analysis</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">{t(locale, "analysis.title")}</h1>
         <p className="text-sm md:text-base text-muted-foreground">
-          Detailed portfolio analysis and insights
+          {t(locale, "analysis.subtitle")}
         </p>
       </div>
 
@@ -93,27 +96,27 @@ export default async function AnalysisPage() {
 
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         <AllocationPieChart data={allocationData} currency={currency} rates={rates} />
-        <PortfolioLineChart data={portfolioHistory} title="Cumulative Investment Over Time" currency={currency} rates={rates} />
+        <PortfolioLineChart data={portfolioHistory} title={t(locale, "analysis.cumulativeInvestment")} currency={currency} rates={rates} />
       </div>
 
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base md:text-lg">P&L Ranking (by Amount)</CardTitle>
+            <CardTitle className="text-base md:text-lg">{t(locale, "analysis.pnlByAmount")}</CardTitle>
           </CardHeader>
           <CardContent>
             {sortedByPnL.length === 0 ? (
               <p className="text-center text-muted-foreground py-4">
-                No holdings to analyze
+                {t(locale, "analysis.noHoldings")}
               </p>
             ) : (
               <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Rank</TableHead>
-                    <TableHead>Symbol</TableHead>
-                    <TableHead className="text-right">P&L</TableHead>
+                    <TableHead>{t(locale, "analysis.rank")}</TableHead>
+                    <TableHead>{t(locale, "analysis.symbol")}</TableHead>
+                    <TableHead className="text-right">{t(locale, "analysis.pnl")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -146,21 +149,21 @@ export default async function AnalysisPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base md:text-lg">P&L Ranking (by Percentage)</CardTitle>
+            <CardTitle className="text-base md:text-lg">{t(locale, "analysis.pnlByPercent")}</CardTitle>
           </CardHeader>
           <CardContent>
             {sortedByPnLPercent.length === 0 ? (
               <p className="text-center text-muted-foreground py-4">
-                No holdings to analyze
+                {t(locale, "analysis.noHoldings")}
               </p>
             ) : (
               <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Rank</TableHead>
-                    <TableHead>Symbol</TableHead>
-                    <TableHead className="text-right">P&L %</TableHead>
+                    <TableHead>{t(locale, "analysis.rank")}</TableHead>
+                    <TableHead>{t(locale, "analysis.symbol")}</TableHead>
+                    <TableHead className="text-right">{t(locale, "analysis.pnlPercent")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -211,11 +214,11 @@ export default async function AnalysisPage() {
                   <Receipt className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-base md:text-lg">Fee Analysis</CardTitle>
+                  <CardTitle className="text-base md:text-lg">{t(locale, "analysis.feeAnalysis")}</CardTitle>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Total fees paid: <span className="font-semibold text-foreground">{fc(totalFees)}</span>
+                    {t(locale, "analysis.totalFeesPaid")} <span className="font-semibold text-foreground">{fc(totalFees)}</span>
                     {totalTraded > 0 && (
-                      <span className="ml-2">({formatPercent(feePercent)} of volume)</span>
+                      <span className="ml-2">({formatPercent(feePercent)} {t(locale, "analysis.ofVolume")})</span>
                     )}
                   </p>
                 </div>
@@ -224,19 +227,19 @@ export default async function AnalysisPage() {
             <CardContent>
               {feeBySymbol.length === 0 ? (
                 <p className="text-center text-muted-foreground py-4">
-                  No fee data recorded
+                  {t(locale, "analysis.noFeeData")}
                 </p>
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Symbol</TableHead>
-                        <TableHead className="text-right">Trades</TableHead>
-                        <TableHead className="text-right">Total Fees</TableHead>
-                        <TableHead className="text-right">Avg Fee/Trade</TableHead>
-                        <TableHead className="text-right">Volume</TableHead>
-                        <TableHead className="text-right">Fee Rate</TableHead>
+                        <TableHead>{t(locale, "analysis.symbol")}</TableHead>
+                        <TableHead className="text-right">{t(locale, "analysis.trades")}</TableHead>
+                        <TableHead className="text-right">{t(locale, "analysis.totalFees")}</TableHead>
+                        <TableHead className="text-right">{t(locale, "analysis.avgFee")}</TableHead>
+                        <TableHead className="text-right">{t(locale, "analysis.volume")}</TableHead>
+                        <TableHead className="text-right">{t(locale, "analysis.feeRate")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -266,7 +269,7 @@ export default async function AnalysisPage() {
                       })}
                       {/* Total row */}
                       <TableRow className="border-t-2 font-semibold">
-                        <TableCell>Total</TableCell>
+                        <TableCell>{t(locale, "common.total")}</TableCell>
                         <TableCell className="text-right">
                           {marketAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0)}
                         </TableCell>
@@ -311,9 +314,9 @@ export default async function AnalysisPage() {
                   <Coins className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-base md:text-lg">Income Summary</CardTitle>
+                  <CardTitle className="text-base md:text-lg">{t(locale, "analysis.incomeSummary")}</CardTitle>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Total income: <span className="font-semibold text-amber-600 dark:text-amber-400">{fc(totalIncome)}</span>
+                    {t(locale, "analysis.totalIncome")} <span className="font-semibold text-amber-600 dark:text-amber-400">{fc(totalIncome)}</span>
                   </p>
                 </div>
               </div>
@@ -323,10 +326,10 @@ export default async function AnalysisPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Asset</TableHead>
-                      <TableHead className="text-right">Entries</TableHead>
-                      <TableHead className="text-right">Income</TableHead>
-                      <TableHead className="text-right">% of Total</TableHead>
+                      <TableHead>{t(locale, "analysis.incomeAsset")}</TableHead>
+                      <TableHead className="text-right">{t(locale, "analysis.incomeEntries")}</TableHead>
+                      <TableHead className="text-right">{t(locale, "analysis.incomeAmount")}</TableHead>
+                      <TableHead className="text-right">{t(locale, "analysis.incomePercent")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

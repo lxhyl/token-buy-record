@@ -11,6 +11,8 @@ import {
 } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, Globe } from "lucide-react";
+import { useI18n } from "@/components/I18nProvider";
+import { TranslationKey } from "@/lib/i18n";
 
 interface CurrencySettingsProps {
   currency: SupportedCurrency;
@@ -18,10 +20,16 @@ interface CurrencySettingsProps {
 }
 
 const CURRENCIES: SupportedCurrency[] = ["USD", "CNY", "HKD"];
+const CURRENCY_NAME_KEYS: Record<SupportedCurrency, TranslationKey> = {
+  USD: "currency.usdName",
+  CNY: "currency.cnyName",
+  HKD: "currency.hkdName",
+};
 
 export function CurrencySettings({ currency, rates }: CurrencySettingsProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const { t, tInterpolate } = useI18n();
 
   const handleSelect = (selected: SupportedCurrency) => {
     if (selected === currency) return;
@@ -39,10 +47,9 @@ export function CurrencySettings({ currency, rates }: CurrencySettingsProps) {
             <Globe className="h-5 w-5" />
           </div>
           <div>
-            <CardTitle>Display Currency</CardTitle>
+            <CardTitle>{t("settings.displayCurrency")}</CardTitle>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Choose the currency for displaying values. Prices are stored in
-              USD and converted at current exchange rates.
+              {t("settings.displayCurrencyDesc")}
             </p>
           </div>
         </div>
@@ -53,6 +60,7 @@ export function CurrencySettings({ currency, rates }: CurrencySettingsProps) {
             const config = CURRENCY_CONFIG[code];
             const isActive = currency === code;
             const rate = rates[code] ?? 1;
+            const nameKey = CURRENCY_NAME_KEYS[code];
 
             return (
               <button
@@ -79,12 +87,12 @@ export function CurrencySettings({ currency, rates }: CurrencySettingsProps) {
                 )}
                 <span className="text-2xl font-bold">{config.symbol}</span>
                 <div>
-                  <p className="font-semibold">{config.name}</p>
+                  <p className="font-semibold">{t(nameKey)}</p>
                   <p className="text-sm text-muted-foreground">{config.code}</p>
                 </div>
                 {code !== "USD" && (
                   <p className="text-xs text-muted-foreground">
-                    1 USD = {rate.toFixed(2)} {code}
+                    {tInterpolate("currency.rateHint", { rate: rate.toFixed(2), code })}
                   </p>
                 )}
               </button>

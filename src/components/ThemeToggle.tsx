@@ -4,14 +4,17 @@ import { useTheme } from "@/components/ThemeProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sun, Moon, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/components/I18nProvider";
+import { TranslationKey } from "@/lib/i18n";
 
-const THEMES = [
-  { key: "light" as const, label: "Light", icon: Sun },
-  { key: "dark" as const, label: "Dark", icon: Moon },
+const THEMES: { key: "light" | "dark"; labelKey: TranslationKey; descKey: TranslationKey; icon: typeof Sun }[] = [
+  { key: "light", labelKey: "settings.light", descKey: "settings.lightDesc", icon: Sun },
+  { key: "dark", labelKey: "settings.dark", descKey: "settings.darkDesc", icon: Moon },
 ];
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useI18n();
 
   return (
     <Card>
@@ -21,16 +24,16 @@ export function ThemeToggle() {
             <Monitor className="h-5 w-5" />
           </div>
           <div>
-            <CardTitle>Appearance</CardTitle>
+            <CardTitle>{t("settings.appearance")}</CardTitle>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Choose between light and dark mode
+              {t("settings.appearanceDesc")}
             </p>
           </div>
         </div>
       </CardHeader>
       <CardContent className="pt-6">
         <div className="grid gap-3 sm:grid-cols-2 max-w-md">
-          {THEMES.map(({ key, label, icon: Icon }) => {
+          {THEMES.map(({ key, labelKey, descKey, icon: Icon }) => {
             const isActive = theme === key;
             return (
               <button
@@ -56,9 +59,9 @@ export function ThemeToggle() {
                   <Icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-semibold">{label}</p>
+                  <p className="font-semibold">{t(labelKey)}</p>
                   <p className="text-sm text-muted-foreground">
-                    {key === "light" ? "Default theme" : "Easy on the eyes"}
+                    {t(descKey)}
                   </p>
                 </div>
               </button>
