@@ -36,7 +36,7 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent">
             Dashboard
           </h1>
           <p className="text-sm md:text-base text-muted-foreground mt-1">
@@ -76,65 +76,65 @@ export default async function DashboardPage() {
               const hasExtra = depositCount > 0 || bondCount > 0;
               return (
                 <div className={`grid grid-cols-2 gap-3 md:gap-4 ${hasExtra ? "md:grid-cols-3" : ""}`}>
-                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-blue-50">
+                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-blue-50 dark:bg-blue-950">
                     <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white">
                       <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <p className="text-xl md:text-2xl font-bold text-blue-700">{holdings.length}</p>
-                      <p className="text-xs md:text-sm text-blue-600">Assets</p>
+                      <p className="text-xl md:text-2xl font-bold text-blue-700 dark:text-blue-300">{holdings.length}</p>
+                      <p className="text-xs md:text-sm text-blue-600 dark:text-blue-400">Assets</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-purple-50">
+                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-purple-50 dark:bg-purple-950">
                     <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500 text-white">
                       <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <p className="text-xl md:text-2xl font-bold text-purple-700">{transactions.length}</p>
-                      <p className="text-xs md:text-sm text-purple-600">Trades</p>
+                      <p className="text-xl md:text-2xl font-bold text-purple-700 dark:text-purple-300">{transactions.length}</p>
+                      <p className="text-xs md:text-sm text-purple-600 dark:text-purple-400">Trades</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-pink-50">
+                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-pink-50 dark:bg-pink-950">
                     <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-pink-500 text-white">
                       <Coins className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <p className="text-xl md:text-2xl font-bold text-pink-700">
+                      <p className="text-xl md:text-2xl font-bold text-pink-700 dark:text-pink-300">
                         {holdings.filter((h) => h.assetType === "crypto").length}
                       </p>
-                      <p className="text-xs md:text-sm text-pink-600">Crypto</p>
+                      <p className="text-xs md:text-sm text-pink-600 dark:text-pink-400">Crypto</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-cyan-50">
+                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-cyan-50 dark:bg-cyan-950">
                     <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500 text-white">
                       <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <p className="text-xl md:text-2xl font-bold text-cyan-700">
+                      <p className="text-xl md:text-2xl font-bold text-cyan-700 dark:text-cyan-300">
                         {holdings.filter((h) => h.assetType === "stock").length}
                       </p>
-                      <p className="text-xs md:text-sm text-cyan-600">Stocks</p>
+                      <p className="text-xs md:text-sm text-cyan-600 dark:text-cyan-400">Stocks</p>
                     </div>
                   </div>
                   {depositCount > 0 && (
-                    <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-green-50">
+                    <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-green-50 dark:bg-green-950">
                       <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-green-500 text-white">
                         <PiggyBank className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
                       <div>
-                        <p className="text-xl md:text-2xl font-bold text-green-700">{depositCount}</p>
-                        <p className="text-xs md:text-sm text-green-600">Deposits</p>
+                        <p className="text-xl md:text-2xl font-bold text-green-700 dark:text-green-300">{depositCount}</p>
+                        <p className="text-xs md:text-sm text-green-600 dark:text-green-400">Deposits</p>
                       </div>
                     </div>
                   )}
                   {bondCount > 0 && (
-                    <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-amber-50">
+                    <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-amber-50 dark:bg-amber-950">
                       <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white">
                         <Landmark className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
                       <div>
-                        <p className="text-xl md:text-2xl font-bold text-amber-700">{bondCount}</p>
-                        <p className="text-xs md:text-sm text-amber-600">Bonds</p>
+                        <p className="text-xl md:text-2xl font-bold text-amber-700 dark:text-amber-300">{bondCount}</p>
+                        <p className="text-xs md:text-sm text-amber-600 dark:text-amber-400">Bonds</p>
                       </div>
                     </div>
                   )}

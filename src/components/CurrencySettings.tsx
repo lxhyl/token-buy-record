@@ -62,7 +62,7 @@ export function CurrencySettings({ currency, rates }: CurrencySettingsProps) {
                 className={cn(
                   "relative flex flex-col items-start gap-2 rounded-xl border-2 p-4 text-left transition-all",
                   isActive
-                    ? "border-blue-500 bg-blue-50"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
                     : "border-transparent bg-muted/30 hover:border-muted-foreground/20 hover:bg-muted/50"
                 )}
               >

@@ -174,7 +174,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                   {hasIncome && (
                     <TableCell className="text-right">
                       {h.totalIncome > 0 ? (
-                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium bg-amber-50 text-amber-700">
+                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
                           <Coins className="h-3.5 w-3.5" />
                           {fc(h.totalIncome)}
                         </div>
@@ -184,8 +184,8 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                   <TableCell className="text-right">
                     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
                       h.unrealizedPnL >= 0
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-red-50 text-red-700"
+                        ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
+                        : "bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300"
                     }`}>
                       {h.unrealizedPnL >= 0 ? (
                         <TrendingUp className="h-3.5 w-3.5" />

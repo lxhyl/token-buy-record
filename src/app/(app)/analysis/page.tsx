@@ -123,7 +123,7 @@ export default async function AnalysisPage() {
                       <TableCell className="font-medium">{h.symbol}</TableCell>
                       <TableCell
                         className={`text-right ${
-                          h.unrealizedPnL >= 0 ? "text-green-600" : "text-red-600"
+                          h.unrealizedPnL >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                         }`}
                       >
                         <div className="flex items-center justify-end gap-1">
@@ -249,7 +249,7 @@ export default async function AnalysisPage() {
                           <TableRow key={a.symbol}>
                             <TableCell className="font-medium">{a.symbol}</TableCell>
                             <TableCell className="text-right">{tradeCount}</TableCell>
-                            <TableCell className="text-right text-orange-600 font-medium">
+                            <TableCell className="text-right text-orange-600 dark:text-orange-400 font-medium">
                               {fc(a.totalFees)}
                             </TableCell>
                             <TableCell className="text-right">
@@ -270,7 +270,7 @@ export default async function AnalysisPage() {
                         <TableCell className="text-right">
                           {marketAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0)}
                         </TableCell>
-                        <TableCell className="text-right text-orange-600">
+                        <TableCell className="text-right text-orange-600 dark:text-orange-400">
                           {fc(totalFees)}
                         </TableCell>
                         <TableCell className="text-right">
@@ -313,7 +313,7 @@ export default async function AnalysisPage() {
                 <div>
                   <CardTitle className="text-base md:text-lg">Income Summary</CardTitle>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Total income: <span className="font-semibold text-amber-600">{fc(totalIncome)}</span>
+                    Total income: <span className="font-semibold text-amber-600 dark:text-amber-400">{fc(totalIncome)}</span>
                   </p>
                 </div>
               </div>
@@ -334,7 +334,7 @@ export default async function AnalysisPage() {
                       <TableRow key={a.symbol}>
                         <TableCell className="font-medium">{a.symbol}</TableCell>
                         <TableCell className="text-right">{a.totalIncomes}</TableCell>
-                        <TableCell className="text-right text-amber-600 font-medium">
+                        <TableCell className="text-right text-amber-600 dark:text-amber-400 font-medium">
                           {fc(a.totalIncomeUsd)}
                         </TableCell>
                         <TableCell className="text-right">

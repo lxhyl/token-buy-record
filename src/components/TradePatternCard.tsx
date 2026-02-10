@@ -131,9 +131,10 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                       <TableCell className="text-right">{fc(a.buyTotalAmountUsd)}</TableCell>
                       <TableCell className="text-right">{a.sellTotalAmountUsd > 0 ? fc(a.sellTotalAmountUsd) : "-"}</TableCell>
                       <TableCell className="text-right">{a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}</TableCell>
-                      <TableCell className={`text-right font-medium ${net >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      <TableCell className={`text-right font-medium ${net >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
                         {fc(net)}
                       </TableCell>
+
                     </TableRow>
                   );
                 })}

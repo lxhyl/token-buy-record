@@ -104,20 +104,23 @@ export function PortfolioLineChart({
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#e5e7eb"
+                className="[&_line]:stroke-gray-200 dark:[&_line]:stroke-gray-700"
+                stroke="currentColor"
                 vertical={false}
               />
               <XAxis
                 dataKey="date"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "#9ca3af" }}
+                tick={{ fontSize: 12 }}
+                className="[&_text]:fill-gray-500 dark:[&_text]:fill-gray-400"
                 dy={10}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "#9ca3af" }}
+                tick={{ fontSize: 12 }}
+                className="[&_text]:fill-gray-500 dark:[&_text]:fill-gray-400"
                 tickFormatter={(value) => {
                   const converted = convertAmount(value, currency, rates);
                   if (Math.abs(converted) >= 1_000_000) {
