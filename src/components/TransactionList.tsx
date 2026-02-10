@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,26 @@ import { createCurrencyFormatter, formatNumber, formatDate } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { Pencil, Trash2, Plus, ArrowUpRight, ArrowDownRight, History, Coins } from "lucide-react";
 
+type TabFilter = "all" | "market" | "fixed-income";
+
+const TABS: { key: TabFilter; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "market", label: "Market" },
+  { key: "fixed-income", label: "Fixed Income" },
+];
+
+function isFixedIncome(t: Transaction) {
+  return t.assetType === "deposit" || t.assetType === "bond";
+}
+
+function getTradeTypeLabel(t: Transaction): string {
+  if (isFixedIncome(t)) {
+    if (t.tradeType === "buy") return "DEPOSIT";
+    if (t.tradeType === "sell") return "WITHDRAW";
+  }
+  return t.tradeType.toUpperCase();
+}
+
 interface TransactionListProps {
   transactions: Transaction[];
   currency: SupportedCurrency;
@@ -27,6 +47,7 @@ interface TransactionListProps {
 export function TransactionList({ transactions, currency, rates }: TransactionListProps) {
   const fc = createCurrencyFormatter(currency, rates);
   const [isPending, startTransition] = useTransition();
+  const [activeTab, setActiveTab] = useState<TabFilter>("all");
 
   const handleDelete = (id: number) => {
     if (confirm("Are you sure you want to delete this transaction?")) {
@@ -35,6 +56,14 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
       });
     }
   };
+
+  const filtered = transactions.filter((t) => {
+    if (activeTab === "market") return !isFixedIncome(t);
+    if (activeTab === "fixed-income") return isFixedIncome(t);
+    return true;
+  });
+
+  const showFixedIncomeColumns = activeTab === "fixed-income";
 
   return (
     <Card className="overflow-hidden">
@@ -56,7 +85,24 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        {transactions.length === 0 ? (
+        {/* Tab Filter */}
+        <div className="flex gap-1 px-4 md:px-6 pt-4 pb-2">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                activeTab === tab.key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
               <History className="h-8 w-8 text-muted-foreground" />
@@ -65,7 +111,11 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
               No transactions yet
             </p>
             <p className="text-sm text-muted-foreground mt-1 mb-4">
-              Add your first transaction to get started
+              {activeTab === "all"
+                ? "Add your first transaction to get started"
+                : activeTab === "market"
+                ? "No market (crypto/stock) transactions"
+                : "No fixed-income (deposit/bond) transactions"}
             </p>
             <Link href="/transactions/new">
               <Button>
@@ -82,14 +132,24 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                 <TableHead>Date</TableHead>
                 <TableHead>Asset</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+                {showFixedIncomeColumns ? (
+                  <>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Rate</TableHead>
+                    <TableHead className="text-right">Maturity</TableHead>
+                  </>
+                ) : (
+                  <>
+                    <TableHead className="text-right">Quantity</TableHead>
+                    <TableHead className="text-right">Price</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </>
+                )}
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.map((t) => (
+              {filtered.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="text-muted-foreground">
                     {formatDate(new Date(t.tradeDate))}
@@ -130,18 +190,38 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                       ) : (
                         <ArrowUpRight className="h-3 w-3" />
                       )}
-                      {t.tradeType.toUpperCase()}
+                      {getTradeTypeLabel(t)}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {parseFloat(t.quantity) > 0 ? formatNumber(parseFloat(t.quantity), 8) : "-"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {parseFloat(t.price) > 0 ? fc(parseFloat(t.price)) : "-"}
-                  </TableCell>
-                  <TableCell className="text-right font-semibold">
-                    {fc(parseFloat(t.totalAmount))}
-                  </TableCell>
+                  {showFixedIncomeColumns ? (
+                    <>
+                      <TableCell className="text-right font-semibold">
+                        {fc(parseFloat(t.totalAmount))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {t.interestRate && parseFloat(t.interestRate) > 0
+                          ? `${parseFloat(t.interestRate).toFixed(2)}%`
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {t.maturityDate
+                          ? formatDate(new Date(t.maturityDate))
+                          : "-"}
+                      </TableCell>
+                    </>
+                  ) : (
+                    <>
+                      <TableCell className="text-right font-medium">
+                        {parseFloat(t.quantity) > 0 ? formatNumber(parseFloat(t.quantity), 8) : "-"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {parseFloat(t.price) > 0 ? fc(parseFloat(t.price)) : "-"}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {fc(parseFloat(t.totalAmount))}
+                      </TableCell>
+                    </>
+                  )}
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       <Link href={`/transactions/${t.id}/edit`}>

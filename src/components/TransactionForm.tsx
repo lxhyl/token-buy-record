@@ -147,8 +147,8 @@ export function TransactionForm({
                   required
                   className="h-11"
                 >
-                  <option value="buy">Buy</option>
-                  <option value="sell">Sell</option>
+                  <option value="buy">{isFixedIncome ? "Deposit" : "Buy"}</option>
+                  <option value="sell">{isFixedIncome ? "Withdraw" : "Sell"}</option>
                   <option value="income">Income</option>
                 </Select>
               </div>
