@@ -111,4 +111,85 @@ await sql`
   END $$
 `;
 
+// ── Auth tables ──────────────────────────────────────────────
+
+await sql`
+  CREATE TABLE IF NOT EXISTS "users" (
+    "id" text PRIMARY KEY NOT NULL,
+    "name" text,
+    "email" text NOT NULL UNIQUE,
+    "emailVerified" timestamp,
+    "image" text
+  )
+`;
+
+await sql`
+  CREATE TABLE IF NOT EXISTS "accounts" (
+    "userId" text NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+    "type" text NOT NULL,
+    "provider" text NOT NULL,
+    "providerAccountId" text NOT NULL,
+    "refresh_token" text,
+    "access_token" text,
+    "expires_at" integer,
+    "token_type" text,
+    "scope" text,
+    "id_token" text,
+    "session_state" text,
+    PRIMARY KEY ("provider", "providerAccountId")
+  )
+`;
+
+// ── Add user_id to transactions ──────────────────────────────
+
+await sql`
+  DO $$ BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'transactions' AND column_name = 'user_id'
+    ) THEN
+      ALTER TABLE "transactions"
+        ADD COLUMN "user_id" text NOT NULL DEFAULT 'legacy';
+    END IF;
+  END $$
+`;
+
+// ── Add user_id to app_settings ──────────────────────────────
+
+await sql`
+  DO $$ BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'app_settings' AND column_name = 'user_id'
+    ) THEN
+      ALTER TABLE "app_settings"
+        ADD COLUMN "user_id" text NOT NULL DEFAULT 'legacy';
+    END IF;
+  END $$
+`;
+
+// Drop old unique constraint on app_settings.key (now composite with user_id)
+await sql`
+  DO $$ BEGIN
+    IF EXISTS (
+      SELECT 1 FROM pg_constraint WHERE conname = 'app_settings_key_unique'
+    ) THEN
+      ALTER TABLE "app_settings"
+        DROP CONSTRAINT "app_settings_key_unique";
+    END IF;
+  END $$
+`;
+
+// Add composite unique on (user_id, key)
+await sql`
+  DO $$ BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint WHERE conname = 'app_settings_user_key_unique'
+    ) THEN
+      ALTER TABLE "app_settings"
+        ADD CONSTRAINT "app_settings_user_key_unique" UNIQUE("user_id", "key");
+    END IF;
+  END $$
+`;
+
 console.log("Migrations complete");

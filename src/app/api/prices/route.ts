@@ -1,15 +1,28 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { transactions, currentPrices } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 import { fetchAllPrices } from "@/lib/price-service";
+import { auth } from "@/lib/auth";
 
 /**
  * GET /api/prices - Fetch latest prices for all held assets and update DB
  */
 export async function GET() {
   try {
-    // 1. Get unique symbols from transactions
-    const allTx = await db.select().from(transactions);
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 1. Get unique symbols from user's transactions
+    const allTx = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.userId, session.user.id));
+
     const assetMap = new Map<string, string>();
     for (const tx of allTx) {
       if (!assetMap.has(tx.symbol)) {

@@ -5,18 +5,56 @@ import {
   decimal,
   timestamp,
   text,
+  integer,
+  primaryKey,
 } from "drizzle-orm/pg-core";
+import type { AdapterAccountType } from "next-auth/adapters";
 
 export const ASSET_TYPES = ["crypto", "stock", "deposit", "bond"] as const;
 export const TRADE_TYPES = ["buy", "sell", "income"] as const;
 export const SUB_TYPES = ["fixed", "demand"] as const;
 
+// ── Auth tables ──────────────────────────────────────────────
+
+export const users = pgTable("users", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name"),
+  email: text("email").unique().notNull(),
+  emailVerified: timestamp("emailVerified", { mode: "date" }),
+  image: text("image"),
+});
+
+export const accounts = pgTable(
+  "accounts",
+  {
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type").$type<AdapterAccountType>().notNull(),
+    provider: text("provider").notNull(),
+    providerAccountId: text("providerAccountId").notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: text("token_type"),
+    scope: text("scope"),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
+  },
+  (account) => [
+    primaryKey({ columns: [account.provider, account.providerAccountId] }),
+  ]
+);
+
+// ── App tables ───────────────────────────────────────────────
+
 export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
   symbol: varchar("symbol", { length: 20 }).notNull(),
   name: varchar("name", { length: 100 }),
-  assetType: varchar("asset_type", { length: 10 }).notNull(), // 'crypto' | 'stock' | 'deposit' | 'bond'
-  tradeType: varchar("trade_type", { length: 10 }).notNull(), // 'buy' | 'sell' | 'income'
+  assetType: varchar("asset_type", { length: 10 }).notNull(),
+  tradeType: varchar("trade_type", { length: 10 }).notNull(),
   quantity: decimal("quantity", { precision: 18, scale: 8 }).notNull(),
   price: decimal("price", { precision: 18, scale: 8 }).notNull(),
   totalAmount: decimal("total_amount", { precision: 18, scale: 2 }).notNull(),
@@ -39,7 +77,8 @@ export const currentPrices = pgTable("current_prices", {
 
 export const appSettings = pgTable("app_settings", {
   id: serial("id").primaryKey(),
-  key: varchar("key", { length: 100 }).notNull().unique(),
+  userId: text("user_id").notNull(),
+  key: varchar("key", { length: 100 }).notNull(),
   value: text("value").notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Navigation } from "@/components/Navigation";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { SplashScreen } from "@/components/SplashScreen";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -111,8 +110,7 @@ export default function RootLayout({
           <ToastProvider>
             <SplashScreen />
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-              <Navigation />
-              <main className="container mx-auto px-4 py-6 md:py-8 pb-24 md:pb-8">{children}</main>
+              {children}
             </div>
             <ServiceWorkerRegister />
           </ToastProvider>

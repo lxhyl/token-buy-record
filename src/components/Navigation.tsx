@@ -10,9 +10,10 @@ import {
   Settings,
   TrendingUp,
 } from "lucide-react";
+import { UserMenu } from "@/components/UserMenu";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/analysis", label: "Analysis", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -27,7 +28,7 @@ export function Navigation() {
       <nav className="sticky top-0 z-50 border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl hidden md:block">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href="/dashboard" className="flex items-center gap-2 group">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25 transition-transform group-hover:scale-105">
                 <TrendingUp className="h-5 w-5" />
               </div>
@@ -41,7 +42,7 @@ export function Navigation() {
                 const Icon = item.icon;
                 const isActive =
                   pathname === item.href ||
-                  (item.href !== "/" && pathname.startsWith(item.href));
+                  pathname.startsWith(item.href + "/");
 
                 return (
                   <Link
@@ -60,14 +61,16 @@ export function Navigation() {
                 );
               })}
             </div>
+
+            <UserMenu />
           </div>
         </div>
       </nav>
 
       {/* Mobile: compact top header + bottom tab bar */}
       <nav className="sticky top-0 z-50 border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl md:hidden">
-        <div className="flex h-12 items-center justify-center px-4">
-          <Link href="/" className="flex items-center gap-2">
+        <div className="flex h-12 items-center justify-between px-4">
+          <Link href="/dashboard" className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 text-white">
               <TrendingUp className="h-4 w-4" />
             </div>
@@ -75,6 +78,7 @@ export function Navigation() {
               TradeTracker
             </span>
           </Link>
+          <UserMenu />
         </div>
       </nav>
 
@@ -85,7 +89,7 @@ export function Navigation() {
             const Icon = item.icon;
             const isActive =
               pathname === item.href ||
-              (item.href !== "/" && pathname.startsWith(item.href));
+              pathname.startsWith(item.href + "/");
 
             return (
               <Link

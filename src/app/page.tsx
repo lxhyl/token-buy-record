@@ -1,157 +1,104 @@
-import { getTransactions, getLatestPrices } from "@/actions/transactions";
-import { getDisplayCurrency } from "@/actions/settings";
-import { getExchangeRates } from "@/lib/currency";
-import {
-  calculateHoldings,
-  calculateFixedIncomeHoldings,
-  calculatePortfolioSummary,
-  calculateAllocationData,
-} from "@/lib/calculations";
-import { StatsCards } from "@/components/StatsCards";
-import { AllocationPieChart } from "@/components/PieChart";
-import { HoldingsTable } from "@/components/HoldingsTable";
-import { FixedIncomeTable } from "@/components/FixedIncomeTable";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Sparkles, TrendingUp, Coins, BarChart3, Landmark, PiggyBank } from "lucide-react";
+import { redirect } from "next/navigation";
+import { auth, signIn } from "@/lib/auth";
+import { TrendingUp, BarChart3, Shield, Moon } from "lucide-react";
 
-export const dynamic = "force-dynamic";
-
-export default async function DashboardPage() {
-  const [transactions, currentPrices, currency, rates] = await Promise.all([
-    getTransactions(),
-    getLatestPrices(),
-    getDisplayCurrency(),
-    getExchangeRates(),
-  ]);
-
-  const holdings = calculateHoldings(transactions, currentPrices, rates);
-  const fixedIncomeHoldings = calculateFixedIncomeHoldings(transactions, rates);
-  const summary = calculatePortfolioSummary(holdings, fixedIncomeHoldings);
-  const allocationData = calculateAllocationData(holdings, fixedIncomeHoldings);
+export default async function LandingPage() {
+  const session = await auth();
+  if (session?.user) {
+    redirect("/dashboard");
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-            Dashboard
-          </h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-1">
-            Overview of your trading portfolio
-          </p>
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-16">
+      {/* Hero */}
+      <div className="flex flex-col items-center text-center max-w-2xl">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25 mb-6">
+          <TrendingUp className="h-8 w-8" />
         </div>
-        <Link href="/transactions/new" className="shrink-0">
-          <Button size="sm" className="md:h-11 md:px-6">
-            <Plus className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2" />
-            <span className="hidden sm:inline">Add Transaction</span>
-            <span className="sm:hidden">Add</span>
-          </Button>
-        </Link>
+        <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+          TradeTracker
+        </h1>
+        <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-lg">
+          Track stocks, crypto, deposits, and bonds in one place.
+          Real-time prices, portfolio analysis, and beautiful charts.
+        </p>
+
+        {/* Sign-in button */}
+        <form
+          action={async () => {
+            "use server";
+            await signIn("google", { redirectTo: "/dashboard" });
+          }}
+        >
+          <button
+            type="submit"
+            className="inline-flex items-center gap-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-6 py-3 text-base font-medium shadow-sm hover:shadow-md transition-all hover:scale-[1.02]"
+          >
+            <svg className="h-5 w-5" viewBox="0 0 24 24">
+              <path
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+                fill="#4285F4"
+              />
+              <path
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                fill="#34A853"
+              />
+              <path
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                fill="#FBBC05"
+              />
+              <path
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                fill="#EA4335"
+              />
+            </svg>
+            Sign in with Google
+          </button>
+        </form>
       </div>
 
-      {/* Stats Cards */}
-      <StatsCards summary={summary} currency={currency} rates={rates} />
-
-      {/* Charts Row */}
-      <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
-        <AllocationPieChart data={allocationData} currency={currency} rates={rates} />
-
-        {/* Quick Stats Card */}
-        <Card>
-          <CardHeader className="border-b bg-muted/30">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <CardTitle>Quick Stats</CardTitle>
+      {/* Feature highlights */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-16 max-w-4xl w-full">
+        {[
+          {
+            icon: TrendingUp,
+            title: "Multi-Asset Tracking",
+            desc: "Stocks, crypto, deposits & bonds",
+            color: "from-blue-500 to-cyan-500",
+          },
+          {
+            icon: BarChart3,
+            title: "Real-Time Prices",
+            desc: "Auto-fetched market data",
+            color: "from-purple-500 to-pink-500",
+          },
+          {
+            icon: Shield,
+            title: "Portfolio Analysis",
+            desc: "P&L, allocation & trade insights",
+            color: "from-amber-500 to-orange-500",
+          },
+          {
+            icon: Moon,
+            title: "Dark Mode",
+            desc: "Beautiful light & dark themes",
+            color: "from-green-500 to-emerald-500",
+          },
+        ].map((f) => (
+          <div
+            key={f.title}
+            className="flex flex-col items-center text-center p-6 rounded-2xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-100 dark:border-gray-800"
+          >
+            <div
+              className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${f.color} text-white mb-3`}
+            >
+              <f.icon className="h-5 w-5" />
             </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            {(() => {
-              const depositCount = fixedIncomeHoldings.filter((h) => h.assetType === "deposit").length;
-              const bondCount = fixedIncomeHoldings.filter((h) => h.assetType === "bond").length;
-              const hasExtra = depositCount > 0 || bondCount > 0;
-              return (
-                <div className={`grid grid-cols-2 gap-3 md:gap-4 ${hasExtra ? "md:grid-cols-3" : ""}`}>
-                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-blue-50">
-                    <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white">
-                      <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xl md:text-2xl font-bold text-blue-700">{holdings.length}</p>
-                      <p className="text-xs md:text-sm text-blue-600">Assets</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-purple-50">
-                    <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500 text-white">
-                      <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xl md:text-2xl font-bold text-purple-700">{transactions.length}</p>
-                      <p className="text-xs md:text-sm text-purple-600">Trades</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-pink-50">
-                    <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-pink-500 text-white">
-                      <Coins className="h-4 w-4 md:h-5 md:w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xl md:text-2xl font-bold text-pink-700">
-                        {holdings.filter((h) => h.assetType === "crypto").length}
-                      </p>
-                      <p className="text-xs md:text-sm text-pink-600">Crypto</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-cyan-50">
-                    <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500 text-white">
-                      <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xl md:text-2xl font-bold text-cyan-700">
-                        {holdings.filter((h) => h.assetType === "stock").length}
-                      </p>
-                      <p className="text-xs md:text-sm text-cyan-600">Stocks</p>
-                    </div>
-                  </div>
-                  {depositCount > 0 && (
-                    <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-green-50">
-                      <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-green-500 text-white">
-                        <PiggyBank className="h-4 w-4 md:h-5 md:w-5" />
-                      </div>
-                      <div>
-                        <p className="text-xl md:text-2xl font-bold text-green-700">{depositCount}</p>
-                        <p className="text-xs md:text-sm text-green-600">Deposits</p>
-                      </div>
-                    </div>
-                  )}
-                  {bondCount > 0 && (
-                    <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-amber-50">
-                      <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white">
-                        <Landmark className="h-4 w-4 md:h-5 md:w-5" />
-                      </div>
-                      <div>
-                        <p className="text-xl md:text-2xl font-bold text-amber-700">{bondCount}</p>
-                        <p className="text-xs md:text-sm text-amber-600">Bonds</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-          </CardContent>
-        </Card>
+            <h3 className="font-semibold mb-1">{f.title}</h3>
+            <p className="text-sm text-muted-foreground">{f.desc}</p>
+          </div>
+        ))}
       </div>
-
-      {/* Holdings Table */}
-      <HoldingsTable holdings={holdings} currency={currency} rates={rates} />
-
-      {/* Fixed-Income Holdings */}
-      {fixedIncomeHoldings.length > 0 && (
-        <FixedIncomeTable holdings={fixedIncomeHoldings} currency={currency} rates={rates} />
-      )}
     </div>
   );
 }

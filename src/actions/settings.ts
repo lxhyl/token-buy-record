@@ -3,15 +3,23 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { appSettings } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { SupportedCurrency } from "@/lib/currency";
+import { getRequiredUser } from "@/lib/auth-utils";
 
 export async function getDisplayCurrency(): Promise<SupportedCurrency> {
   try {
+    const userId = await getRequiredUser();
+
     const result = await db
       .select()
       .from(appSettings)
-      .where(eq(appSettings.key, "displayCurrency"));
+      .where(
+        and(
+          eq(appSettings.userId, userId),
+          eq(appSettings.key, "displayCurrency")
+        )
+      );
 
     const value = result[0]?.value;
     if (value === "CNY" || value === "HKD" || value === "USD") {
@@ -24,19 +32,22 @@ export async function getDisplayCurrency(): Promise<SupportedCurrency> {
 }
 
 export async function setDisplayCurrency(currency: SupportedCurrency) {
+  const userId = await getRequiredUser();
+
   await db
     .insert(appSettings)
     .values({
+      userId,
       key: "displayCurrency",
       value: currency,
       updatedAt: new Date(),
     })
     .onConflictDoUpdate({
-      target: appSettings.key,
+      target: [appSettings.userId, appSettings.key],
       set: { value: currency, updatedAt: new Date() },
     });
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath("/holdings");
   revalidatePath("/transactions");
   revalidatePath("/analysis");

@@ -2,11 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { transactions, currentPrices, NewTransaction } from "@/lib/schema";
-import { eq, desc } from "drizzle-orm";
+import { transactions, currentPrices } from "@/lib/schema";
+import { eq, desc, and } from "drizzle-orm";
 import { fetchAllPrices } from "@/lib/price-service";
+import { getRequiredUser } from "@/lib/auth-utils";
 
 export async function createTransaction(formData: FormData) {
+  const userId = await getRequiredUser();
+
   const symbol = formData.get("symbol") as string;
   const name = formData.get("name") as string;
   const assetType = formData.get("assetType") as string;
@@ -36,6 +39,7 @@ export async function createTransaction(formData: FormData) {
   }
 
   await db.insert(transactions).values({
+    userId,
     symbol: symbol.toUpperCase(),
     name: name || null,
     assetType,
@@ -52,13 +56,15 @@ export async function createTransaction(formData: FormData) {
     subType: subType || null,
   });
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath("/transactions");
   revalidatePath("/holdings");
   revalidatePath("/analysis");
 }
 
 export async function updateTransaction(id: number, formData: FormData) {
+  const userId = await getRequiredUser();
+
   const symbol = formData.get("symbol") as string;
   const name = formData.get("name") as string;
   const assetType = formData.get("assetType") as string;
@@ -103,35 +109,44 @@ export async function updateTransaction(id: number, formData: FormData) {
       maturityDate: maturityDateRaw ? new Date(maturityDateRaw) : null,
       subType: subType || null,
     })
-    .where(eq(transactions.id, id));
+    .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath("/transactions");
   revalidatePath("/holdings");
   revalidatePath("/analysis");
 }
 
 export async function deleteTransaction(id: number) {
-  await db.delete(transactions).where(eq(transactions.id, id));
+  const userId = await getRequiredUser();
 
-  revalidatePath("/");
+  await db
+    .delete(transactions)
+    .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
+
+  revalidatePath("/dashboard");
   revalidatePath("/transactions");
   revalidatePath("/holdings");
   revalidatePath("/analysis");
 }
 
 export async function getTransactions() {
+  const userId = await getRequiredUser();
+
   return await db
     .select()
     .from(transactions)
+    .where(eq(transactions.userId, userId))
     .orderBy(desc(transactions.tradeDate));
 }
 
 export async function getTransaction(id: number) {
+  const userId = await getRequiredUser();
+
   const result = await db
     .select()
     .from(transactions)
-    .where(eq(transactions.id, id));
+    .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
   return result[0] || null;
 }
 
@@ -153,7 +168,7 @@ export async function updateCurrentPrice(symbol: string, price: string) {
     });
   }
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath("/holdings");
   revalidatePath("/analysis");
 }
@@ -177,10 +192,15 @@ const PRICE_STALE_MS = 60 * 1000; // 1 minute
  * otherwise return cached DB prices.
  */
 export async function getLatestPrices() {
-  const allTx = await db.select().from(transactions);
+  const userId = await getRequiredUser();
+
+  const allTx = await db
+    .select()
+    .from(transactions)
+    .where(eq(transactions.userId, userId));
   const dbPrices = await db.select().from(currentPrices);
 
-  // Build asset list from transactions
+  // Build asset list from user's transactions
   const assetMap = new Map<string, string>();
   for (const tx of allTx) {
     if (!assetMap.has(tx.symbol)) {
