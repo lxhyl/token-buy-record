@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/Navigation";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { SplashScreen } from "@/components/SplashScreen";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -99,42 +100,17 @@ export default function RootLayout({
                 0% { transform: translateX(-100%); }
                 100% { transform: translateX(200%); }
               }
-              #app-splash.loaded { opacity: 0; pointer-events: none; }
             `,
           }}
         />
       </head>
       <body className={inter.className}>
-        {/* Splash screen: visible immediately, hidden once React hydrates */}
-        <div id="app-splash">
-          <div className="splash-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-              <polyline points="16 7 22 7 22 13" />
-            </svg>
-          </div>
-          <div className="splash-title">TradeTracker</div>
-          <div className="splash-bar" />
-        </div>
+        <SplashScreen />
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
           <Navigation />
           <main className="container mx-auto px-4 py-6 md:py-8 pb-24 md:pb-8">{children}</main>
         </div>
         <ServiceWorkerRegister />
-        {/* Remove splash screen once page content is ready */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                var s = document.getElementById('app-splash');
-                if (s) {
-                  s.classList.add('loaded');
-                  setTimeout(function() { s.remove(); }, 350);
-                }
-              })();
-            `,
-          }}
-        />
       </body>
     </html>
   );
