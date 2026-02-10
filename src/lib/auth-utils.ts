@@ -1,9 +1,13 @@
 import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-/** Returns the authenticated userId, or "anonymous" if not signed in. */
+/** Returns the authenticated userId, or redirects to landing page. */
 export async function getUserId(): Promise<string> {
   const session = await auth();
-  return session?.user?.id ?? "anonymous";
+  if (!session?.user?.id) {
+    redirect("/");
+  }
+  return session.user.id;
 }
 
 export async function getOptionalUser() {

@@ -13,7 +13,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   }),
   providers: [Google],
   session: { strategy: "jwt" },
+  pages: {
+    signIn: "/",
+  },
   callbacks: {
+    authorized({ auth: session, request: { nextUrl } }) {
+      const isLoggedIn = !!session?.user;
+      const isLanding = nextUrl.pathname === "/";
+      if (isLanding) return true; // always allow landing page
+      if (!isLoggedIn) return false; // redirect to signIn page (/)
+      return true;
+    },
     jwt({ token, user }) {
       if (user?.id) {
         token.userId = user.id;

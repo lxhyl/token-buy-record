@@ -46,7 +46,7 @@ export function AccountSection() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => signOut({ callbackUrl: "/dashboard" })}
+              onClick={() => signOut({ callbackUrl: "/" })}
             >
               <LogOut className="h-4 w-4 mr-2" />
               Sign out
