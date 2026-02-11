@@ -17,7 +17,7 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <div className="space-y-6 md:space-y-8 max-w-2xl">
+    <div className="space-y-6 md:space-y-8 max-w-2xl mx-auto">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold">
