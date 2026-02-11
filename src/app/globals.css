@@ -64,6 +64,9 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+  .dark select {
+    background-color: hsl(var(--background));
+  }
   .dark select option {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));

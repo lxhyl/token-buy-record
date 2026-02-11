@@ -298,11 +298,13 @@ const translations = {
   "settings.account": { en: "Account", zh: "账户" },
   "settings.signInHint": { en: "Sign in to sync your data across devices", zh: "登录以在多设备间同步数据" },
   "settings.appearance": { en: "Appearance", zh: "外观" },
-  "settings.appearanceDesc": { en: "Choose between light and dark mode", zh: "选择浅色或深色模式" },
+  "settings.appearanceDesc": { en: "Choose your preferred theme", zh: "选择您偏好的主题" },
   "settings.light": { en: "Light", zh: "浅色" },
   "settings.dark": { en: "Dark", zh: "深色" },
+  "settings.system": { en: "System", zh: "跟随系统" },
   "settings.lightDesc": { en: "Default theme", zh: "默认主题" },
   "settings.darkDesc": { en: "Easy on the eyes", zh: "护眼模式" },
+  "settings.systemDesc": { en: "Follow OS setting", zh: "自动跟随系统设置" },
   "settings.language": { en: "Language", zh: "语言" },
   "settings.languageDesc": { en: "Choose your preferred display language", zh: "选择您的显示语言" },
   "settings.displayCurrency": { en: "Display Currency", zh: "显示货币" },
@@ -310,6 +312,8 @@ const translations = {
     en: "Choose the currency for displaying values. Prices are stored in USD and converted at current exchange rates.",
     zh: "选择显示价值的货币。价格以美元存储并按实时汇率换算。",
   },
+  "settings.preferences": { en: "Preferences", zh: "偏好设置" },
+  "settings.preferencesDesc": { en: "Customize your experience", zh: "自定义您的使用体验" },
 
   // ── Currency ─────────────────────────────────────────────
   "currency.usdName": { en: "US Dollar", zh: "美元" },

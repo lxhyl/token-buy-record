@@ -2,7 +2,7 @@
 
 import { useSession, signIn, signOut } from "next-auth/react";
 import Image from "next/image";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { User, LogOut } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
@@ -13,56 +13,51 @@ export function AccountSection() {
 
   return (
     <Card>
-      <CardHeader className="border-b bg-muted/30">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white">
-            <User className="h-5 w-5" />
-          </div>
-          <CardTitle>{t("settings.account")}</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-6">
+      <CardContent className="p-5">
         {status === "loading" ? (
-          <div className="h-12 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
+          <div className="h-12 rounded-lg bg-muted animate-pulse" />
         ) : session?.user ? (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
               {session.user.image ? (
                 <Image
                   src={session.user.image}
                   alt={session.user.name || t("common.user")}
                   width={40}
                   height={40}
-                  className="rounded-full"
+                  className="rounded-full shrink-0"
                 />
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white font-medium">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white font-medium">
                   {(session.user.name?.[0] || session.user.email?.[0] || "U").toUpperCase()}
                 </div>
               )}
-              <div>
-                <p className="font-medium">{session.user.name}</p>
-                <p className="text-sm text-muted-foreground">{session.user.email}</p>
+              <div className="min-w-0">
+                <p className="font-medium truncate">{session.user.name}</p>
+                <p className="text-sm text-muted-foreground truncate">
+                  {session.user.email}
+                </p>
               </div>
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => signOut({ callbackUrl: "/" })}
+              className="shrink-0"
             >
               <LogOut className="h-4 w-4 mr-2" />
               {t("common.signOut")}
             </Button>
           </div>
         ) : (
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
               {t("settings.signInHint")}
             </p>
             <Button
               variant="outline"
               onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-              className="gap-2"
+              className="gap-2 shrink-0"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24">
                 <path
