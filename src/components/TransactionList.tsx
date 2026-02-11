@@ -346,10 +346,10 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                     <TableCell>
                       <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
                         tx.tradeType === "buy"
-                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
                           : tx.tradeType === "income"
-                          ? "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
-                          : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+                          ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                          : "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300"
                       }`}>
                         {tx.tradeType === "buy" ? (
                           <ArrowDownRight className="h-3 w-3" />
@@ -436,7 +436,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 dark:bg-red-950">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/40">
                 <AlertTriangle className="h-5 w-5 text-red-500" />
               </div>
               <div>

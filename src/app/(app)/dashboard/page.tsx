@@ -79,7 +79,7 @@ export default async function DashboardPage() {
               const hasExtra = depositCount > 0 || bondCount > 0;
               return (
                 <div className={`grid grid-cols-2 gap-3 md:gap-4 ${hasExtra ? "md:grid-cols-3" : ""}`}>
-                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-blue-50 dark:bg-blue-950">
+                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40">
                     <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500 text-white">
                       <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
@@ -88,7 +88,7 @@ export default async function DashboardPage() {
                       <p className="text-xs md:text-sm text-blue-600 dark:text-blue-400">{t(locale, "dashboard.assets")}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-purple-50 dark:bg-purple-950">
+                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-purple-50 dark:bg-purple-950/40">
                     <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500 text-white">
                       <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
@@ -97,7 +97,7 @@ export default async function DashboardPage() {
                       <p className="text-xs md:text-sm text-purple-600 dark:text-purple-400">{t(locale, "dashboard.trades")}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-pink-50 dark:bg-pink-950">
+                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-pink-50 dark:bg-pink-950/40">
                     <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-pink-500 text-white">
                       <Coins className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
@@ -108,7 +108,7 @@ export default async function DashboardPage() {
                       <p className="text-xs md:text-sm text-pink-600 dark:text-pink-400">{t(locale, "dashboard.crypto")}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-cyan-50 dark:bg-cyan-950">
+                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-cyan-50 dark:bg-cyan-950/40">
                     <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500 text-white">
                       <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
@@ -120,7 +120,7 @@ export default async function DashboardPage() {
                     </div>
                   </div>
                   {depositCount > 0 && (
-                    <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-green-50 dark:bg-green-950">
+                    <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-green-50 dark:bg-green-950/40">
                       <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-green-500 text-white">
                         <PiggyBank className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
@@ -131,7 +131,7 @@ export default async function DashboardPage() {
                     </div>
                   )}
                   {bondCount > 0 && (
-                    <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-amber-50 dark:bg-amber-950">
+                    <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40">
                       <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white">
                         <Landmark className="h-4 w-4 md:h-5 md:w-5" />
                       </div>

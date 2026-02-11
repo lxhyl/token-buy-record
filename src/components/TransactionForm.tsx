@@ -172,7 +172,7 @@ export function TransactionForm({
                   onClick={() => setIncomeMode("cash")}
                   className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                     incomeMode === "cash"
-                      ? "border-amber-500 bg-amber-50 dark:bg-amber-950"
+                      ? "border-amber-500 bg-amber-50 dark:bg-amber-950/40"
                       : "border-muted hover:border-amber-300"
                   }`}
                 >
@@ -191,7 +191,7 @@ export function TransactionForm({
                   onClick={() => setIncomeMode("asset")}
                   className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                     incomeMode === "asset"
-                      ? "border-amber-500 bg-amber-50 dark:bg-amber-950"
+                      ? "border-amber-500 bg-amber-50 dark:bg-amber-950/40"
                       : "border-muted hover:border-amber-300"
                   }`}
                 >
@@ -222,7 +222,7 @@ export function TransactionForm({
                   onClick={() => setSubType("fixed")}
                   className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                     subType === "fixed"
-                      ? "border-green-500 bg-green-50 dark:bg-green-950"
+                      ? "border-green-500 bg-green-50 dark:bg-green-950/40"
                       : "border-muted hover:border-green-300"
                   }`}
                 >
@@ -241,7 +241,7 @@ export function TransactionForm({
                   onClick={() => setSubType("demand")}
                   className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                     subType === "demand"
-                      ? "border-green-500 bg-green-50 dark:bg-green-950"
+                      ? "border-green-500 bg-green-50 dark:bg-green-950/40"
                       : "border-muted hover:border-green-300"
                   }`}
                 >

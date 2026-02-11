@@ -204,7 +204,7 @@ export function LandingPage() {
                         <p className="text-sm text-muted-foreground">{t("landing.portfolioValue")}</p>
                         <p className="text-2xl font-bold">$284,520.00</p>
                       </div>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                         <TrendingUp className="h-3 w-3" />
                         +31.5%
                       </span>

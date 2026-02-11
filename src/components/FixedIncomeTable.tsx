@@ -28,7 +28,7 @@ function getStatus(maturityDate: Date | null): {
   className: string;
 } {
   if (!maturityDate) {
-    return { labelKey: "fixedIncome.active", className: "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300" };
+    return { labelKey: "fixedIncome.active", className: "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300" };
   }
 
   const now = new Date();
@@ -39,9 +39,9 @@ function getStatus(maturityDate: Date | null): {
     return { labelKey: "fixedIncome.matured", className: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400" };
   }
   if (diffDays < 30) {
-    return { labelKey: "fixedIncome.maturingSoon", className: "bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300" };
+    return { labelKey: "fixedIncome.maturingSoon", className: "bg-yellow-50 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-300" };
   }
-  return { labelKey: "fixedIncome.active", className: "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300" };
+  return { labelKey: "fixedIncome.active", className: "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300" };
 }
 
 export function FixedIncomeTable({
@@ -127,14 +127,14 @@ export function FixedIncomeTable({
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                               h.subType === "demand"
-                                ? "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
-                                : "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
+                                ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
+                                : "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300"
                             }`}
                           >
                             {h.subType === "demand" ? t("fixedIncome.demand") : t("fixedIncome.fixed")}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300">
                             {t("fixedIncome.bond")}
                           </span>
                         )}
@@ -149,7 +149,7 @@ export function FixedIncomeTable({
                       </TableCell>
                       <TableCell className="text-right">
                         {h.totalIncome > 0 ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300">
                             {fc(h.totalIncome)}
                           </span>
                         ) : (

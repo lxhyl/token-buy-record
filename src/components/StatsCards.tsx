@@ -23,7 +23,7 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
       icon: DollarSign,
       gradient: "from-blue-500 to-blue-600",
       shadowColor: "shadow-blue-500/25",
-      bgLight: "bg-blue-50 dark:bg-blue-950",
+      bgLight: "bg-blue-50 dark:bg-blue-950/40",
       iconColor: "text-blue-600 dark:text-blue-400",
     },
     {
@@ -32,7 +32,7 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
       icon: PiggyBank,
       gradient: "from-purple-500 to-purple-600",
       shadowColor: "shadow-purple-500/25",
-      bgLight: "bg-purple-50 dark:bg-purple-950",
+      bgLight: "bg-purple-50 dark:bg-purple-950/40",
       iconColor: "text-purple-600 dark:text-purple-400",
     },
     {
@@ -46,7 +46,7 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
       shadowColor: summary.totalUnrealizedPnL >= 0
         ? "shadow-emerald-500/25"
         : "shadow-red-500/25",
-      bgLight: summary.totalUnrealizedPnL >= 0 ? "bg-emerald-50 dark:bg-emerald-950" : "bg-red-50 dark:bg-red-950",
+      bgLight: summary.totalUnrealizedPnL >= 0 ? "bg-emerald-50 dark:bg-emerald-950/40" : "bg-red-50 dark:bg-red-950/40",
       iconColor: summary.totalUnrealizedPnL >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
       valueColor: summary.totalUnrealizedPnL >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
     },
@@ -60,7 +60,7 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
       shadowColor: summary.totalRealizedPnL >= 0
         ? "shadow-amber-500/25"
         : "shadow-red-500/25",
-      bgLight: summary.totalRealizedPnL >= 0 ? "bg-amber-50 dark:bg-amber-950" : "bg-red-50 dark:bg-red-950",
+      bgLight: summary.totalRealizedPnL >= 0 ? "bg-amber-50 dark:bg-amber-950/40" : "bg-red-50 dark:bg-red-950/40",
       iconColor: summary.totalRealizedPnL >= 0 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400",
       valueColor: summary.totalRealizedPnL >= 0 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400",
     },
@@ -72,7 +72,7 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
             icon: Coins,
             gradient: "from-amber-500 to-yellow-500",
             shadowColor: "shadow-amber-500/25",
-            bgLight: "bg-amber-50 dark:bg-amber-950",
+            bgLight: "bg-amber-50 dark:bg-amber-950/40",
             iconColor: "text-amber-600 dark:text-amber-400",
             valueColor: "text-amber-600 dark:text-amber-400",
           },
