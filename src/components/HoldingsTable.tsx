@@ -184,7 +184,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                     </TableCell>
                   )}
                   <TableCell className="text-right">
-                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
+                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ${
                       h.unrealizedPnL >= 0
                         ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
                         : "bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300"
