@@ -387,15 +387,24 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                         </TableCell>
                         <TableCell className="text-right font-semibold">
                           <div>{fc(parseFloat(tx.totalAmount))}</div>
-                          {tx.tradeType === "sell" && tx.realizedPnl && (
-                            <div className={`text-xs font-medium mt-0.5 ${
-                              parseFloat(tx.realizedPnl) >= 0
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : "text-red-600 dark:text-red-400"
-                            }`}>
-                              {t("transactions.realizedPnl")}: {parseFloat(tx.realizedPnl) >= 0 ? "+" : ""}{fc(parseFloat(tx.realizedPnl))}
-                            </div>
-                          )}
+                          {tx.tradeType === "sell" && tx.realizedPnl && (() => {
+                            const pnl = parseFloat(tx.realizedPnl);
+                            const isProfit = pnl >= 0;
+                            return (
+                              <div className={`inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[11px] font-semibold leading-none ${
+                                isProfit
+                                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                                  : "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300"
+                              }`}>
+                                {isProfit ? (
+                                  <ArrowUpRight className="h-3 w-3 shrink-0" />
+                                ) : (
+                                  <ArrowDownRight className="h-3 w-3 shrink-0" />
+                                )}
+                                <span className="whitespace-nowrap">{isProfit ? "+" : ""}{fc(pnl)}</span>
+                              </div>
+                            );
+                          })()}
                         </TableCell>
                       </>
                     )}
