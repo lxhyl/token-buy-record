@@ -401,6 +401,7 @@ export interface TradeAnalysis {
   totalIncomeUsd: number;
   buyTotalAmountUsd: number;
   sellTotalAmountUsd: number;
+  realizedPnl: number;
 }
 
 export function analyzeTradePatterns(
@@ -419,6 +420,7 @@ export function analyzeTradePatterns(
       incomeUsd: number;
       buyTotalAmountUsd: number;
       sellTotalAmountUsd: number;
+      realizedPnl: number;
     }
   >();
 
@@ -434,6 +436,7 @@ export function analyzeTradePatterns(
         incomeUsd: 0,
         buyTotalAmountUsd: 0,
         sellTotalAmountUsd: 0,
+        realizedPnl: 0,
       });
     }
 
@@ -458,6 +461,9 @@ export function analyzeTradePatterns(
     } else {
       analysis.sells.push({ quantity, priceUsd });
       analysis.sellTotalAmountUsd += totalUsd;
+      if (t.realizedPnl) {
+        analysis.realizedPnl += parseFloat(t.realizedPnl);
+      }
     }
   });
 
@@ -488,6 +494,7 @@ export function analyzeTradePatterns(
       totalIncomeUsd: data.incomeUsd,
       buyTotalAmountUsd: data.buyTotalAmountUsd,
       sellTotalAmountUsd: data.sellTotalAmountUsd,
+      realizedPnl: data.realizedPnl,
     });
   });
 

@@ -393,7 +393,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                                 ? "text-emerald-600 dark:text-emerald-400"
                                 : "text-red-600 dark:text-red-400"
                             }`}>
-                              {parseFloat(tx.realizedPnl) >= 0 ? "+" : ""}{fc(parseFloat(tx.realizedPnl))}
+                              {t("transactions.realizedPnl")}: {parseFloat(tx.realizedPnl) >= 0 ? "+" : ""}{fc(parseFloat(tx.realizedPnl))}
                             </div>
                           )}
                         </TableCell>

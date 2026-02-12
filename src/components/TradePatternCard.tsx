@@ -92,6 +92,7 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                   <TableHead className="text-right">
                     {tInterpolate("tradePattern.incomeAmount", { currency })}
                   </TableHead>
+                  <TableHead className="text-right">{t("tradePattern.realizedPnl")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -108,6 +109,13 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                     <TableCell className="text-right hidden lg:table-cell">{a.sellVolume > 0 ? formatNumber(a.sellVolume, 4) : "-"}</TableCell>
                     <TableCell className="text-right">{a.sellVolumeUsd > 0 ? fc(a.sellVolumeUsd) : "-"}</TableCell>
                     <TableCell className="text-right">{a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}</TableCell>
+                    <TableCell className={`text-right font-medium ${
+                      a.realizedPnl >= 0
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}>
+                      {a.realizedPnl !== 0 ? (a.realizedPnl >= 0 ? "+" : "") + fc(a.realizedPnl) : "-"}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

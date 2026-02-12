@@ -287,6 +287,7 @@ const translations = {
   "tradePattern.buyAmount": { en: "Buy {currency}", zh: "买入 {currency}" },
   "tradePattern.sellAmount": { en: "Sell {currency}", zh: "卖出 {currency}" },
   "tradePattern.incomeAmount": { en: "Income {currency}", zh: "收入 {currency}" },
+  "tradePattern.realizedPnl": { en: "Realized P&L", zh: "已实现盈亏" },
   "tradePattern.depositsCol": { en: "Deposits", zh: "存入次数" },
   "tradePattern.withdrawals": { en: "Withdrawals", zh: "取出次数" },
   "tradePattern.deposited": { en: "Deposited", zh: "已存入" },
