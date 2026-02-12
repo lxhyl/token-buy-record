@@ -106,7 +106,6 @@ export function PortfolioLineChart({
                 </linearGradient>
               </defs>
               <CartesianGrid
-                strokeDasharray="3 3"
                 className="[&_line]:stroke-gray-200 dark:[&_line]:stroke-gray-700"
                 stroke="currentColor"
                 vertical={false}
