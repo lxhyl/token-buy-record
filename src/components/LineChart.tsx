@@ -5,7 +5,6 @@ import {
   Area,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
@@ -105,11 +104,6 @@ export function PortfolioLineChart({
                   <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid
-                className="[&_line]:stroke-gray-200 dark:[&_line]:stroke-gray-700"
-                stroke="currentColor"
-                vertical={false}
-              />
               <XAxis
                 dataKey="date"
                 axisLine={false}
