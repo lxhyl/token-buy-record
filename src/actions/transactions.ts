@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { transactions, currentPrices } from "@/lib/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, asc } from "drizzle-orm";
 import { fetchAllPrices } from "@/lib/price-service";
 import { getUserId } from "@/lib/auth-utils";
 
@@ -38,6 +38,18 @@ export async function createTransaction(formData: FormData) {
     ).toFixed(2);
   }
 
+  // Calculate realized P&L for market sell transactions using FIFO
+  let realizedPnl: string | null = null;
+  const isMarketType = assetType !== "deposit" && assetType !== "bond";
+  if (tradeType === "sell" && isMarketType) {
+    realizedPnl = await calculateFifoRealizedPnl(
+      userId,
+      symbol.toUpperCase(),
+      parseFloat(quantity),
+      parseFloat(totalAmount)
+    );
+  }
+
   await db.insert(transactions).values({
     userId,
     symbol: symbol.toUpperCase(),
@@ -54,6 +66,7 @@ export async function createTransaction(formData: FormData) {
     interestRate: interestRateRaw ? parseFloat(interestRateRaw).toFixed(4) : null,
     maturityDate: maturityDateRaw ? new Date(maturityDateRaw) : null,
     subType: subType || null,
+    realizedPnl,
   });
 
   revalidatePath("/dashboard");
@@ -91,6 +104,19 @@ export async function updateTransaction(id: number, formData: FormData) {
     ).toFixed(2);
   }
 
+  // Recalculate realized P&L for market sell transactions using FIFO
+  let updatedRealizedPnl: string | null = null;
+  const isMarketTypeUpdate = assetType !== "deposit" && assetType !== "bond";
+  if (tradeType === "sell" && isMarketTypeUpdate) {
+    updatedRealizedPnl = await calculateFifoRealizedPnl(
+      userId,
+      symbol.toUpperCase(),
+      parseFloat(quantity),
+      parseFloat(totalAmount),
+      id
+    );
+  }
+
   await db
     .update(transactions)
     .set({
@@ -108,6 +134,7 @@ export async function updateTransaction(id: number, formData: FormData) {
       interestRate: interestRateRaw ? parseFloat(interestRateRaw).toFixed(4) : null,
       maturityDate: maturityDateRaw ? new Date(maturityDateRaw) : null,
       subType: subType || null,
+      realizedPnl: updatedRealizedPnl,
     })
     .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
 
@@ -261,4 +288,73 @@ export async function getLatestPrices() {
     console.error("Failed to fetch latest prices, using cached:", error);
     return dbPrices;
   }
+}
+
+/**
+ * Calculate realized P&L for a sell transaction using FIFO cost basis.
+ * Queries all prior buys and sells for the same user+symbol,
+ * consumes buy lots in chronological order, and returns the P&L.
+ *
+ * @param excludeSellId - When updating an existing sell, exclude it from prior sells
+ */
+async function calculateFifoRealizedPnl(
+  userId: string,
+  symbol: string,
+  sellQuantity: number,
+  sellTotalAmount: number,
+  excludeSellId?: number
+): Promise<string> {
+  const allTxs = await db
+    .select()
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        eq(transactions.symbol, symbol),
+      )
+    )
+    .orderBy(asc(transactions.tradeDate), asc(transactions.id));
+
+  const marketTxs = allTxs.filter(
+    t => t.assetType !== "deposit" && t.assetType !== "bond"
+  );
+
+  // Build FIFO lot queue from buys/income
+  const lots = marketTxs
+    .filter(t => t.tradeType === "buy" || t.tradeType === "income")
+    .map(t => ({
+      remaining: parseFloat(t.quantity),
+      price: parseFloat(t.price),
+    }));
+
+  // Consume lots for all prior sells (excluding the current one if updating)
+  const priorSells = marketTxs.filter(
+    t => t.tradeType === "sell" && t.id !== excludeSellId
+  );
+
+  let lotIdx = 0;
+  for (const sell of priorSells) {
+    let qty = parseFloat(sell.quantity);
+    while (qty > 0.00000001 && lotIdx < lots.length) {
+      const lot = lots[lotIdx];
+      const take = Math.min(qty, lot.remaining);
+      lot.remaining -= take;
+      qty -= take;
+      if (lot.remaining <= 0.00000001) lotIdx++;
+    }
+  }
+
+  // Now consume lots for this sell
+  let costOfSold = 0;
+  let remaining = sellQuantity;
+  while (remaining > 0.00000001 && lotIdx < lots.length) {
+    const lot = lots[lotIdx];
+    const take = Math.min(remaining, lot.remaining);
+    costOfSold += take * lot.price;
+    lot.remaining -= take;
+    remaining -= take;
+    if (lot.remaining <= 0.00000001) lotIdx++;
+  }
+
+  return (sellTotalAmount - costOfSold).toFixed(2);
 }

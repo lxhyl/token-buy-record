@@ -173,6 +173,7 @@ const translations = {
   "transactions.buy": { en: "BUY", zh: "买入" },
   "transactions.sell": { en: "SELL", zh: "卖出" },
   "transactions.incomeType": { en: "INCOME", zh: "收入" },
+  "transactions.realizedPnl": { en: "Realized P&L", zh: "已实现盈亏" },
 
   // ── Form ──────────────────────────────────────────────────
   "form.addTitle": { en: "Add Transaction", zh: "添加交易" },

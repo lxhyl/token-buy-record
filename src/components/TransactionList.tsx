@@ -386,7 +386,16 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                           {parseFloat(tx.price) > 0 ? fc(parseFloat(tx.price)) : "-"}
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          {fc(parseFloat(tx.totalAmount))}
+                          <div>{fc(parseFloat(tx.totalAmount))}</div>
+                          {tx.tradeType === "sell" && tx.realizedPnl && (
+                            <div className={`text-xs font-medium mt-0.5 ${
+                              parseFloat(tx.realizedPnl) >= 0
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : "text-red-600 dark:text-red-400"
+                            }`}>
+                              {parseFloat(tx.realizedPnl) >= 0 ? "+" : ""}{fc(parseFloat(tx.realizedPnl))}
+                            </div>
+                          )}
                         </TableCell>
                       </>
                     )}

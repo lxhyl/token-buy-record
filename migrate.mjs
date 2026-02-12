@@ -192,4 +192,98 @@ await sql`
   END $$
 `;
 
+// ── Add realized_pnl to transactions ─────────────────────────
+
+await sql`
+  DO $$ BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'transactions' AND column_name = 'realized_pnl'
+    ) THEN
+      ALTER TABLE "transactions"
+        ADD COLUMN "realized_pnl" numeric(18, 2);
+    END IF;
+  END $$
+`;
+
+// ── Backfill realized_pnl for existing sell transactions (FIFO) ──
+
+const sellsToBackfill = await sql`
+  SELECT id, user_id, symbol, quantity, price, total_amount, currency, trade_date
+  FROM transactions
+  WHERE trade_type = 'sell'
+    AND asset_type NOT IN ('deposit', 'bond')
+    AND realized_pnl IS NULL
+  ORDER BY trade_date ASC
+`;
+
+if (sellsToBackfill.length > 0) {
+  console.log(`Backfilling realized_pnl for ${sellsToBackfill.length} sell transaction(s)...`);
+
+  // Group sells by (user_id, symbol) to process FIFO per group
+  const groups = new Map();
+  for (const sell of sellsToBackfill) {
+    const key = `${sell.user_id}::${sell.symbol}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(sell);
+  }
+
+  for (const [key, sells] of groups) {
+    const [userId, symbol] = key.split("::");
+
+    // Get all buy/income transactions for this user+symbol, ordered by date
+    const buys = await sql`
+      SELECT quantity, price, currency, trade_date
+      FROM transactions
+      WHERE user_id = ${userId}
+        AND symbol = ${symbol}
+        AND trade_type IN ('buy', 'income')
+        AND asset_type NOT IN ('deposit', 'bond')
+      ORDER BY trade_date ASC, id ASC
+    `;
+
+    // Build FIFO lot queue
+    const lots = buys.map(b => ({
+      remaining: parseFloat(b.quantity),
+      price: parseFloat(b.price),
+    }));
+
+    // Get all sells for this user+symbol in chronological order (including already-filled ones)
+    const allSells = await sql`
+      SELECT id, quantity, price, total_amount, realized_pnl
+      FROM transactions
+      WHERE user_id = ${userId}
+        AND symbol = ${symbol}
+        AND trade_type = 'sell'
+        AND asset_type NOT IN ('deposit', 'bond')
+      ORDER BY trade_date ASC, id ASC
+    `;
+
+    let lotIdx = 0;
+    for (const sell of allSells) {
+      let sellQty = parseFloat(sell.quantity);
+      let costOfSold = 0;
+
+      while (sellQty > 0.00000001 && lotIdx < lots.length) {
+        const lot = lots[lotIdx];
+        const take = Math.min(sellQty, lot.remaining);
+        costOfSold += take * lot.price;
+        lot.remaining -= take;
+        sellQty -= take;
+        if (lot.remaining <= 0.00000001) lotIdx++;
+      }
+
+      if (sell.realized_pnl === null) {
+        const sellProceeds = parseFloat(sell.total_amount);
+        const realizedPnl = (sellProceeds - costOfSold).toFixed(2);
+        await sql`
+          UPDATE transactions SET realized_pnl = ${realizedPnl} WHERE id = ${sell.id}
+        `;
+      }
+    }
+  }
+
+  console.log("Backfill complete.");
+}
+
 console.log("Migrations complete");

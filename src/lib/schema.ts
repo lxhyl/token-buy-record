@@ -65,6 +65,7 @@ export const transactions = pgTable("transactions", {
   interestRate: decimal("interest_rate", { precision: 8, scale: 4 }),
   maturityDate: timestamp("maturity_date"),
   subType: varchar("sub_type", { length: 20 }),
+  realizedPnl: decimal("realized_pnl", { precision: 18, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

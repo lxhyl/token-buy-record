@@ -76,6 +76,7 @@ export function calculateHoldings(
       assetType: string;
       buys: { quantity: number; priceUsd: number; date: Date }[];
       sells: { quantity: number; priceUsd: number }[];
+      storedRealizedPnl: number;
       incomeTotal: number;
       firstBuyDate: Date | null;
     }
@@ -90,6 +91,7 @@ export function calculateHoldings(
         assetType: t.assetType,
         buys: [],
         sells: [],
+        storedRealizedPnl: 0,
         incomeTotal: 0,
         firstBuyDate: null,
       });
@@ -120,6 +122,9 @@ export function calculateHoldings(
       }
     } else {
       holding.sells.push({ quantity, priceUsd });
+      if (t.realizedPnl) {
+        holding.storedRealizedPnl += parseFloat(t.realizedPnl);
+      }
     }
   });
 
@@ -160,20 +165,27 @@ export function calculateHoldings(
       totalCost += buy.quantity * buy.priceUsd;
     }
 
-    // Calculate realized P&L
-    const sellsTotal = data.sells.reduce(
-      (sum, s) => sum + s.quantity * s.priceUsd,
-      0
-    );
-    let costOfSold = 0;
-    let soldRemaining = totalSold;
-    for (const buy of sortedBuys) {
-      if (soldRemaining <= 0) break;
-      const qtyFromBuy = Math.min(soldRemaining, buy.quantity);
-      costOfSold += qtyFromBuy * buy.priceUsd;
-      soldRemaining -= qtyFromBuy;
+    // Use stored realized P&L if available, otherwise calculate from FIFO
+    let realizedPnL: number;
+    const hasStoredPnl = data.sells.length === 0 || data.storedRealizedPnl !== 0;
+    if (hasStoredPnl) {
+      realizedPnL = data.storedRealizedPnl;
+    } else {
+      // Fallback: calculate realized P&L from FIFO (for un-backfilled sells)
+      const sellsTotal = data.sells.reduce(
+        (sum, s) => sum + s.quantity * s.priceUsd,
+        0
+      );
+      let costOfSold = 0;
+      let soldRemaining = totalSold;
+      for (const buy of sortedBuys) {
+        if (soldRemaining <= 0) break;
+        const qtyFromBuy = Math.min(soldRemaining, buy.quantity);
+        costOfSold += qtyFromBuy * buy.priceUsd;
+        soldRemaining -= qtyFromBuy;
+      }
+      realizedPnL = sellsTotal - costOfSold;
     }
-    const realizedPnL = sellsTotal - costOfSold;
 
     // Position-derived metrics: only meaningful when there's an active position
     const hasPosition = remainingQty > 0.00000001;
