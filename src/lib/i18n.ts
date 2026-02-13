@@ -323,6 +323,11 @@ const translations = {
   "currency.hkdName": { en: "Hong Kong Dollar", zh: "港币" },
   "currency.rateHint": { en: "1 USD = {rate} {code}", zh: "1 美元 = {rate} {code}" },
 
+  // ── Pagination ──────────────────────────────────────────
+  "pagination.prev": { en: "Previous", zh: "上一页" },
+  "pagination.next": { en: "Next", zh: "下一页" },
+  "pagination.pageInfo": { en: "Page {page} of {total}", zh: "第 {page} 页，共 {total} 页" },
+
   // ── Not Found ───────────────────────────────────────────
   "notFound.message": { en: "Page not found", zh: "页面未找到" },
   "notFound.action": { en: "Go Home", zh: "返回首页" },

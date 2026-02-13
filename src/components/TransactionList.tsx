@@ -32,6 +32,8 @@ import {
   ArrowUpDown,
   Download,
   AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 type TabFilter = "all" | "market" | "fixed-income";
@@ -58,6 +60,8 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; symbol: string } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const TABS: { key: TabFilter; labelKey: TranslationKey }[] = [
     { key: "all", labelKey: "transactions.all" },
@@ -141,6 +145,11 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
 
     return result;
   }, [transactions, activeTab, searchQuery, sortField, sortDir]);
+
+  // Reset to page 1 when filters change
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginated = filtered.slice((safeCurrentPage - 1) * PAGE_SIZE, safeCurrentPage * PAGE_SIZE);
 
   const showFixedIncomeColumns = activeTab === "fixed-income";
 
@@ -234,7 +243,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                   key={tab.key}
                   role="tab"
                   aria-selected={activeTab === tab.key}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => { setActiveTab(tab.key); setCurrentPage(1); }}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                     activeTab === tab.key
                       ? "bg-primary text-primary-foreground"
@@ -251,7 +260,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                 <Input
                   placeholder={t("transactions.searchPlaceholder")}
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                   className="pl-8 h-8 text-xs w-full sm:w-48"
                 />
               </div>
@@ -311,13 +320,14 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                       <TableHead className="text-right">
                         <SortButton field="total">{t("transactions.total")}</SortButton>
                       </TableHead>
+                      <TableHead className="text-right">{t("transactions.realizedPnl")}</TableHead>
                     </>
                   )}
                   <TableHead className="text-right">{t("transactions.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((tx) => (
+                {paginated.map((tx) => (
                   <TableRow key={tx.id}>
                     <TableCell className="text-muted-foreground">
                       {formatDate(new Date(tx.tradeDate))}
@@ -386,12 +396,14 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                           {parseFloat(tx.price) > 0 ? fc(parseFloat(tx.price)) : "-"}
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          <div>{fc(parseFloat(tx.totalAmount))}</div>
-                          {tx.tradeType === "sell" && tx.realizedPnl && (() => {
+                          {fc(parseFloat(tx.totalAmount))}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {tx.tradeType === "sell" && tx.realizedPnl ? (() => {
                             const pnl = parseFloat(tx.realizedPnl);
                             const isProfit = pnl >= 0;
                             return (
-                              <div className={`inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[11px] font-semibold leading-none ${
+                              <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold leading-none ${
                                 isProfit
                                   ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
                                   : "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300"
@@ -404,7 +416,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                                 <span className="whitespace-nowrap">{isProfit ? "+" : ""}{fc(pnl)}</span>
                               </div>
                             );
-                          })()}
+                          })() : <span className="text-muted-foreground">-</span>}
                         </TableCell>
                       </>
                     )}
@@ -431,6 +443,35 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                 ))}
               </TableBody>
             </Table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {filtered.length > PAGE_SIZE && (
+            <div className="flex items-center justify-between px-4 md:px-6 py-3 border-t">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safeCurrentPage <= 1}
+                className="gap-1 text-xs"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                {t("pagination.prev")}
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {tInterpolate("pagination.pageInfo", { page: safeCurrentPage, total: totalPages })}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safeCurrentPage >= totalPages}
+                className="gap-1 text-xs"
+              >
+                {t("pagination.next")}
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
             </div>
           )}
 
