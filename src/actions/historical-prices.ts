@@ -278,3 +278,159 @@ export async function getHistoricalPortfolioData(): Promise<{
 
   return { chartData };
 }
+
+/**
+ * Get daily P&L for a specific month.
+ * Daily P&L = change in unrealized P&L from previous day.
+ * unrealized P&L = (market value) - (cost basis).
+ */
+export async function getDailyPnLForMonth(
+  year: number,
+  month: number
+): Promise<{ date: string; pnl: number }[]> {
+  const userId = await getUserId();
+
+  const allTx = await db
+    .select()
+    .from(transactions)
+    .where(eq(transactions.userId, userId))
+    .orderBy(asc(transactions.tradeDate));
+
+  if (allTx.length === 0) return [];
+
+  // Identify market symbols
+  const symbolTypes = new Map<string, string>();
+  for (const tx of allTx) {
+    if (tx.assetType === "deposit" || tx.assetType === "bond") continue;
+    if (!symbolTypes.has(tx.symbol)) {
+      symbolTypes.set(tx.symbol, tx.assetType);
+    }
+  }
+
+  // Date range: day before month start → last day of month
+  const dayBefore = new Date(Date.UTC(year, month - 1, 0)); // last day of prev month
+  const lastDay = new Date(Date.UTC(year, month, 0)); // last day of this month
+  const todayUTC = toMidnightUTC(new Date());
+
+  // Load prices for relevant symbols in this range (with some lookback for carry-forward)
+  const lookbackStart = new Date(dayBefore);
+  lookbackStart.setUTCDate(lookbackStart.getUTCDate() - 10);
+
+  const allSymbols = Array.from(symbolTypes.keys());
+  const priceMap = new Map<string, Map<string, number>>();
+
+  for (const symbol of allSymbols) {
+    const prices = await db
+      .select()
+      .from(priceHistory)
+      .where(
+        and(
+          eq(priceHistory.symbol, symbol),
+          gte(priceHistory.date, lookbackStart),
+          lte(priceHistory.date, lastDay)
+        )
+      )
+      .orderBy(asc(priceHistory.date));
+
+    const dateMap = new Map<string, number>();
+    for (const p of prices) {
+      const dateStr = toMidnightUTC(new Date(p.date))
+        .toISOString()
+        .slice(0, 10);
+      dateMap.set(dateStr, parseFloat(p.price));
+    }
+    priceMap.set(symbol, dateMap);
+  }
+
+  // Helper: look up price with carry-forward
+  function getPrice(symbol: string, dateStr: string, date: Date): number | undefined {
+    const symbolPrices = priceMap.get(symbol);
+    if (!symbolPrices) return undefined;
+    let price = symbolPrices.get(dateStr);
+    if (price !== undefined) return price;
+    const d = new Date(date);
+    for (let i = 0; i < 10; i++) {
+      d.setUTCDate(d.getUTCDate() - 1);
+      price = symbolPrices.get(d.toISOString().slice(0, 10));
+      if (price !== undefined) return price;
+    }
+    return undefined;
+  }
+
+  // Walk through days with running state
+  const holdings = new Map<string, number>();
+  let invested = 0;
+  let fixedIncomeValue = 0;
+  let txIdx = 0;
+
+  function applyTransactionsUpTo(targetDate: Date) {
+    while (txIdx < allTx.length) {
+      const tx = allTx[txIdx];
+      const txDate = toMidnightUTC(new Date(tx.tradeDate));
+      if (txDate > targetDate) break;
+
+      const amount = parseFloat(tx.totalAmount);
+      const qty = parseFloat(tx.quantity);
+
+      if (tx.assetType === "deposit" || tx.assetType === "bond") {
+        if (tx.tradeType === "buy") fixedIncomeValue += amount;
+        else if (tx.tradeType === "sell") fixedIncomeValue -= amount;
+      } else {
+        if (tx.tradeType === "buy") {
+          invested += amount;
+          holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
+        } else if (tx.tradeType === "sell") {
+          invested -= amount;
+          holdings.set(
+            tx.symbol,
+            Math.max(0, (holdings.get(tx.symbol) || 0) - qty)
+          );
+        } else if (tx.tradeType === "income") {
+          invested += amount;
+          if (qty > 0) {
+            holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
+          }
+        }
+      }
+      txIdx++;
+    }
+  }
+
+  function computePortfolioValue(date: Date): number {
+    const dateStr = date.toISOString().slice(0, 10);
+    let marketValue = 0;
+    holdings.forEach((qty, symbol) => {
+      if (qty <= 0) return;
+      const price = getPrice(symbol, dateStr, date);
+      if (price !== undefined) {
+        marketValue += qty * price;
+      }
+    });
+    return marketValue + fixedIncomeValue;
+  }
+
+  // Advance to day before month start
+  applyTransactionsUpTo(dayBefore);
+  let prevUnrealizedPnL = computePortfolioValue(dayBefore) - invested - fixedIncomeValue;
+
+  const daysInMonth = lastDay.getUTCDate();
+  const results: { date: string; pnl: number }[] = [];
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (date > todayUTC) break;
+
+    applyTransactionsUpTo(date);
+    const unrealizedPnL = computePortfolioValue(date) - invested - fixedIncomeValue;
+    const dailyPnL = unrealizedPnL - prevUnrealizedPnL;
+
+    results.push({
+      date: date.toISOString().slice(0, 10),
+      pnl: Math.round(dailyPnL * 100) / 100,
+    });
+
+    prevUnrealizedPnL = unrealizedPnL;
+  }
+
+  return results;
+}

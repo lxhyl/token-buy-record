@@ -6,6 +6,7 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,26 +16,21 @@ import {
   ExchangeRates,
   convertAmount,
 } from "@/lib/currency";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 
 interface DataPoint {
   date: string;
-  invested: number;
-  value: number;
+  pnl: number;
 }
 
-interface HistoricalValueChartProps {
+interface PnLChartProps {
   data: DataPoint[];
   currency: SupportedCurrency;
   rates: ExchangeRates;
 }
 
-export function HistoricalValueChart({
-  data,
-  currency,
-  rates,
-}: HistoricalValueChartProps) {
+export function PnLChart({ data, currency, rates }: PnLChartProps) {
   const fc = createCurrencyFormatter(currency, rates);
   const { t } = useI18n();
 
@@ -43,10 +39,10 @@ export function HistoricalValueChart({
       <Card>
         <CardHeader className="border-b bg-muted/30">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white">
               <TrendingUp className="h-5 w-5" />
             </div>
-            <CardTitle>{t("analysis.totalAssets")}</CardTitle>
+            <CardTitle>{t("analysis.pnlOverTime")}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="pt-6">
@@ -61,14 +57,33 @@ export function HistoricalValueChart({
     );
   }
 
+  const lastPnL = data[data.length - 1]?.pnl ?? 0;
+  const isPositive = lastPnL >= 0;
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const pnl = payload[0].value as number;
+      const positive = pnl >= 0;
       return (
         <div className="bg-popover text-popover-foreground rounded-xl shadow-lg border p-3">
           <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-lg font-semibold text-foreground mt-1">
-            {fc(payload[0].value)}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            {positive ? (
+              <TrendingUp className="h-4 w-4 text-green-500" />
+            ) : (
+              <TrendingDown className="h-4 w-4 text-red-500" />
+            )}
+            <p
+              className={`text-lg font-semibold ${
+                positive
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {positive ? "+" : ""}
+              {fc(pnl)}
+            </p>
+          </div>
         </div>
       );
     }
@@ -79,10 +94,32 @@ export function HistoricalValueChart({
     <Card>
       <CardHeader className="border-b bg-muted/30">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
-            <TrendingUp className="h-5 w-5" />
+          <div
+            className={`flex h-10 w-10 items-center justify-center rounded-xl text-white ${
+              isPositive
+                ? "bg-gradient-to-br from-green-500 to-emerald-500"
+                : "bg-gradient-to-br from-red-500 to-rose-500"
+            }`}
+          >
+            {isPositive ? (
+              <TrendingUp className="h-5 w-5" />
+            ) : (
+              <TrendingDown className="h-5 w-5" />
+            )}
           </div>
-          <CardTitle>{t("analysis.totalAssets")}</CardTitle>
+          <div>
+            <CardTitle>{t("analysis.pnlOverTime")}</CardTitle>
+            <p
+              className={`text-sm font-semibold mt-0.5 ${
+                isPositive
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {isPositive ? "+" : ""}
+              {fc(lastPnL)}
+            </p>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-6">
@@ -98,9 +135,13 @@ export function HistoricalValueChart({
               }}
             >
               <defs>
-                <linearGradient id="colorTotalAssets" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                <linearGradient id="colorPnLPos" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorPnLNeg" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis
@@ -128,13 +169,14 @@ export function HistoricalValueChart({
                 }}
                 dx={-10}
               />
+              <ReferenceLine y={0} stroke="#6b7280" strokeDasharray="3 3" />
               <Tooltip content={<CustomTooltip />} />
               <Area
                 type="monotone"
-                dataKey="value"
-                stroke="#10b981"
+                dataKey="pnl"
+                stroke={isPositive ? "#22c55e" : "#ef4444"}
                 strokeWidth={2}
-                fill="url(#colorTotalAssets)"
+                fill={isPositive ? "url(#colorPnLPos)" : "url(#colorPnLNeg)"}
               />
             </AreaChart>
           </ResponsiveContainer>

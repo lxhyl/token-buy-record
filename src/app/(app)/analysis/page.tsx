@@ -11,7 +11,9 @@ import {
 import { StatsCards } from "@/components/StatsCards";
 import { AllocationPieChart } from "@/components/PieChart";
 import { HistoricalValueChart } from "@/components/HistoricalValueChart";
-import { getHistoricalPortfolioData } from "@/actions/historical-prices";
+import { PnLChart } from "@/components/PnLChart";
+import { PnLHeatmap } from "@/components/PnLHeatmap";
+import { getHistoricalPortfolioData, getDailyPnLForMonth } from "@/actions/historical-prices";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -30,13 +32,18 @@ import { t } from "@/lib/i18n";
 export const dynamic = "force-dynamic";
 
 export default async function AnalysisPage() {
-  const [transactions, currentPrices, currency, rates, locale, historicalData] = await Promise.all([
+  const nowUTC = new Date();
+  const currentYear = nowUTC.getUTCFullYear();
+  const currentMonth = nowUTC.getUTCMonth() + 1;
+
+  const [transactions, currentPrices, currency, rates, locale, historicalData, heatmapData] = await Promise.all([
     getTransactions(),
     getLatestPrices(),
     getDisplayCurrency(),
     getExchangeRates(),
     getDisplayLanguage(),
     getHistoricalPortfolioData(),
+    getDailyPnLForMonth(currentYear, currentMonth),
   ]);
 
   const holdings = calculateHoldings(transactions, currentPrices, rates);
@@ -73,6 +80,23 @@ export default async function AnalysisPage() {
         <AllocationPieChart data={allocationData} currency={currency} rates={rates} />
         <HistoricalValueChart data={historicalData.chartData} currency={currency} rates={rates} />
       </div>
+
+      <PnLChart
+        data={historicalData.chartData.map((d) => ({
+          date: d.date,
+          pnl: Math.round((d.value - d.invested) * 100) / 100,
+        }))}
+        currency={currency}
+        rates={rates}
+      />
+
+      <PnLHeatmap
+        initialData={heatmapData}
+        initialYear={currentYear}
+        initialMonth={currentMonth}
+        currency={currency}
+        rates={rates}
+      />
 
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         <Card>

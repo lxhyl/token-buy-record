@@ -271,9 +271,16 @@ const translations = {
   "analysis.cumulativeInvestment": { en: "Cumulative Investment Over Time", zh: "累计投资趋势" },
   "analysis.portfolioValue": { en: "Portfolio Value Over Time", zh: "投资组合价值趋势" },
   "analysis.historicalValue": { en: "Historical Portfolio Value", zh: "历史投资组合价值" },
+  "analysis.totalAssets": { en: "Total Assets", zh: "总资产" },
   "analysis.invested": { en: "Total Invested", zh: "总投入" },
   "analysis.marketValue": { en: "Market Value", zh: "市场价值" },
   "analysis.gainLoss": { en: "Gain/Loss", zh: "盈亏" },
+  "analysis.pnlOverTime": { en: "P&L Over Time", zh: "盈亏趋势" },
+  "analysis.unrealizedPnl": { en: "Unrealized P&L", zh: "未实现盈亏" },
+  "analysis.dailyPnl": { en: "Daily P&L", zh: "每日盈亏" },
+  "analysis.dailyPnlCalendar": { en: "Daily P&L Calendar", zh: "每日盈亏日历" },
+  "analysis.gain": { en: "Gain", zh: "盈利" },
+  "analysis.loss": { en: "Loss", zh: "亏损" },
 
   // ── Trade Pattern ─────────────────────────────────────────
   "tradePattern.title": { en: "Trade Pattern Analysis", zh: "交易模式分析" },
