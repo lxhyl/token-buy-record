@@ -84,8 +84,19 @@ export const appSettings = pgTable("app_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const priceHistory = pgTable("price_history", {
+  id: serial("id").primaryKey(),
+  symbol: varchar("symbol", { length: 20 }).notNull(),
+  date: timestamp("date").notNull(),
+  price: decimal("price", { precision: 18, scale: 8 }).notNull(),
+  source: varchar("source", { length: 20 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;
 export type CurrentPrice = typeof currentPrices.$inferSelect;
 export type NewCurrentPrice = typeof currentPrices.$inferInsert;
 export type AppSetting = typeof appSettings.$inferSelect;
+export type PriceHistory = typeof priceHistory.$inferSelect;
+export type NewPriceHistory = typeof priceHistory.$inferInsert;

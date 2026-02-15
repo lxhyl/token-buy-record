@@ -10,7 +10,8 @@ import {
 } from "@/lib/calculations";
 import { StatsCards } from "@/components/StatsCards";
 import { AllocationPieChart } from "@/components/PieChart";
-import { PortfolioLineChart } from "@/components/LineChart";
+import { HistoricalValueChart } from "@/components/HistoricalValueChart";
+import { getHistoricalPortfolioData } from "@/actions/historical-prices";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -29,12 +30,13 @@ import { t } from "@/lib/i18n";
 export const dynamic = "force-dynamic";
 
 export default async function AnalysisPage() {
-  const [transactions, currentPrices, currency, rates, locale] = await Promise.all([
+  const [transactions, currentPrices, currency, rates, locale, historicalData] = await Promise.all([
     getTransactions(),
     getLatestPrices(),
     getDisplayCurrency(),
     getExchangeRates(),
     getDisplayLanguage(),
+    getHistoricalPortfolioData(),
   ]);
 
   const holdings = calculateHoldings(transactions, currentPrices, rates);
@@ -42,33 +44,6 @@ export default async function AnalysisPage() {
   const summary = calculatePortfolioSummary(holdings, fixedIncomeHoldings);
   const allocationData = calculateAllocationData(holdings, fixedIncomeHoldings);
   const tradeAnalysis = analyzeTradePatterns(transactions, rates);
-
-  const sortedTransactions = [...transactions].sort(
-    (a, b) =>
-      new Date(a.tradeDate).getTime() - new Date(b.tradeDate).getTime()
-  );
-
-  const portfolioHistory: { date: string; value: number }[] = [];
-  let runningValue = 0;
-
-  sortedTransactions.forEach((t) => {
-    const amount = parseFloat(t.totalAmount);
-    if (t.tradeType === "buy") {
-      runningValue += amount;
-    } else if (t.tradeType === "sell") {
-      runningValue -= amount;
-    } else if (t.tradeType === "income") {
-      runningValue += amount;
-    }
-
-    const dateStr = new Date(t.tradeDate).toLocaleDateString();
-    const existing = portfolioHistory.find((h) => h.date === dateStr);
-    if (existing) {
-      existing.value = runningValue;
-    } else {
-      portfolioHistory.push({ date: dateStr, value: runningValue });
-    }
-  });
 
   const fc = createCurrencyFormatter(currency, rates);
 
@@ -96,7 +71,7 @@ export default async function AnalysisPage() {
 
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         <AllocationPieChart data={allocationData} currency={currency} rates={rates} />
-        <PortfolioLineChart data={portfolioHistory} title={t(locale, "analysis.cumulativeInvestment")} currency={currency} rates={rates} />
+        <HistoricalValueChart data={historicalData.chartData} currency={currency} rates={rates} />
       </div>
 
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">

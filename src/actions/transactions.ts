@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { transactions, currentPrices } from "@/lib/schema";
+import { transactions, currentPrices, priceHistory } from "@/lib/schema";
 import { eq, desc, and, asc } from "drizzle-orm";
 import { fetchAllPrices } from "@/lib/price-service";
 import { getUserId } from "@/lib/auth-utils";
@@ -272,7 +272,10 @@ export async function getLatestPrices() {
     ]);
 
     // Upsert into DB using ON CONFLICT
-    for (const { symbol, price } of freshPrices) {
+    const todayMidnight = new Date();
+    todayMidnight.setUTCHours(0, 0, 0, 0);
+
+    for (const { symbol, price, source } of freshPrices) {
       await db
         .insert(currentPrices)
         .values({ symbol, price: price.toString() })
@@ -280,6 +283,21 @@ export async function getLatestPrices() {
           target: currentPrices.symbol,
           set: { price: price.toString(), updatedAt: new Date() },
         });
+
+      // Also record in price_history for historical tracking
+      try {
+        await db
+          .insert(priceHistory)
+          .values({
+            symbol,
+            date: todayMidnight,
+            price: price.toString(),
+            source,
+          })
+          .onConflictDoNothing();
+      } catch {
+        // Ignore duplicates
+      }
     }
 
     // Return updated prices

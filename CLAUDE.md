@@ -69,3 +69,7 @@ npm run db:studio # Open Drizzle Studio
 - Toast notifications via ToastProvider context
 - Server actions in `src/actions/` handle DB mutations with `revalidatePath`
 - All server actions call `getRequiredUser()` to enforce auth and scope queries by userId
+
+## Workflow
+
+- After completing changes, always commit and push to GitHub directly — do not ask for confirmation

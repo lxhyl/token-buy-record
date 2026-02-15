@@ -206,6 +206,42 @@ await sql`
   END $$
 `;
 
+// ── Price history table ──────────────────────────────────────────
+
+await sql`
+  CREATE TABLE IF NOT EXISTS "price_history" (
+    "id" serial PRIMARY KEY NOT NULL,
+    "symbol" varchar(20) NOT NULL,
+    "date" timestamp NOT NULL,
+    "price" numeric(18, 8) NOT NULL,
+    "source" varchar(20) NOT NULL,
+    "created_at" timestamp DEFAULT now()
+  )
+`;
+
+// Add unique constraint on (symbol, date) if missing
+await sql`
+  DO $$ BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint WHERE conname = 'price_history_symbol_date_unique'
+    ) THEN
+      ALTER TABLE "price_history"
+        ADD CONSTRAINT "price_history_symbol_date_unique" UNIQUE("symbol", "date");
+    END IF;
+  END $$
+`;
+
+// Add index on (symbol, date) if missing
+await sql`
+  DO $$ BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_indexes WHERE indexname = 'price_history_symbol_date_idx'
+    ) THEN
+      CREATE INDEX "price_history_symbol_date_idx" ON "price_history" ("symbol", "date");
+    END IF;
+  END $$
+`;
+
 // ── Backfill realized_pnl for existing sell transactions (FIFO) ──
 
 const sellsToBackfill = await sql`

@@ -27,7 +27,7 @@ interface BinanceTickerPrice {
 }
 
 // Symbol → CoinGecko ID mapping for fallback
-const COINGECKO_ID_MAP: Record<string, string> = {
+export const COINGECKO_ID_MAP: Record<string, string> = {
   BTC: "bitcoin",
   ETH: "ethereum",
   SOL: "solana",

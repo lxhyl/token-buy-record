@@ -270,6 +270,10 @@ const translations = {
   "analysis.incomePercent": { en: "% of Total", zh: "占比" },
   "analysis.cumulativeInvestment": { en: "Cumulative Investment Over Time", zh: "累计投资趋势" },
   "analysis.portfolioValue": { en: "Portfolio Value Over Time", zh: "投资组合价值趋势" },
+  "analysis.historicalValue": { en: "Historical Portfolio Value", zh: "历史投资组合价值" },
+  "analysis.invested": { en: "Total Invested", zh: "总投入" },
+  "analysis.marketValue": { en: "Market Value", zh: "市场价值" },
+  "analysis.gainLoss": { en: "Gain/Loss", zh: "盈亏" },
 
   // ── Trade Pattern ─────────────────────────────────────────
   "tradePattern.title": { en: "Trade Pattern Analysis", zh: "交易模式分析" },
