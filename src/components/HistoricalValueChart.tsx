@@ -61,11 +61,16 @@ export function HistoricalValueChart({
     );
   }
 
+  const formatDateLabel = (value: string) => {
+    const d = new Date(value + "T00:00:00Z");
+    return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+  };
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-popover text-popover-foreground rounded-xl shadow-lg border p-3">
-          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-sm text-muted-foreground">{formatDateLabel(label)}</p>
           <p className="text-lg font-semibold text-foreground mt-1">
             {fc(payload[0].value)}
           </p>
@@ -107,9 +112,15 @@ export function HistoricalValueChart({
                 dataKey="date"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 11 }}
                 className="[&_text]:fill-gray-500 dark:[&_text]:fill-gray-400"
                 dy={10}
+                interval="preserveStartEnd"
+                minTickGap={40}
+                tickFormatter={(value: string) => {
+                  const d = new Date(value + "T00:00:00Z");
+                  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+                }}
               />
               <YAxis
                 axisLine={false}

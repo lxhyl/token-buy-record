@@ -60,13 +60,18 @@ export function PnLChart({ data, currency, rates }: PnLChartProps) {
   const lastPnL = data[data.length - 1]?.pnl ?? 0;
   const isPositive = lastPnL >= 0;
 
+  const formatDateLabel = (value: string) => {
+    const d = new Date(value + "T00:00:00Z");
+    return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+  };
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const pnl = payload[0].value as number;
       const positive = pnl >= 0;
       return (
         <div className="bg-popover text-popover-foreground rounded-xl shadow-lg border p-3">
-          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-sm text-muted-foreground">{formatDateLabel(label)}</p>
           <div className="flex items-center gap-2 mt-1">
             {positive ? (
               <TrendingUp className="h-4 w-4 text-green-500" />
@@ -148,9 +153,15 @@ export function PnLChart({ data, currency, rates }: PnLChartProps) {
                 dataKey="date"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 11 }}
                 className="[&_text]:fill-gray-500 dark:[&_text]:fill-gray-400"
                 dy={10}
+                interval="preserveStartEnd"
+                minTickGap={40}
+                tickFormatter={(value: string) => {
+                  const d = new Date(value + "T00:00:00Z");
+                  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+                }}
               />
               <YAxis
                 axisLine={false}
