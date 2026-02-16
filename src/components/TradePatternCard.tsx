@@ -78,7 +78,6 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                   <TableHead>{t("tradePattern.symbol")}</TableHead>
                   <TableHead className="text-right">{t("tradePattern.buyTrades")}</TableHead>
                   <TableHead className="text-right">{t("tradePattern.sellTrades")}</TableHead>
-                  <TableHead className="text-right">{t("tradePattern.income")}</TableHead>
                   <TableHead className="text-right hidden md:table-cell">{t("tradePattern.avgBuy")}</TableHead>
                   <TableHead className="text-right hidden md:table-cell">{t("tradePattern.avgSell")}</TableHead>
                   <TableHead className="text-right hidden lg:table-cell">{t("tradePattern.buyVol")}</TableHead>
@@ -101,7 +100,6 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                     <TableCell className="font-medium">{a.symbol}</TableCell>
                     <TableCell className="text-right">{a.totalBuys}</TableCell>
                     <TableCell className="text-right">{a.totalSells}</TableCell>
-                    <TableCell className="text-right">{a.totalIncomes > 0 ? a.totalIncomes : "-"}</TableCell>
                     <TableCell className="text-right hidden md:table-cell">{fc(a.avgBuyPrice)}</TableCell>
                     <TableCell className="text-right hidden md:table-cell">{a.avgSellPrice > 0 ? fc(a.avgSellPrice) : "-"}</TableCell>
                     <TableCell className="text-right hidden lg:table-cell">{formatNumber(a.buyVolume, 4)}</TableCell>
