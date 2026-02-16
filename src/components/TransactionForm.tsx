@@ -14,6 +14,7 @@ import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { ArrowDownRight, ArrowUpRight, TrendingUp, Save, X, DollarSign, Coins, Landmark, PiggyBank } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/components/I18nProvider";
+import { SymbolAutocomplete } from "@/components/SymbolAutocomplete";
 
 interface TransactionFormProps {
   transaction?: Transaction;
@@ -40,6 +41,7 @@ export function TransactionForm({
       ? "cash"
       : "asset"
   );
+  const [autoName, setAutoName] = useState(transaction?.name || "");
 
   const isIncome = tradeType === "income";
   const isCashIncome = isIncome && incomeMode === "cash";
@@ -106,13 +108,23 @@ export function TransactionForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="symbol">{t("form.symbol")}</Label>
-                <Input
-                  id="symbol"
-                  name="symbol"
-                  placeholder={symbolPlaceholder}
-                  defaultValue={transaction?.symbol || ""}
-                  required
-                />
+                {assetType === "stock" ? (
+                  <SymbolAutocomplete
+                    defaultValue={transaction?.symbol || ""}
+                    placeholder={symbolPlaceholder}
+                    onSelect={(_, name) => {
+                      if (name) setAutoName(name);
+                    }}
+                  />
+                ) : (
+                  <Input
+                    id="symbol"
+                    name="symbol"
+                    placeholder={symbolPlaceholder}
+                    defaultValue={transaction?.symbol || ""}
+                    required
+                  />
+                )}
               </div>
 
               <div className="space-y-2">
@@ -121,7 +133,8 @@ export function TransactionForm({
                   id="name"
                   name="name"
                   placeholder={namePlaceholder}
-                  defaultValue={transaction?.name || ""}
+                  value={autoName}
+                  onChange={(e) => setAutoName(e.target.value)}
                 />
               </div>
 

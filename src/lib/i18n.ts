@@ -235,7 +235,7 @@ const translations = {
   "form.transactionCreated": { en: "Transaction created", zh: "交易已创建" },
   "form.transactionUpdated": { en: "Transaction updated", zh: "交易已更新" },
   "form.symbolPlaceholderCrypto": { en: "BTC, ETH, SOL...", zh: "BTC, ETH, SOL..." },
-  "form.symbolPlaceholderStock": { en: "AAPL, TSLA, 0700.HK...", zh: "AAPL, TSLA, 0700.HK..." },
+  "form.symbolPlaceholderStock": { en: "AAPL, 600519, 0700.HK...", zh: "AAPL, 600519, 0700.HK..." },
   "form.symbolPlaceholderDeposit": { en: "ABC Bank 1Y, Savings...", zh: "ABC银行1年, 储蓄..." },
   "form.symbolPlaceholderBond": { en: "US10Y, Corp Bond...", zh: "US10Y, 公司债..." },
   "form.namePlaceholderCrypto": { en: "Bitcoin, Ethereum...", zh: "比特币, 以太坊..." },

@@ -6,6 +6,7 @@ import { transactions, currentPrices, priceHistory } from "@/lib/schema";
 import { eq, desc, and, asc } from "drizzle-orm";
 import { fetchAllPrices } from "@/lib/price-service";
 import { getUserId } from "@/lib/auth-utils";
+import { normalizeStockSymbol } from "@/lib/stock-utils";
 
 export async function createTransaction(formData: FormData) {
   const userId = await getUserId();
@@ -41,10 +42,12 @@ export async function createTransaction(formData: FormData) {
   // Calculate realized P&L for market sell transactions using FIFO
   let realizedPnl: string | null = null;
   const isMarketType = assetType !== "deposit" && assetType !== "bond";
+  const normalizedSymbol = normalizeStockSymbol(symbol, assetType);
+
   if (tradeType === "sell" && isMarketType) {
     realizedPnl = await calculateFifoRealizedPnl(
       userId,
-      symbol.toUpperCase(),
+      normalizedSymbol,
       parseFloat(quantity),
       parseFloat(totalAmount)
     );
@@ -52,7 +55,7 @@ export async function createTransaction(formData: FormData) {
 
   await db.insert(transactions).values({
     userId,
-    symbol: symbol.toUpperCase(),
+    symbol: normalizedSymbol,
     name: name || null,
     assetType,
     tradeType,
@@ -104,13 +107,15 @@ export async function updateTransaction(id: number, formData: FormData) {
     ).toFixed(2);
   }
 
+  const normalizedSymbol = normalizeStockSymbol(symbol, assetType);
+
   // Recalculate realized P&L for market sell transactions using FIFO
   let updatedRealizedPnl: string | null = null;
   const isMarketTypeUpdate = assetType !== "deposit" && assetType !== "bond";
   if (tradeType === "sell" && isMarketTypeUpdate) {
     updatedRealizedPnl = await calculateFifoRealizedPnl(
       userId,
-      symbol.toUpperCase(),
+      normalizedSymbol,
       parseFloat(quantity),
       parseFloat(totalAmount),
       id
@@ -120,7 +125,7 @@ export async function updateTransaction(id: number, formData: FormData) {
   await db
     .update(transactions)
     .set({
-      symbol: symbol.toUpperCase(),
+      symbol: normalizedSymbol,
       name: name || null,
       assetType,
       tradeType,
