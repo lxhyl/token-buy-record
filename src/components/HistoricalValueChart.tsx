@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import {
   AreaChart,
   Area,
@@ -17,6 +18,9 @@ import {
 } from "@/lib/currency";
 import { TrendingUp } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
+import { lttb } from "@/lib/chart-utils";
+
+type TimeRange = "7d" | "1m" | "all";
 
 interface DataPoint {
   date: string;
@@ -35,8 +39,28 @@ export function HistoricalValueChart({
   currency,
   rates,
 }: HistoricalValueChartProps) {
+  const [range, setRange] = useState<TimeRange>("all");
   const fc = createCurrencyFormatter(currency, rates);
   const { t } = useI18n();
+
+  const chartData = useMemo(() => {
+    if (data.length === 0) return [];
+
+    let filtered = data;
+    if (range !== "all") {
+      const now = new Date();
+      const cutoff = new Date(now);
+      if (range === "7d") cutoff.setUTCDate(cutoff.getUTCDate() - 7);
+      else if (range === "1m") cutoff.setUTCDate(cutoff.getUTCDate() - 30);
+      const cutoffStr = cutoff.toISOString().slice(0, 10);
+      filtered = data.filter((d) => d.date >= cutoffStr);
+    }
+
+    if (range === "all" && filtered.length > 80) {
+      return lttb(filtered, 80, (d) => d.value);
+    }
+    return filtered;
+  }, [data, range]);
 
   if (data.length === 0) {
     return (
@@ -61,6 +85,12 @@ export function HistoricalValueChart({
     );
   }
 
+  const ranges: { key: TimeRange; label: string }[] = [
+    { key: "7d", label: t("analysis.range7D") },
+    { key: "1m", label: t("analysis.range1M") },
+    { key: "all", label: t("analysis.rangeAll") },
+  ];
+
   const formatDateLabel = (value: string) => {
     const d = new Date(value + "T00:00:00Z");
     return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
@@ -83,18 +113,35 @@ export function HistoricalValueChart({
   return (
     <Card>
       <CardHeader className="border-b bg-muted/30">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
-            <TrendingUp className="h-5 w-5" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <CardTitle>{t("analysis.totalAssets")}</CardTitle>
           </div>
-          <CardTitle>{t("analysis.totalAssets")}</CardTitle>
+          <div className="flex rounded-lg bg-muted p-0.5">
+            {ranges.map((r) => (
+              <button
+                key={r.key}
+                onClick={() => setRange(r.key)}
+                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                  range === r.key
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-6">
         <div className="h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
-              data={data}
+              data={chartData}
               margin={{
                 top: 10,
                 right: 10,

@@ -281,6 +281,10 @@ const translations = {
   "analysis.dailyPnlCalendar": { en: "Daily P&L Calendar", zh: "每日盈亏日历" },
   "analysis.gain": { en: "Gain", zh: "盈利" },
   "analysis.loss": { en: "Loss", zh: "亏损" },
+  "analysis.range7D": { en: "7D", zh: "7日" },
+  "analysis.range1M": { en: "1M", zh: "1月" },
+  "analysis.rangeAll": { en: "All", zh: "全部" },
+  "analysis.monthPnl": { en: "Monthly P&L", zh: "月度盈亏" },
 
   // ── Trade Pattern ─────────────────────────────────────────
   "tradePattern.title": { en: "Trade Pattern Analysis", zh: "交易模式分析" },

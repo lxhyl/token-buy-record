@@ -145,41 +145,21 @@ export async function getHistoricalPortfolioData(): Promise<{
     priceMap.set(symbol, dateMap);
   }
 
-  // 5. Determine sample dates
+  // 5. Generate daily sample dates (client handles downsampling via LTTB)
   const firstTxDate = toMidnightUTC(new Date(allTx[0].tradeDate));
-  const totalDays = Math.ceil(
-    (today.getTime() - firstTxDate.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  let intervalDays: number;
-  if (totalDays <= 90) intervalDays = 1;
-  else if (totalDays <= 365) intervalDays = 3;
-  else if (totalDays <= 365 * 3) intervalDays = 7;
-  else intervalDays = 14;
-
   const sampleDates: Date[] = [];
   const cursor = new Date(firstTxDate);
   while (cursor <= today) {
     sampleDates.push(new Date(cursor));
-    cursor.setUTCDate(cursor.getUTCDate() + intervalDays);
-  }
-  // Always include today
-  if (
-    sampleDates.length === 0 ||
-    sampleDates[sampleDates.length - 1].getTime() !== today.getTime()
-  ) {
-    sampleDates.push(new Date(today));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
 
   // 6. Build chart data by walking through sample dates
-  // Maintain running holdings state
-  const holdings = new Map<string, number>(); // symbol -> quantity
+  const holdings = new Map<string, number>();
   let investedCumulative = 0;
+  let fixedIncomeValue = 0;
   let txIdx = 0;
-
-  // Track last known price per symbol for carry-forward
   const lastKnownPrice = new Map<string, number>();
-
   const chartData: ChartDataPoint[] = [];
 
   for (const sampleDate of sampleDates) {
@@ -194,19 +174,28 @@ export async function getHistoricalPortfolioData(): Promise<{
       const amount = parseFloat(tx.totalAmount);
       const qty = parseFloat(tx.quantity);
 
-      if (tx.tradeType === "buy") {
-        investedCumulative += amount;
-        const current = holdings.get(tx.symbol) || 0;
-        holdings.set(tx.symbol, current + qty);
-      } else if (tx.tradeType === "sell") {
-        investedCumulative -= amount;
-        const current = holdings.get(tx.symbol) || 0;
-        holdings.set(tx.symbol, Math.max(0, current - qty));
-      } else if (tx.tradeType === "income") {
-        investedCumulative += amount;
-        if (qty > 0) {
-          const current = holdings.get(tx.symbol) || 0;
-          holdings.set(tx.symbol, current + qty);
+      if (tx.assetType === "deposit" || tx.assetType === "bond") {
+        if (tx.tradeType === "buy") {
+          investedCumulative += amount;
+          fixedIncomeValue += amount;
+        } else if (tx.tradeType === "sell") {
+          investedCumulative -= amount;
+          fixedIncomeValue -= amount;
+        } else if (tx.tradeType === "income") {
+          investedCumulative += amount;
+        }
+      } else {
+        if (tx.tradeType === "buy") {
+          investedCumulative += amount;
+          holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
+        } else if (tx.tradeType === "sell") {
+          investedCumulative -= amount;
+          holdings.set(tx.symbol, Math.max(0, (holdings.get(tx.symbol) || 0) - qty));
+        } else if (tx.tradeType === "income") {
+          investedCumulative += amount;
+          if (qty > 0) {
+            holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
+          }
         }
       }
 
@@ -217,27 +206,16 @@ export async function getHistoricalPortfolioData(): Promise<{
     let marketValue = 0;
     holdings.forEach((qty, symbol) => {
       if (qty <= 0) return;
-
-      const info = symbolInfo.get(symbol);
-      if (!info) {
-        // Fixed-income: use principal (already in invested)
-        return;
-      }
-
       const symbolPrices = priceMap.get(symbol);
       let price: number | undefined;
 
       if (symbolPrices) {
-        // Try exact date
         price = symbolPrices.get(sampleDateStr);
-
-        // Carry forward: find closest previous date
         if (price === undefined) {
           const d = new Date(sampleDate);
           for (let i = 0; i < 10; i++) {
             d.setUTCDate(d.getUTCDate() - 1);
-            const key = d.toISOString().slice(0, 10);
-            price = symbolPrices.get(key);
+            price = symbolPrices.get(d.toISOString().slice(0, 10));
             if (price !== undefined) break;
           }
         }
@@ -247,27 +225,10 @@ export async function getHistoricalPortfolioData(): Promise<{
         lastKnownPrice.set(symbol, price);
         marketValue += qty * price;
       } else {
-        // Use last known price if available
         const lkp = lastKnownPrice.get(symbol);
-        if (lkp !== undefined) {
-          marketValue += qty * lkp;
-        }
+        if (lkp !== undefined) marketValue += qty * lkp;
       }
     });
-
-    // For fixed-income, add their principal to market value
-    let fixedIncomeValue = 0;
-    for (const tx of allTx) {
-      if (tx.assetType !== "deposit" && tx.assetType !== "bond") continue;
-      const txDate = toMidnightUTC(new Date(tx.tradeDate));
-      if (txDate > sampleDate) continue;
-      const amount = parseFloat(tx.totalAmount);
-      if (tx.tradeType === "buy") {
-        fixedIncomeValue += amount;
-      } else if (tx.tradeType === "sell") {
-        fixedIncomeValue -= amount;
-      }
-    }
 
     chartData.push({
       date: sampleDateStr,

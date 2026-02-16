@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import {
   AreaChart,
   Area,
@@ -18,6 +19,9 @@ import {
 } from "@/lib/currency";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
+import { lttb } from "@/lib/chart-utils";
+
+type TimeRange = "7d" | "1m" | "all";
 
 interface DataPoint {
   date: string;
@@ -31,8 +35,28 @@ interface PnLChartProps {
 }
 
 export function PnLChart({ data, currency, rates }: PnLChartProps) {
+  const [range, setRange] = useState<TimeRange>("all");
   const fc = createCurrencyFormatter(currency, rates);
   const { t } = useI18n();
+
+  const chartData = useMemo(() => {
+    if (data.length === 0) return [];
+
+    let filtered = data;
+    if (range !== "all") {
+      const now = new Date();
+      const cutoff = new Date(now);
+      if (range === "7d") cutoff.setUTCDate(cutoff.getUTCDate() - 7);
+      else if (range === "1m") cutoff.setUTCDate(cutoff.getUTCDate() - 30);
+      const cutoffStr = cutoff.toISOString().slice(0, 10);
+      filtered = data.filter((d) => d.date >= cutoffStr);
+    }
+
+    if (range === "all" && filtered.length > 80) {
+      return lttb(filtered, 80, (d) => d.pnl);
+    }
+    return filtered;
+  }, [data, range]);
 
   if (data.length === 0) {
     return (
@@ -57,8 +81,14 @@ export function PnLChart({ data, currency, rates }: PnLChartProps) {
     );
   }
 
-  const lastPnL = data[data.length - 1]?.pnl ?? 0;
+  const lastPnL = chartData.length > 0 ? chartData[chartData.length - 1].pnl : 0;
   const isPositive = lastPnL >= 0;
+
+  const ranges: { key: TimeRange; label: string }[] = [
+    { key: "7d", label: t("analysis.range7D") },
+    { key: "1m", label: t("analysis.range1M") },
+    { key: "all", label: t("analysis.rangeAll") },
+  ];
 
   const formatDateLabel = (value: string) => {
     const d = new Date(value + "T00:00:00Z");
@@ -98,32 +128,49 @@ export function PnLChart({ data, currency, rates }: PnLChartProps) {
   return (
     <Card>
       <CardHeader className="border-b bg-muted/30">
-        <div className="flex items-center gap-3">
-          <div
-            className={`flex h-10 w-10 items-center justify-center rounded-xl text-white ${
-              isPositive
-                ? "bg-gradient-to-br from-green-500 to-emerald-500"
-                : "bg-gradient-to-br from-red-500 to-rose-500"
-            }`}
-          >
-            {isPositive ? (
-              <TrendingUp className="h-5 w-5" />
-            ) : (
-              <TrendingDown className="h-5 w-5" />
-            )}
-          </div>
-          <div>
-            <CardTitle>{t("analysis.pnlOverTime")}</CardTitle>
-            <p
-              className={`text-sm font-semibold mt-0.5 ${
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-xl text-white ${
                 isPositive
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-red-600 dark:text-red-400"
+                  ? "bg-gradient-to-br from-green-500 to-emerald-500"
+                  : "bg-gradient-to-br from-red-500 to-rose-500"
               }`}
             >
-              {isPositive ? "+" : ""}
-              {fc(lastPnL)}
-            </p>
+              {isPositive ? (
+                <TrendingUp className="h-5 w-5" />
+              ) : (
+                <TrendingDown className="h-5 w-5" />
+              )}
+            </div>
+            <div>
+              <CardTitle>{t("analysis.pnlOverTime")}</CardTitle>
+              <p
+                className={`text-sm font-semibold mt-0.5 ${
+                  isPositive
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {isPositive ? "+" : ""}
+                {fc(lastPnL)}
+              </p>
+            </div>
+          </div>
+          <div className="flex rounded-lg bg-muted p-0.5">
+            {ranges.map((r) => (
+              <button
+                key={r.key}
+                onClick={() => setRange(r.key)}
+                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                  range === r.key
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
           </div>
         </div>
       </CardHeader>
@@ -131,7 +178,7 @@ export function PnLChart({ data, currency, rates }: PnLChartProps) {
         <div className="h-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
-              data={data}
+              data={chartData}
               margin={{
                 top: 10,
                 right: 10,
