@@ -13,6 +13,7 @@ import { AllocationPieChart } from "@/components/PieChart";
 import { HistoricalValueChart } from "@/components/HistoricalValueChart";
 import { PnLChart } from "@/components/PnLChart";
 import { PnLHeatmap } from "@/components/PnLHeatmap";
+import { TradingStats } from "@/components/TradingStats";
 import { getHistoricalPortfolioData, getDailyPnLForMonth } from "@/actions/historical-prices";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -90,13 +91,16 @@ export default async function AnalysisPage() {
         rates={rates}
       />
 
-      <PnLHeatmap
-        initialData={heatmapData}
-        initialYear={currentYear}
-        initialMonth={currentMonth}
-        currency={currency}
-        rates={rates}
-      />
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
+        <PnLHeatmap
+          initialData={heatmapData}
+          initialYear={currentYear}
+          initialMonth={currentMonth}
+          currency={currency}
+          rates={rates}
+        />
+        <TradingStats chartData={historicalData.chartData} currency={currency} rates={rates} />
+      </div>
 
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         <Card>

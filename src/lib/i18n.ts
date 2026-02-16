@@ -285,6 +285,16 @@ const translations = {
   "analysis.range1M": { en: "1M", zh: "1月" },
   "analysis.rangeAll": { en: "All", zh: "全部" },
   "analysis.monthPnl": { en: "Monthly P&L", zh: "月度盈亏" },
+  "analysis.tradingStats": { en: "Trading Performance", zh: "交易统计" },
+  "analysis.winRate": { en: "Win Rate", zh: "胜率" },
+  "analysis.bestDay": { en: "Best Day", zh: "最佳单日" },
+  "analysis.worstDay": { en: "Worst Day", zh: "最差单日" },
+  "analysis.avgDailyPnl": { en: "Avg Daily P&L", zh: "日均盈亏" },
+  "analysis.maxDrawdown": { en: "Max Drawdown", zh: "最大回撤" },
+  "analysis.profitFactor": { en: "Profit Factor", zh: "盈亏比" },
+  "analysis.longestWinStreak": { en: "Win Streak", zh: "最长连胜" },
+  "analysis.longestLossStreak": { en: "Loss Streak", zh: "最长连亏" },
+  "analysis.days": { en: "days", zh: "天" },
 
   // ── Trade Pattern ─────────────────────────────────────────
   "tradePattern.title": { en: "Trade Pattern Analysis", zh: "交易模式分析" },

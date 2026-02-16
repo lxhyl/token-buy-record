@@ -87,7 +87,7 @@ export function PnLHeatmap({
   const lossDays = data.filter((d) => d.pnl < 0).length;
 
   return (
-    <Card className="max-w-lg w-full">
+    <Card className="w-full">
       <CardHeader className="border-b bg-muted/30 py-3 px-4 sm:px-5">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 text-white">
