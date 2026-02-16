@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { createCurrencyFormatter } from "@/lib/utils";
-import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
+import { SupportedCurrency, ExchangeRates, convertAmount } from "@/lib/currency";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { getDailyPnLForMonth } from "@/actions/historical-prices";
@@ -78,7 +78,7 @@ export function PnLHeatmap({
   const pnlMap = new Map<number, number>();
   for (const d of data) {
     const day = parseInt(d.date.slice(8, 10), 10);
-    pnlMap.set(day, d.pnl);
+    pnlMap.set(day, convertAmount(d.pnl, currency, rates));
   }
 
   const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
