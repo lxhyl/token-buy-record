@@ -61,3 +61,16 @@ export function convertAmount(
   if (currency === "USD") return usdValue;
   return usdValue * (rates[currency] ?? 1);
 }
+
+/**
+ * Convert a price from its original transaction currency to USD.
+ * If the transaction is already in USD, returns as-is.
+ */
+export function toUsd(
+  value: number,
+  txCurrency: string,
+  rates: ExchangeRates
+): number {
+  if (txCurrency === "USD" || !rates[txCurrency]) return value;
+  return value / rates[txCurrency];
+}

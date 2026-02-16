@@ -1,18 +1,5 @@
 import { Transaction, CurrentPrice } from "./schema";
-import { ExchangeRates } from "./currency";
-
-/**
- * Convert a price from its original transaction currency to USD.
- * If the transaction is already in USD, returns as-is.
- */
-function toUsd(
-  price: number,
-  txCurrency: string,
-  rates: ExchangeRates
-): number {
-  if (txCurrency === "USD" || !rates[txCurrency]) return price;
-  return price / rates[txCurrency];
-}
+import { ExchangeRates, toUsd } from "./currency";
 
 export interface Holding {
   symbol: string;
@@ -123,7 +110,7 @@ export function calculateHoldings(
     } else {
       holding.sells.push({ quantity, priceUsd });
       if (t.realizedPnl) {
-        holding.storedRealizedPnl += parseFloat(t.realizedPnl);
+        holding.storedRealizedPnl += toUsd(parseFloat(t.realizedPnl), txCurrency, rates);
       }
     }
   });
@@ -462,7 +449,7 @@ export function analyzeTradePatterns(
       analysis.sells.push({ quantity, priceUsd });
       analysis.sellTotalAmountUsd += totalUsd;
       if (t.realizedPnl) {
-        analysis.realizedPnl += parseFloat(t.realizedPnl);
+        analysis.realizedPnl += toUsd(parseFloat(t.realizedPnl), txCurrency, rates);
       }
     }
   });

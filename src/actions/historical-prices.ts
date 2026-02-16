@@ -10,6 +10,7 @@ import {
   delay,
   type HistoricalPrice,
 } from "@/lib/historical-price-service";
+import { getExchangeRates, toUsd } from "@/lib/currency";
 
 function toMidnightUTC(date: Date): Date {
   return new Date(
@@ -42,6 +43,8 @@ export async function getHistoricalPortfolioData(): Promise<{
   if (allTx.length === 0) {
     return { chartData: [] };
   }
+
+  const rates = await getExchangeRates();
 
   // 2. Identify unique market symbols and their date ranges
   const symbolInfo = new Map<
@@ -171,28 +174,28 @@ export async function getHistoricalPortfolioData(): Promise<{
       const txDate = toMidnightUTC(new Date(tx.tradeDate));
       if (txDate > sampleDate) break;
 
-      const amount = parseFloat(tx.totalAmount);
+      const amountUsd = toUsd(parseFloat(tx.totalAmount), tx.currency || "USD", rates);
       const qty = parseFloat(tx.quantity);
 
       if (tx.assetType === "deposit" || tx.assetType === "bond") {
         if (tx.tradeType === "buy") {
-          investedCumulative += amount;
-          fixedIncomeValue += amount;
+          investedCumulative += amountUsd;
+          fixedIncomeValue += amountUsd;
         } else if (tx.tradeType === "sell") {
-          investedCumulative -= amount;
-          fixedIncomeValue -= amount;
+          investedCumulative -= amountUsd;
+          fixedIncomeValue -= amountUsd;
         } else if (tx.tradeType === "income") {
-          investedCumulative += amount;
+          investedCumulative += amountUsd;
         }
       } else {
         if (tx.tradeType === "buy") {
-          investedCumulative += amount;
+          investedCumulative += amountUsd;
           holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
         } else if (tx.tradeType === "sell") {
-          investedCumulative -= amount;
+          investedCumulative -= amountUsd;
           holdings.set(tx.symbol, Math.max(0, (holdings.get(tx.symbol) || 0) - qty));
         } else if (tx.tradeType === "income") {
-          investedCumulative += amount;
+          investedCumulative += amountUsd;
           if (qty > 0) {
             holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
           }
@@ -258,6 +261,8 @@ export async function getDailyPnLForMonth(
     .orderBy(asc(transactions.tradeDate));
 
   if (allTx.length === 0) return [];
+
+  const rates = await getExchangeRates();
 
   // Identify market symbols
   const symbolTypes = new Map<string, string>();
@@ -330,24 +335,24 @@ export async function getDailyPnLForMonth(
       const txDate = toMidnightUTC(new Date(tx.tradeDate));
       if (txDate > targetDate) break;
 
-      const amount = parseFloat(tx.totalAmount);
+      const amountUsd = toUsd(parseFloat(tx.totalAmount), tx.currency || "USD", rates);
       const qty = parseFloat(tx.quantity);
 
       if (tx.assetType === "deposit" || tx.assetType === "bond") {
-        if (tx.tradeType === "buy") fixedIncomeValue += amount;
-        else if (tx.tradeType === "sell") fixedIncomeValue -= amount;
+        if (tx.tradeType === "buy") fixedIncomeValue += amountUsd;
+        else if (tx.tradeType === "sell") fixedIncomeValue -= amountUsd;
       } else {
         if (tx.tradeType === "buy") {
-          invested += amount;
+          invested += amountUsd;
           holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
         } else if (tx.tradeType === "sell") {
-          invested -= amount;
+          invested -= amountUsd;
           holdings.set(
             tx.symbol,
             Math.max(0, (holdings.get(tx.symbol) || 0) - qty)
           );
         } else if (tx.tradeType === "income") {
-          invested += amount;
+          invested += amountUsd;
           if (qty > 0) {
             holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
           }

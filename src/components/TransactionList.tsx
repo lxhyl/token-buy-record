@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { deleteTransaction } from "@/actions/transactions";
 import { Transaction } from "@/lib/schema";
 import { createCurrencyFormatter, formatNumber, formatDate } from "@/lib/utils";
-import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
+import { SupportedCurrency, ExchangeRates, toUsd } from "@/lib/currency";
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/components/I18nProvider";
 import { TranslationKey } from "@/lib/i18n";
@@ -374,7 +374,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                     {showFixedIncomeColumns ? (
                       <>
                         <TableCell className="text-right font-semibold">
-                          {fc(parseFloat(tx.totalAmount))}
+                          {fc(toUsd(parseFloat(tx.totalAmount), tx.currency || "USD", rates))}
                         </TableCell>
                         <TableCell className="text-right">
                           {tx.interestRate && parseFloat(tx.interestRate) > 0
@@ -393,15 +393,15 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                           {parseFloat(tx.quantity) > 0 ? formatNumber(parseFloat(tx.quantity), 8) : "-"}
                         </TableCell>
                         <TableCell className="text-right">
-                          {parseFloat(tx.price) > 0 ? fc(parseFloat(tx.price)) : "-"}
+                          {parseFloat(tx.price) > 0 ? fc(toUsd(parseFloat(tx.price), tx.currency || "USD", rates)) : "-"}
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          {fc(parseFloat(tx.totalAmount))}
+                          {fc(toUsd(parseFloat(tx.totalAmount), tx.currency || "USD", rates))}
                         </TableCell>
                         <TableCell className="text-right">
                           {tx.tradeType === "sell" && tx.realizedPnl ? (() => {
-                            const pnl = parseFloat(tx.realizedPnl);
-                            const isProfit = pnl >= 0;
+                            const pnlUsd = toUsd(parseFloat(tx.realizedPnl), tx.currency || "USD", rates);
+                            const isProfit = pnlUsd >= 0;
                             return (
                               <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold leading-none ${
                                 isProfit
@@ -413,7 +413,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                                 ) : (
                                   <ArrowDownRight className="h-3 w-3 shrink-0" />
                                 )}
-                                <span className="whitespace-nowrap">{isProfit ? "+" : ""}{fc(pnl)}</span>
+                                <span className="whitespace-nowrap">{isProfit ? "+" : ""}{fc(pnlUsd)}</span>
                               </div>
                             );
                           })() : <span className="text-muted-foreground">-</span>}
