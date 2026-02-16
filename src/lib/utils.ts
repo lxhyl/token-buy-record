@@ -24,7 +24,7 @@ export function formatCurrency(
     maximumFractionDigits: 2,
   }).format(Math.abs(converted));
   const sign = converted < 0 ? "-" : "";
-  return `${sign}${config.symbol}${num}`;
+  return `${sign}${num}`;
 }
 
 export function createCurrencyFormatter(

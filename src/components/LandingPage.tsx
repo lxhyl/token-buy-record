@@ -266,10 +266,10 @@ export function LandingPage() {
                             </td>
                             <td className="text-right px-4 py-2.5 hidden sm:table-cell">{h.qty.toLocaleString()}</td>
                             <td className="text-right px-4 py-2.5 font-medium">
-                              ${h.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              {h.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                             </td>
                             <td className="text-right px-4 py-2.5 text-muted-foreground hidden md:table-cell">
-                              ${h.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              {h.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                             </td>
                             <td className="text-right px-4 py-2.5">
                               <span

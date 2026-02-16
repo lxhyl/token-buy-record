@@ -65,6 +65,7 @@ npm run db:studio # Open Drizzle Studio
 - Authenticated pages live under `src/app/(app)/`, public pages at `src/app/`
 - Currency values stored in USD, converted at display time via `formatCurrency()`
 - `createCurrencyFormatter(currency, rates)` returns a reusable formatter function
+- **Currency display: numbers only, no currency symbols** (no $, ¥, HK$ prefixes). All formatting goes through `formatCurrency()` in `src/lib/utils.ts`
 - Dark mode via `.dark` class on `<html>`, toggled by ThemeProvider with localStorage
 - Toast notifications via ToastProvider context
 - Server actions in `src/actions/` handle DB mutations with `revalidatePath`
