@@ -118,9 +118,24 @@ export async function getHistoricalPortfolioData(): Promise<{
         (today.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)
       );
 
-      // If we have at least 70% of expected days, skip backfill
-      if (existingPrices.length > daySpan * 0.7 && daySpan > 0) {
+      // Check if recent days (last 3 days) have data
+      const threeDaysAgo = new Date(today);
+      threeDaysAgo.setUTCDate(threeDaysAgo.getUTCDate() - 3);
+      const recentPrices = existingPrices.filter(
+        (p) => new Date(p.date) >= threeDaysAgo
+      );
+      const hasRecentData = recentPrices.length >= 1;
+
+      // If we have at least 70% of expected days AND recent data exists, skip backfill
+      if (existingPrices.length > daySpan * 0.7 && daySpan > 0 && hasRecentData) {
         continue;
+      }
+
+      // If overall coverage is fine but recent data is missing, only fetch last 7 days
+      if (existingPrices.length > daySpan * 0.7 && daySpan > 0 && !hasRecentData) {
+        const weekAgo = new Date(today);
+        weekAgo.setUTCDate(weekAgo.getUTCDate() - 7);
+        fromDate.setTime(weekAgo.getTime());
       }
 
       // Fetch historical prices

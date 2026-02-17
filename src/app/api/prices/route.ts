@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { transactions, currentPrices } from "@/lib/schema";
+import { transactions, currentPrices, priceHistory } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { fetchAllPrices } from "@/lib/price-service";
 import { getUserId } from "@/lib/auth-utils";
@@ -42,7 +42,16 @@ export async function GET() {
     const priceResults = await fetchAllPrices(assets);
 
     // 3. Upsert prices into DB using ON CONFLICT
-    for (const { symbol, price } of priceResults) {
+    const todayMidnightUTC = new Date(
+      Date.UTC(
+        new Date().getUTCFullYear(),
+        new Date().getUTCMonth(),
+        new Date().getUTCDate()
+      )
+    );
+
+    for (const { symbol, price, source } of priceResults) {
+      // Update current price
       await db
         .insert(currentPrices)
         .values({ symbol, price: price.toString() })
@@ -50,6 +59,17 @@ export async function GET() {
           target: currentPrices.symbol,
           set: { price: price.toString(), updatedAt: new Date() },
         });
+
+      // Also snapshot into price_history for today
+      await db
+        .insert(priceHistory)
+        .values({
+          symbol,
+          date: todayMidnightUTC,
+          price: price.toString(),
+          source: source || "api",
+        })
+        .onConflictDoNothing();
     }
 
     return NextResponse.json({
