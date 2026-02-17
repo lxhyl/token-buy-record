@@ -43,6 +43,12 @@ export async function createTransaction(formData: FormData): Promise<{ error: st
   const normalizedSymbol = normalizeStockSymbol(symbol, assetType);
 
   if (tradeType === "sell" && isMarketType) {
+    const available = await getAvailableQuantity(userId, normalizedSymbol);
+    if (v.quantity > available + 0.00000001) {
+      return {
+        error: `Insufficient holdings: you have ${available} ${normalizedSymbol} but tried to sell ${v.quantity}`,
+      };
+    }
     realizedPnl = await calculateFifoRealizedPnl(
       userId,
       normalizedSymbol,
@@ -110,6 +116,12 @@ export async function updateTransaction(id: number, formData: FormData): Promise
   let updatedRealizedPnl: string | null = null;
   const isMarketTypeUpdate = assetType !== "deposit" && assetType !== "bond";
   if (tradeType === "sell" && isMarketTypeUpdate) {
+    const available = await getAvailableQuantity(userId, normalizedSymbol, id);
+    if (v.quantity > available + 0.00000001) {
+      return {
+        error: `Insufficient holdings: you have ${available} ${normalizedSymbol} but tried to sell ${v.quantity}`,
+      };
+    }
     updatedRealizedPnl = await calculateFifoRealizedPnl(
       userId,
       normalizedSymbol,
@@ -377,4 +389,37 @@ async function calculateFifoRealizedPnl(
   }
 
   return (sellTotalAmount - costOfSold).toFixed(2);
+}
+
+/**
+ * Calculate the available quantity of a symbol for selling.
+ * Sum of buys/income minus sum of sells, excluding a specific transaction if updating.
+ */
+async function getAvailableQuantity(
+  userId: string,
+  symbol: string,
+  excludeTxId?: number
+): Promise<number> {
+  const allTxs = await db
+    .select()
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        eq(transactions.symbol, symbol)
+      )
+    );
+
+  let available = 0;
+  for (const tx of allTxs) {
+    if (tx.assetType === "deposit" || tx.assetType === "bond") continue;
+    if (excludeTxId !== undefined && tx.id === excludeTxId) continue;
+    const qty = parseFloat(tx.quantity);
+    if (tx.tradeType === "buy" || tx.tradeType === "income") {
+      available += qty;
+    } else if (tx.tradeType === "sell") {
+      available -= qty;
+    }
+  }
+  return Math.max(0, available);
 }
