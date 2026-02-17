@@ -66,7 +66,7 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader className="border-b bg-muted/30">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white">
                 <Sparkles className="h-5 w-5" />
               </div>
               <CardTitle>{t(locale, "dashboard.quickStats")}</CardTitle>
@@ -88,13 +88,13 @@ export default async function DashboardPage() {
                       <p className="text-xs md:text-sm text-blue-600 dark:text-blue-400">{t(locale, "dashboard.assets")}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-purple-50 dark:bg-purple-950/40">
-                    <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500 text-white">
+                  <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-indigo-50 dark:bg-indigo-950/40">
+                    <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500 text-white">
                       <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <p className="text-xl md:text-2xl font-bold font-num text-purple-700 dark:text-purple-300">{transactions.length}</p>
-                      <p className="text-xs md:text-sm text-purple-600 dark:text-purple-400">{t(locale, "dashboard.trades")}</p>
+                      <p className="text-xl md:text-2xl font-bold font-num text-indigo-700 dark:text-indigo-300">{transactions.length}</p>
+                      <p className="text-xs md:text-sm text-indigo-600 dark:text-indigo-400">{t(locale, "dashboard.trades")}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 md:p-4 rounded-xl bg-pink-50 dark:bg-pink-950/40">

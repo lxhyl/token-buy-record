@@ -28,7 +28,7 @@ export function AccountSection() {
                   className="rounded-full shrink-0"
                 />
               ) : (
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white font-medium">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-white font-medium">
                   {(session.user.name?.[0] || session.user.email?.[0] || "U").toUpperCase()}
                 </div>
               )}

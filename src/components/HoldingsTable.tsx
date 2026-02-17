@@ -82,7 +82,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
       <CardHeader className="border-b bg-muted/30 px-4 md:px-6">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 md:gap-3 min-w-0">
-            <div className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+            <div className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white">
               <Wallet className="h-4 w-4 md:h-5 md:w-5" />
             </div>
             <CardTitle className="text-base md:text-lg truncate">{t("holdings.title")}</CardTitle>

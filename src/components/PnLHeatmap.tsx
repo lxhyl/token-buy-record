@@ -92,7 +92,7 @@ export function PnLHeatmap({
     <Card className="w-full">
       <CardHeader className="border-b bg-muted/30 py-3 px-4 sm:px-5">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-500 text-white">
             <CalendarDays className="h-4 w-4" />
           </div>
           <CardTitle className="text-sm">{t("analysis.dailyPnlCalendar")}</CardTitle>

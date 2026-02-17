@@ -40,7 +40,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: "#3b82f6",
+  themeColor: "#2563eb",
   viewportFit: "cover",
 };
 
@@ -69,19 +69,19 @@ export default async function RootLayout({
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                background: linear-gradient(135deg, #f8fafc, #fff, #eff6ff);
+                background: linear-gradient(160deg, #f8fafc, #fff, #f0fdf4);
                 transition: opacity 0.3s;
               }
               #app-splash .splash-icon {
                 width: 56px;
                 height: 56px;
                 border-radius: 16px;
-                background: linear-gradient(135deg, #2563eb, #7c3aed);
+                background: linear-gradient(135deg, #2563eb, #0d9488);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 margin-bottom: 16px;
-                box-shadow: 0 4px 14px rgba(37,99,235,0.3);
+                box-shadow: 0 4px 14px rgba(37,99,235,0.25);
               }
               #app-splash .splash-icon svg {
                 width: 28px;
@@ -91,7 +91,7 @@ export default async function RootLayout({
               #app-splash .splash-title {
                 font-size: 22px;
                 font-weight: 700;
-                background: linear-gradient(90deg, #2563eb, #7c3aed);
+                background: linear-gradient(90deg, #2563eb, #0d9488);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
@@ -111,7 +111,7 @@ export default async function RootLayout({
                 width: 50%;
                 height: 100%;
                 border-radius: 3px;
-                background: linear-gradient(90deg, #2563eb, #7c3aed);
+                background: linear-gradient(90deg, #2563eb, #0d9488);
                 animation: splashProgress 1.2s ease-in-out infinite;
               }
               @keyframes splashProgress {
@@ -128,7 +128,7 @@ export default async function RootLayout({
             <ColorSchemeProvider scheme={colorScheme}>
             <ToastProvider>
               <SplashScreen />
-              <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+              <div className="min-h-screen bg-background">
                 {children}
               </div>
               <ServiceWorkerRegister />

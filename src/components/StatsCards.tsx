@@ -32,10 +32,10 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
       title: t("stats.currentValue"),
       value: fc(summary.totalCurrentValue),
       icon: PiggyBank,
-      gradient: "from-purple-500 to-purple-600",
-      shadowColor: "shadow-purple-500/25",
-      bgLight: "bg-purple-50 dark:bg-purple-950/40",
-      iconColor: "text-purple-600 dark:text-purple-400",
+      gradient: "from-teal-500 to-cyan-500",
+      shadowColor: "shadow-teal-500/25",
+      bgLight: "bg-teal-50 dark:bg-teal-950/40",
+      iconColor: "text-teal-600 dark:text-teal-400",
     },
     {
       title: t("stats.unrealizedPnL"),
@@ -85,7 +85,7 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
         return (
           <div
             key={card.title}
-            className="group relative overflow-hidden rounded-2xl bg-card p-4 md:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
+            className="group relative overflow-hidden rounded-xl bg-card p-4 md:p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5"
             style={{ animationDelay: `${index * 100}ms` }}
           >
             {/* Background decoration */}

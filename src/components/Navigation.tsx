@@ -49,19 +49,19 @@ export function Navigation() {
   return (
     <>
       {/* Desktop: top nav */}
-      <nav className="sticky top-0 z-50 border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl hidden md:block">
+      <nav className="sticky top-0 z-50 border-b bg-white/85 dark:bg-gray-950/85 backdrop-blur-xl hidden md:block">
         <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
-            <Link href="/dashboard" className="flex items-center gap-2 group">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25 transition-transform group-hover:scale-105">
-                <TrendingUp className="h-5 w-5" />
+          <div className="flex h-14 items-center justify-between">
+            <Link href="/dashboard" className="flex items-center gap-2.5 group">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-teal-500 text-white shadow-md shadow-blue-600/20 transition-transform group-hover:scale-105">
+                <TrendingUp className="h-4 w-4" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-lg font-bold text-gradient">
                 {t("common.appName")}
               </span>
             </Link>
 
-            <div className="flex items-center gap-1 rounded-2xl bg-secondary/50 p-1.5">
+            <div className="flex items-center gap-0.5 rounded-lg bg-secondary/60 p-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive =
@@ -73,13 +73,13 @@ export function Navigation() {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200",
+                      "flex items-center gap-2 px-3.5 py-1.5 rounded-md text-sm font-medium transition-all duration-200",
                       isActive
-                        ? "bg-white dark:bg-gray-800 text-primary shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-gray-800/50"
+                        ? "bg-white dark:bg-gray-800 text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className={cn("h-4 w-4", isActive && "text-primary")} />
                     <span>{t(item.labelKey)}</span>
                   </Link>
                 );
@@ -90,19 +90,19 @@ export function Navigation() {
       </nav>
 
       {/* Mobile: compact top header with hamburger */}
-      <nav className="sticky top-0 z-50 border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl md:hidden">
+      <nav className="sticky top-0 z-50 border-b bg-white/85 dark:bg-gray-950/85 backdrop-blur-xl md:hidden">
         <div className="flex h-12 items-center justify-between px-4" ref={menuRef}>
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 text-white">
-              <TrendingUp className="h-4 w-4" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-teal-500 text-white">
+              <TrendingUp className="h-3.5 w-3.5" />
             </div>
-            <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="text-lg font-bold text-gradient">
               {t("common.appName")}
             </span>
           </Link>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
             aria-label={t("common.toggleMenu")}
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -110,8 +110,8 @@ export function Navigation() {
 
           {/* Mobile dropdown menu */}
           {menuOpen && (
-            <div className="absolute top-full left-0 right-0 border-b bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg animate-fade-in">
-              <div className="px-3 py-2 space-y-1">
+            <div className="absolute top-full left-0 right-0 border-b bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl shadow-lg animate-fade-in">
+              <div className="px-3 py-2 space-y-0.5">
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   const isActive =
@@ -123,9 +123,9 @@ export function Navigation() {
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors",
+                        "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
                         isActive
-                          ? "bg-primary/10 text-primary"
+                          ? "bg-primary/8 text-primary"
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                       )}
                     >

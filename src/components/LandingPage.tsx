@@ -34,11 +34,11 @@ const MOCK_CHART_DATA = [
 
 const FEATURE_ITEMS: { icon: typeof BarChart3; titleKey: TranslationKey; descKey: TranslationKey; gradient: string }[] = [
   { icon: BarChart3, titleKey: "landing.featureAnalyticsTitle", descKey: "landing.featureAnalyticsDesc", gradient: "from-blue-500 to-cyan-500" },
-  { icon: PieChart, titleKey: "landing.featureMultiAssetTitle", descKey: "landing.featureMultiAssetDesc", gradient: "from-purple-500 to-pink-500" },
-  { icon: Globe, titleKey: "landing.featureMultiCurrencyTitle", descKey: "landing.featureMultiCurrencyDesc", gradient: "from-emerald-500 to-teal-500" },
+  { icon: PieChart, titleKey: "landing.featureMultiAssetTitle", descKey: "landing.featureMultiAssetDesc", gradient: "from-teal-500 to-emerald-500" },
+  { icon: Globe, titleKey: "landing.featureMultiCurrencyTitle", descKey: "landing.featureMultiCurrencyDesc", gradient: "from-sky-500 to-blue-500" },
   { icon: Smartphone, titleKey: "landing.featurePWATitle", descKey: "landing.featurePWADesc", gradient: "from-orange-500 to-amber-500" },
-  { icon: Shield, titleKey: "landing.featureSecureTitle", descKey: "landing.featureSecureDesc", gradient: "from-red-500 to-rose-500" },
-  { icon: Zap, titleKey: "landing.featureFastTitle", descKey: "landing.featureFastDesc", gradient: "from-yellow-500 to-orange-500" },
+  { icon: Shield, titleKey: "landing.featureSecureTitle", descKey: "landing.featureSecureDesc", gradient: "from-slate-600 to-slate-800" },
+  { icon: Zap, titleKey: "landing.featureFastTitle", descKey: "landing.featureFastDesc", gradient: "from-amber-500 to-yellow-500" },
 ];
 
 // ── Sparkline mini-chart (SVG) ─────────────────────────────
@@ -60,7 +60,7 @@ function MiniChart({ data, color }: { data: number[]; color: string }) {
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="none">
       <defs>
         <linearGradient id={`grad-${color}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+          <stop offset="0%" stopColor={color} stopOpacity={0.25} />
           <stop offset="100%" stopColor={color} stopOpacity={0} />
         </linearGradient>
       </defs>
@@ -82,7 +82,7 @@ export function LandingPage() {
 
   const ALLOCATION_ITEMS: { labelKey: TranslationKey; color: string; pct: string }[] = [
     { labelKey: "landing.stocks", color: "bg-blue-500", pct: "42%" },
-    { labelKey: "landing.crypto", color: "bg-purple-500", pct: "28%" },
+    { labelKey: "landing.crypto", color: "bg-teal-500", pct: "28%" },
     { labelKey: "landing.bonds", color: "bg-amber-500", pct: "18%" },
     { labelKey: "landing.deposits", color: "bg-emerald-500", pct: "12%" },
   ];
@@ -90,13 +90,13 @@ export function LandingPage() {
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Top nav bar */}
-      <header className="sticky top-0 z-50 border-b bg-white/70 dark:bg-gray-950/70 backdrop-blur-xl">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25">
-              <TrendingUp className="h-5 w-5" />
+      <header className="sticky top-0 z-50 border-b bg-white/85 dark:bg-gray-950/85 backdrop-blur-xl">
+        <div className="container mx-auto flex h-14 items-center justify-between px-4">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-teal-500 text-white shadow-md shadow-blue-600/20">
+              <TrendingUp className="h-4 w-4" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="text-lg font-bold text-gradient">
               TradeTracker
             </span>
           </div>
@@ -104,10 +104,10 @@ export function LandingPage() {
             <LandingLanguageToggle />
             <button
               onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-0.5 active:translate-y-0"
+              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition-all hover:shadow-lg hover:shadow-blue-600/25 hover:-translate-y-0.5 active:translate-y-0"
             >
               {t("common.getStarted")}
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
@@ -117,8 +117,8 @@ export function LandingPage() {
       <section className="relative py-20 md:py-28">
         {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-blue-500/10 blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-purple-500/10 blur-3xl" />
+          <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-blue-500/8 blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-teal-500/8 blur-3xl" />
         </div>
 
         <div className="container mx-auto px-4 relative">
@@ -129,7 +129,7 @@ export function LandingPage() {
             </div>
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
               {t("landing.heroTitle1")}{" "}
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              <span className="text-gradient">
                 {t("landing.heroTitle2")}
               </span>
             </h1>
@@ -139,7 +139,7 @@ export function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
               <button
                 onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-0.5 active:translate-y-0"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-teal-500 px-8 py-3.5 text-base font-semibold text-white shadow-md shadow-blue-600/20 transition-all hover:shadow-lg hover:shadow-blue-600/25 hover:-translate-y-0.5 active:translate-y-0"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#fff" fillOpacity={0.9} />
@@ -151,7 +151,7 @@ export function LandingPage() {
               </button>
               <a
                 href="#features"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-gray-200 dark:border-gray-700 px-8 py-3.5 text-base font-semibold text-foreground transition-all hover:bg-secondary/50 hover:-translate-y-0.5 active:translate-y-0"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-8 py-3.5 text-base font-semibold text-foreground transition-all hover:bg-secondary/50 hover:-translate-y-0.5 active:translate-y-0"
               >
                 {t("common.learnMore")}
                 <ChevronRight className="h-4 w-4" />
@@ -164,12 +164,12 @@ export function LandingPage() {
             {STATS.map((s, i) => (
               <div
                 key={s.labelKey}
-                className="relative rounded-2xl border bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm p-5 animate-fade-in"
+                className="relative rounded-xl border bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm p-5 animate-fade-in"
                 style={{ animationDelay: `${0.3 + i * 0.1}s` }}
               >
                 <p className="text-sm text-muted-foreground">{t(s.labelKey)}</p>
-                <p className="text-2xl font-bold mt-1">{s.value}</p>
-                <span className={`text-sm font-medium ${s.up ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                <p className="text-2xl font-bold font-num mt-1">{s.value}</p>
+                <span className={`text-sm font-medium font-num ${s.up ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                   {s.change}
                 </span>
               </div>
@@ -178,16 +178,16 @@ export function LandingPage() {
 
           {/* Mock dashboard preview */}
           <div className="max-w-5xl mx-auto animate-fade-in" style={{ animationDelay: "0.5s" }}>
-            <div className="rounded-2xl border bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm shadow-2xl shadow-blue-500/5 overflow-hidden">
+            <div className="rounded-xl border bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm shadow-2xl shadow-black/5 dark:shadow-black/20 overflow-hidden">
               {/* Browser chrome */}
-              <div className="flex items-center gap-2 border-b px-4 py-3 bg-gray-50/80 dark:bg-gray-800/80">
+              <div className="flex items-center gap-2 border-b px-4 py-2.5 bg-gray-50/80 dark:bg-gray-800/80">
                 <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-400" />
-                  <div className="w-3 h-3 rounded-full bg-amber-400" />
-                  <div className="w-3 h-3 rounded-full bg-emerald-400" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                 </div>
                 <div className="flex-1 flex justify-center">
-                  <div className="flex items-center gap-2 rounded-lg bg-white dark:bg-gray-900 border px-4 py-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 rounded-md bg-white dark:bg-gray-900 border px-4 py-1 text-xs text-muted-foreground">
                     <Shield className="h-3 w-3 text-emerald-500" />
                     tradetracker.app/dashboard
                   </div>
@@ -198,29 +198,29 @@ export function LandingPage() {
               <div className="p-4 md:p-6">
                 {/* Chart area */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-                  <div className="lg:col-span-2 rounded-xl border bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 p-4">
+                  <div className="lg:col-span-2 rounded-lg border bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <p className="text-sm text-muted-foreground">{t("landing.portfolioValue")}</p>
-                        <p className="text-2xl font-bold">$284,520.00</p>
+                        <p className="text-2xl font-bold font-num">$284,520.00</p>
                       </div>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 text-xs font-semibold font-num text-emerald-600 dark:text-emerald-400">
                         <TrendingUp className="h-3 w-3" />
                         +31.5%
                       </span>
                     </div>
                     <div className="h-32 md:h-40">
-                      <MiniChart data={MOCK_CHART_DATA} color="#3b82f6" />
+                      <MiniChart data={MOCK_CHART_DATA} color="#2563eb" />
                     </div>
                   </div>
-                  <div className="rounded-xl border bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 p-4">
+                  <div className="rounded-lg border bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 p-4">
                     <p className="text-sm text-muted-foreground mb-3">{t("landing.allocation")}</p>
                     {/* Donut chart mock */}
                     <div className="flex items-center justify-center py-2">
                       <div className="relative w-28 h-28">
                         <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                          <circle cx="18" cy="18" r="14" fill="none" stroke="#3b82f6" strokeWidth="4" strokeDasharray="30 70" strokeDashoffset="0" />
-                          <circle cx="18" cy="18" r="14" fill="none" stroke="#8b5cf6" strokeWidth="4" strokeDasharray="25 75" strokeDashoffset="-30" />
+                          <circle cx="18" cy="18" r="14" fill="none" stroke="#2563eb" strokeWidth="4" strokeDasharray="30 70" strokeDashoffset="0" />
+                          <circle cx="18" cy="18" r="14" fill="none" stroke="#14b8a6" strokeWidth="4" strokeDasharray="25 75" strokeDashoffset="-30" />
                           <circle cx="18" cy="18" r="14" fill="none" stroke="#f59e0b" strokeWidth="4" strokeDasharray="20 80" strokeDashoffset="-55" />
                           <circle cx="18" cy="18" r="14" fill="none" stroke="#10b981" strokeWidth="4" strokeDasharray="15 85" strokeDashoffset="-75" />
                           <circle cx="18" cy="18" r="14" fill="none" stroke="#ef4444" strokeWidth="4" strokeDasharray="10 90" strokeDashoffset="-90" />
@@ -232,7 +232,7 @@ export function LandingPage() {
                         <div key={item.labelKey} className="flex items-center gap-1.5">
                           <div className={`w-2 h-2 rounded-full ${item.color}`} />
                           <span className="text-muted-foreground">{t(item.labelKey)}</span>
-                          <span className="font-medium ml-auto">{item.pct}</span>
+                          <span className="font-medium font-num ml-auto">{item.pct}</span>
                         </div>
                       ))}
                     </div>
@@ -240,7 +240,7 @@ export function LandingPage() {
                 </div>
 
                 {/* Holdings table */}
-                <div className="rounded-xl border overflow-hidden">
+                <div className="rounded-lg border overflow-hidden">
                   <div className="bg-gray-50/80 dark:bg-gray-800/80 px-4 py-2.5 border-b">
                     <p className="text-sm font-semibold">{t("landing.holdings")}</p>
                   </div>
@@ -264,16 +264,16 @@ export function LandingPage() {
                                 <p className="text-xs text-muted-foreground hidden sm:block">{h.name}</p>
                               </div>
                             </td>
-                            <td className="text-right px-4 py-2.5 hidden sm:table-cell">{h.qty.toLocaleString()}</td>
-                            <td className="text-right px-4 py-2.5 font-medium">
+                            <td className="text-right px-4 py-2.5 font-num hidden sm:table-cell">{h.qty.toLocaleString()}</td>
+                            <td className="text-right px-4 py-2.5 font-medium font-num">
                               {h.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                             </td>
-                            <td className="text-right px-4 py-2.5 text-muted-foreground hidden md:table-cell">
+                            <td className="text-right px-4 py-2.5 text-muted-foreground font-num hidden md:table-cell">
                               {h.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                             </td>
                             <td className="text-right px-4 py-2.5">
                               <span
-                                className={`inline-flex items-center gap-1 font-semibold ${
+                                className={`inline-flex items-center gap-1 font-semibold font-num ${
                                   h.change >= 0
                                     ? "text-emerald-600 dark:text-emerald-400"
                                     : "text-red-600 dark:text-red-400"
@@ -301,12 +301,12 @@ export function LandingPage() {
       </section>
 
       {/* ── Features Section ─────────────────────────── */}
-      <section id="features" className="py-20 md:py-28 border-t bg-gray-50/50 dark:bg-gray-900/30">
+      <section id="features" className="py-20 md:py-28 border-t bg-secondary/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">
               {t("landing.featuresTitle1")}{" "}
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-gradient">
                 {t("landing.featuresTitle2")}
               </span>
             </h2>
@@ -315,19 +315,19 @@ export function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
             {FEATURE_ITEMS.map((f, i) => {
               const Icon = f.icon;
               return (
                 <div
                   key={f.titleKey}
-                  className="group rounded-2xl border bg-white dark:bg-gray-900 p-6 transition-all hover:shadow-lg hover:-translate-y-1 animate-fade-in"
+                  className="group rounded-xl border bg-card p-6 transition-all hover:shadow-md hover:-translate-y-0.5 animate-fade-in"
                   style={{ animationDelay: `${i * 0.08}s` }}
                 >
-                  <div className={`inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${f.gradient} text-white mb-4 shadow-lg transition-transform group-hover:scale-110`}>
+                  <div className={`inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${f.gradient} text-white mb-4 shadow-sm transition-transform group-hover:scale-105`}>
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">{t(f.titleKey)}</h3>
+                  <h3 className="text-base font-semibold mb-1.5">{t(f.titleKey)}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{t(f.descKey)}</p>
                 </div>
               );
@@ -348,7 +348,7 @@ export function LandingPage() {
             </p>
             <button
               onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-0.5 active:translate-y-0"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-teal-500 px-8 py-4 text-base font-semibold text-white shadow-md shadow-blue-600/20 transition-all hover:shadow-lg hover:shadow-blue-600/25 hover:-translate-y-0.5 active:translate-y-0"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#fff" fillOpacity={0.9} />
@@ -367,7 +367,7 @@ export function LandingPage() {
       <footer className="border-t py-8">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 text-white">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-blue-600 to-teal-500 text-white">
               <TrendingUp className="h-3.5 w-3.5" />
             </div>
             <span className="font-semibold text-foreground">TradeTracker</span>
