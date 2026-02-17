@@ -3,12 +3,24 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { transactions, currentPrices, priceHistory } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { fetchAllPrices } from "@/lib/price-service";
+import {
+  fetchCryptoHistoricalPrices,
+  fetchStockHistoricalPrices,
+  delay,
+} from "@/lib/historical-price-service";
 import { getUserId } from "@/lib/auth-utils";
 
+function toMidnightUTC(date: Date): Date {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
+}
+
 /**
- * GET /api/prices - Fetch latest prices for all held assets and update DB
+ * GET /api/prices - Fetch latest prices for all held assets and update DB.
+ * Also backfills any missing days in priceHistory since the last recorded date.
  */
 export async function GET() {
   try {
@@ -27,31 +39,21 @@ export async function GET() {
       }
     }
 
-    const assets = Array.from(assetMap.entries())
+    const marketAssets = Array.from(assetMap.entries())
       .filter(([_, assetType]) => assetType === "crypto" || assetType === "stock")
-      .map(([symbol, assetType]) => ({
-        symbol,
-        assetType,
-      }));
+      .map(([symbol, assetType]) => ({ symbol, assetType }));
 
-    if (assets.length === 0) {
+    if (marketAssets.length === 0) {
       return NextResponse.json({ updated: 0, prices: [] });
     }
 
     // 2. Fetch latest prices from external APIs
-    const priceResults = await fetchAllPrices(assets);
+    const priceResults = await fetchAllPrices(marketAssets);
 
-    // 3. Upsert prices into DB using ON CONFLICT
-    const todayMidnightUTC = new Date(
-      Date.UTC(
-        new Date().getUTCFullYear(),
-        new Date().getUTCMonth(),
-        new Date().getUTCDate()
-      )
-    );
+    // 3. Write current prices + today's snapshot to priceHistory
+    const today = toMidnightUTC(new Date());
 
     for (const { symbol, price, source } of priceResults) {
-      // Update current price
       await db
         .insert(currentPrices)
         .values({ symbol, price: price.toString() })
@@ -60,16 +62,65 @@ export async function GET() {
           set: { price: price.toString(), updatedAt: new Date() },
         });
 
-      // Also snapshot into price_history for today
       await db
         .insert(priceHistory)
         .values({
           symbol,
-          date: todayMidnightUTC,
+          date: today,
           price: price.toString(),
           source: source || "api",
         })
         .onConflictDoNothing();
+    }
+
+    // 4. Backfill missing days between last recorded date and yesterday
+    const yesterday = new Date(today);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+
+    for (const { symbol, assetType } of marketAssets) {
+      const latestRow = await db
+        .select({ date: priceHistory.date })
+        .from(priceHistory)
+        .where(eq(priceHistory.symbol, symbol))
+        .orderBy(asc(priceHistory.date))
+        .then((rows) => rows.at(-1));
+
+      if (!latestRow) continue; // No history at all — full backfill handled by analysis page
+
+      const lastDate = toMidnightUTC(new Date(latestRow.date));
+      const gapDays = Math.floor(
+        (yesterday.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      if (gapDays <= 0) continue; // No gap to fill
+
+      const fetchFrom = new Date(lastDate);
+      fetchFrom.setUTCDate(fetchFrom.getUTCDate() + 1);
+
+      try {
+        let fetched;
+        if (assetType === "crypto") {
+          fetched = await fetchCryptoHistoricalPrices(symbol, fetchFrom, today);
+          await delay(1500);
+        } else {
+          fetched = await fetchStockHistoricalPrices(symbol, fetchFrom, today);
+          await delay(500);
+        }
+
+        for (const p of fetched) {
+          await db
+            .insert(priceHistory)
+            .values({
+              symbol: p.symbol,
+              date: p.date,
+              price: p.price.toString(),
+              source: p.source,
+            })
+            .onConflictDoNothing();
+        }
+      } catch (e) {
+        console.warn(`[PriceBackfill] Failed for ${symbol}:`, (e as Error).message);
+      }
     }
 
     return NextResponse.json({

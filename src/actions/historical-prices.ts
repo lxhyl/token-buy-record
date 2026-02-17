@@ -1,15 +1,9 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { transactions, priceHistory, appSettings } from "@/lib/schema";
+import { transactions, priceHistory } from "@/lib/schema";
 import { eq, and, gte, lte, asc } from "drizzle-orm";
 import { getUserId } from "@/lib/auth-utils";
-import {
-  fetchCryptoHistoricalPrices,
-  fetchStockHistoricalPrices,
-  delay,
-  type HistoricalPrice,
-} from "@/lib/historical-price-service";
 import { toUsd } from "@/lib/currency";
 import { getExchangeRates } from "@/lib/exchange-rates";
 
@@ -69,107 +63,10 @@ export async function getHistoricalPortfolioData(): Promise<{
     }
   }
 
-  // 3. Backfill missing prices from external APIs (throttled to once per 6 hours)
-  const BACKFILL_THROTTLE_MS = 6 * 60 * 60 * 1000; // 6 hours
-  const BACKFILL_KEY = "_last_backfill_at";
-
-  let shouldBackfill = true;
-  try {
-    const lastBackfillResult = await db
-      .select()
-      .from(appSettings)
-      .where(
-        and(
-          eq(appSettings.userId, userId),
-          eq(appSettings.key, BACKFILL_KEY)
-        )
-      );
-    if (lastBackfillResult[0]?.value) {
-      const lastBackfillAt = parseInt(lastBackfillResult[0].value, 10);
-      if (Date.now() - lastBackfillAt < BACKFILL_THROTTLE_MS) {
-        shouldBackfill = false;
-      }
-    }
-  } catch {
-    // If we can't check, allow backfill
-  }
-
   const today = toMidnightUTC(new Date());
 
-  if (shouldBackfill) {
-    const symbolEntries = Array.from(symbolInfo.entries());
-    for (const [symbol, info] of symbolEntries) {
-      // Find the latest existing price to avoid re-fetching everything
-      const latestExisting = await db
-        .select({ date: priceHistory.date })
-        .from(priceHistory)
-        .where(eq(priceHistory.symbol, symbol))
-        .orderBy(asc(priceHistory.date))
-        .then((rows) => rows.at(-1));
-
-      let fetchFrom: Date;
-      if (latestExisting) {
-        // Start from the day after the latest existing record
-        fetchFrom = new Date(latestExisting.date);
-        fetchFrom.setUTCDate(fetchFrom.getUTCDate() + 1);
-        if (fetchFrom >= today) continue; // Already up to date
-      } else {
-        fetchFrom = toMidnightUTC(info.firstDate);
-      }
-
-      // Fetch historical prices from where we left off
-      let fetched: HistoricalPrice[] = [];
-      try {
-        if (info.assetType === "crypto") {
-          fetched = await fetchCryptoHistoricalPrices(symbol, fetchFrom, today);
-          await delay(1500); // Rate limit for CoinGecko
-        } else if (info.assetType === "stock") {
-          fetched = await fetchStockHistoricalPrices(symbol, fetchFrom, today);
-          await delay(500);
-        }
-      } catch (e) {
-        console.warn(`[HistoricalPrices] Failed to fetch ${symbol}:`, e);
-        continue;
-      }
-
-      // Insert to DB with ON CONFLICT DO NOTHING
-      for (const p of fetched) {
-        try {
-          await db
-            .insert(priceHistory)
-            .values({
-              symbol: p.symbol,
-              date: p.date,
-              price: p.price.toString(),
-              source: p.source,
-            })
-            .onConflictDoNothing();
-        } catch {
-          // Skip duplicates
-        }
-      }
-    }
-
-    // Record backfill timestamp
-    try {
-      await db
-        .insert(appSettings)
-        .values({
-          userId,
-          key: BACKFILL_KEY,
-          value: Date.now().toString(),
-          updatedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: [appSettings.userId, appSettings.key],
-          set: { value: Date.now().toString(), updatedAt: new Date() },
-        });
-    } catch {
-      // Non-critical
-    }
-  }
-
-  // 4. Load all historical prices for user's symbols
+  // 3. Load all historical prices for user's symbols
+  // (backfill is handled by /api/prices when user refreshes prices)
   const allSymbols = Array.from(symbolInfo.keys());
   const priceMap = new Map<string, Map<string, number>>(); // symbol -> dateStr -> price
 
