@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -16,8 +16,10 @@ import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { useI18n } from "@/components/I18nProvider";
 import { TranslationKey } from "@/lib/i18n";
 import { usePnLColors } from "@/components/ColorSchemeProvider";
+import { ArrowUpDown } from "lucide-react";
 
 type Tab = "market" | "fixed-income";
+type SortDir = "asc" | "desc";
 
 const TABS: { key: Tab; labelKey: TranslationKey }[] = [
   { key: "market", labelKey: "tradePattern.market" },
@@ -36,12 +38,53 @@ interface TradePatternCardProps {
 
 export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatternCardProps) {
   const [activeTab, setActiveTab] = useState<Tab>("market");
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
   const fc = createCurrencyFormatter(currency, rates);
   const { t, tInterpolate } = useI18n();
   const c = usePnLColors();
 
-  const filtered = tradeAnalysis.filter((a) =>
-    activeTab === "market" ? !isFixedIncome(a) : isFixedIncome(a)
+  const filtered = useMemo(() => {
+    const base = tradeAnalysis.filter((a) =>
+      activeTab === "market" ? !isFixedIncome(a) : isFixedIncome(a)
+    );
+    if (!sortField) return base;
+
+    return [...base].sort((a, b) => {
+      let va: number, vb: number;
+      if (sortField === "net") {
+        va = a.buyTotalAmountUsd - a.sellTotalAmountUsd;
+        vb = b.buyTotalAmountUsd - b.sellTotalAmountUsd;
+      } else {
+        va = (a as unknown as Record<string, number>)[sortField] ?? 0;
+        vb = (b as unknown as Record<string, number>)[sortField] ?? 0;
+      }
+      return sortDir === "asc" ? va - vb : vb - va;
+    });
+  }, [tradeAnalysis, activeTab, sortField, sortDir]);
+
+  function toggleSort(field: string) {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir("desc");
+    }
+  }
+
+  function handleTabChange(tab: Tab) {
+    setActiveTab(tab);
+    setSortField(null);
+  }
+
+  const SortButton = ({ field, children, className }: { field: string; children: React.ReactNode; className?: string }) => (
+    <button
+      onClick={() => toggleSort(field)}
+      className={`inline-flex items-center gap-1 hover:text-foreground transition-colors ${className ?? ""}`}
+    >
+      {children}
+      <ArrowUpDown className={`h-3 w-3 ${sortField === field ? "text-primary" : "opacity-40"}`} />
+    </button>
   );
 
   return (
@@ -56,7 +99,7 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
               key={tab.key}
               role="tab"
               aria-selected={activeTab === tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => handleTabChange(tab.key)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 activeTab === tab.key
                   ? "bg-primary text-primary-foreground"
@@ -78,19 +121,33 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("tradePattern.symbol")}</TableHead>
-                  <TableHead className="text-right">{t("tradePattern.realizedPnl")}</TableHead>
                   <TableHead className="text-right">
-                    {tInterpolate("tradePattern.buyAmount", { currency })}
+                    <SortButton field="realizedPnl">{t("tradePattern.realizedPnl")}</SortButton>
                   </TableHead>
                   <TableHead className="text-right">
-                    {tInterpolate("tradePattern.sellAmount", { currency })}
+                    <SortButton field="buyVolumeUsd">{tInterpolate("tradePattern.buyAmount", { currency })}</SortButton>
                   </TableHead>
-                  <TableHead className="text-right hidden md:table-cell">{t("tradePattern.buyTrades")}</TableHead>
-                  <TableHead className="text-right hidden md:table-cell">{t("tradePattern.sellTrades")}</TableHead>
-                  <TableHead className="text-right hidden md:table-cell">{t("tradePattern.avgBuy")}</TableHead>
-                  <TableHead className="text-right hidden md:table-cell">{t("tradePattern.avgSell")}</TableHead>
-                  <TableHead className="text-right hidden lg:table-cell">{t("tradePattern.buyVol")}</TableHead>
-                  <TableHead className="text-right hidden lg:table-cell">{t("tradePattern.sellVol")}</TableHead>
+                  <TableHead className="text-right">
+                    <SortButton field="sellVolumeUsd">{tInterpolate("tradePattern.sellAmount", { currency })}</SortButton>
+                  </TableHead>
+                  <TableHead className="text-right hidden md:table-cell">
+                    <SortButton field="avgBuyPrice">{t("tradePattern.avgBuy")}</SortButton>
+                  </TableHead>
+                  <TableHead className="text-right hidden md:table-cell">
+                    <SortButton field="avgSellPrice">{t("tradePattern.avgSell")}</SortButton>
+                  </TableHead>
+                  <TableHead className="text-right hidden md:table-cell">
+                    <SortButton field="totalBuys">{t("tradePattern.buyTrades")}</SortButton>
+                  </TableHead>
+                  <TableHead className="text-right hidden md:table-cell">
+                    <SortButton field="totalSells">{t("tradePattern.sellTrades")}</SortButton>
+                  </TableHead>
+                  <TableHead className="text-right hidden lg:table-cell">
+                    <SortButton field="buyVolume">{t("tradePattern.buyVol")}</SortButton>
+                  </TableHead>
+                  <TableHead className="text-right hidden lg:table-cell">
+                    <SortButton field="sellVolume">{t("tradePattern.sellVol")}</SortButton>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -104,10 +161,10 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                     </TableCell>
                     <TableCell className="text-right">{fc(a.buyVolumeUsd)}</TableCell>
                     <TableCell className="text-right">{a.sellVolumeUsd > 0 ? fc(a.sellVolumeUsd) : "-"}</TableCell>
-                    <TableCell className="text-right hidden md:table-cell">{a.totalBuys}</TableCell>
-                    <TableCell className="text-right hidden md:table-cell">{a.totalSells}</TableCell>
                     <TableCell className="text-right hidden md:table-cell">{fc(a.avgBuyPrice)}</TableCell>
                     <TableCell className="text-right hidden md:table-cell">{a.avgSellPrice > 0 ? fc(a.avgSellPrice) : "-"}</TableCell>
+                    <TableCell className="text-right hidden md:table-cell">{a.totalBuys}</TableCell>
+                    <TableCell className="text-right hidden md:table-cell">{a.totalSells}</TableCell>
                     <TableCell className="text-right hidden lg:table-cell">{formatNumber(a.buyVolume, 4)}</TableCell>
                     <TableCell className="text-right hidden lg:table-cell">{a.sellVolume > 0 ? formatNumber(a.sellVolume, 4) : "-"}</TableCell>
                   </TableRow>
@@ -121,15 +178,27 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("tradePattern.symbol")}</TableHead>
-                  <TableHead className="text-right">{t("tradePattern.depositsCol")}</TableHead>
-                  <TableHead className="text-right">{t("tradePattern.withdrawals")}</TableHead>
-                  <TableHead className="text-right">{t("tradePattern.income")}</TableHead>
-                  <TableHead className="text-right">{t("tradePattern.deposited")}</TableHead>
-                  <TableHead className="text-right">{t("tradePattern.withdrawn")}</TableHead>
                   <TableHead className="text-right">
-                    {tInterpolate("tradePattern.incomeAmount", { currency })}
+                    <SortButton field="net">{t("tradePattern.net")}</SortButton>
                   </TableHead>
-                  <TableHead className="text-right">{t("tradePattern.net")}</TableHead>
+                  <TableHead className="text-right">
+                    <SortButton field="buyTotalAmountUsd">{t("tradePattern.deposited")}</SortButton>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <SortButton field="sellTotalAmountUsd">{t("tradePattern.withdrawn")}</SortButton>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <SortButton field="totalIncomeUsd">{tInterpolate("tradePattern.incomeAmount", { currency })}</SortButton>
+                  </TableHead>
+                  <TableHead className="text-right hidden md:table-cell">
+                    <SortButton field="totalBuys">{t("tradePattern.depositsCol")}</SortButton>
+                  </TableHead>
+                  <TableHead className="text-right hidden md:table-cell">
+                    <SortButton field="totalSells">{t("tradePattern.withdrawals")}</SortButton>
+                  </TableHead>
+                  <TableHead className="text-right hidden md:table-cell">
+                    <SortButton field="totalIncomes">{t("tradePattern.income")}</SortButton>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -138,16 +207,15 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                   return (
                     <TableRow key={a.symbol}>
                       <TableCell className="font-medium">{a.symbol}</TableCell>
-                      <TableCell className="text-right">{a.totalBuys}</TableCell>
-                      <TableCell className="text-right">{a.totalSells > 0 ? a.totalSells : "-"}</TableCell>
-                      <TableCell className="text-right">{a.totalIncomes > 0 ? a.totalIncomes : "-"}</TableCell>
-                      <TableCell className="text-right">{fc(a.buyTotalAmountUsd)}</TableCell>
-                      <TableCell className="text-right">{a.sellTotalAmountUsd > 0 ? fc(a.sellTotalAmountUsd) : "-"}</TableCell>
-                      <TableCell className="text-right">{a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}</TableCell>
                       <TableCell className={`text-right font-medium ${net >= 0 ? c.gainText : c.lossText}`}>
                         {fc(net)}
                       </TableCell>
-
+                      <TableCell className="text-right">{fc(a.buyTotalAmountUsd)}</TableCell>
+                      <TableCell className="text-right">{a.sellTotalAmountUsd > 0 ? fc(a.sellTotalAmountUsd) : "-"}</TableCell>
+                      <TableCell className="text-right">{a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}</TableCell>
+                      <TableCell className="text-right hidden md:table-cell">{a.totalBuys}</TableCell>
+                      <TableCell className="text-right hidden md:table-cell">{a.totalSells > 0 ? a.totalSells : "-"}</TableCell>
+                      <TableCell className="text-right hidden md:table-cell">{a.totalIncomes > 0 ? a.totalIncomes : "-"}</TableCell>
                     </TableRow>
                   );
                 })}
