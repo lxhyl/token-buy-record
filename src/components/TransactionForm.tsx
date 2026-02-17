@@ -494,9 +494,11 @@ export function TransactionForm({
           ) : (
             <>
               <div className="space-y-2">
-                <Label htmlFor="quantity">
-                  {isIncome ? t("form.quantityReceived") : t("form.quantity")}
-                </Label>
+                <div className="flex items-center h-5">
+                  <Label htmlFor="quantity">
+                    {isIncome ? t("form.quantityReceived") : t("form.quantity")}
+                  </Label>
+                </div>
                 <Input
                   id="quantity"
                   name="quantity"
@@ -510,7 +512,7 @@ export function TransactionForm({
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between h-5">
                   <Label htmlFor="price">
                     {isIncome ? t("form.marketPriceAtReceipt") : t("form.price")}
                   </Label>
