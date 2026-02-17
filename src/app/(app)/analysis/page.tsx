@@ -81,11 +81,6 @@ export default async function AnalysisPage() {
 
       <StatsCards summary={summary} currency={currency} rates={rates} />
 
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-        <AllocationPieChart data={allocationData} currency={currency} rates={rates} />
-        <HistoricalValueChart data={historicalData.chartData} currency={currency} rates={rates} />
-      </div>
-
       <PnLChart
         data={historicalData.chartData.map((d) => ({
           date: d.date,
@@ -94,6 +89,11 @@ export default async function AnalysisPage() {
         currency={currency}
         rates={rates}
       />
+
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
+        <HistoricalValueChart data={historicalData.chartData} currency={currency} rates={rates} />
+        <AllocationPieChart data={allocationData} currency={currency} rates={rates} />
+      </div>
 
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         <PnLHeatmap
@@ -195,6 +195,62 @@ export default async function AnalysisPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Income Summary */}
+      {(() => {
+        const totalIncome = tradeAnalysis.reduce((sum, a) => sum + a.totalIncomeUsd, 0);
+        if (totalIncome <= 0) return null;
+        const incomeBySymbol = [...tradeAnalysis]
+          .filter((a) => a.totalIncomeUsd > 0)
+          .sort((a, b) => b.totalIncomeUsd - a.totalIncomeUsd);
+        return (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 text-white">
+                  <Coins className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base md:text-lg">{t(locale, "analysis.incomeSummary")}</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {t(locale, "analysis.totalIncome")} <span className="font-semibold text-amber-600 dark:text-amber-400">{fc(totalIncome)}</span>
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t(locale, "analysis.incomeAsset")}</TableHead>
+                      <TableHead className="text-right">{t(locale, "analysis.incomeEntries")}</TableHead>
+                      <TableHead className="text-right">{t(locale, "analysis.incomeAmount")}</TableHead>
+                      <TableHead className="text-right">{t(locale, "analysis.incomePercent")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {incomeBySymbol.map((a) => (
+                      <TableRow key={a.symbol}>
+                        <TableCell className="font-medium">{a.symbol}</TableCell>
+                        <TableCell className="text-right">{a.totalIncomes}</TableCell>
+                        <TableCell className="text-right text-amber-600 dark:text-amber-400 font-medium">
+                          {fc(a.totalIncomeUsd)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatPercent((a.totalIncomeUsd / totalIncome) * 100)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+      <TradePatternCard tradeAnalysis={tradeAnalysis} currency={currency} rates={rates} />
 
       {/* Fee Analysis — market assets only (fixed-income has zero fees) */}
       {(() => {
@@ -303,62 +359,6 @@ export default async function AnalysisPage() {
           </Card>
         );
       })()}
-
-      {/* Income Summary */}
-      {(() => {
-        const totalIncome = tradeAnalysis.reduce((sum, a) => sum + a.totalIncomeUsd, 0);
-        if (totalIncome <= 0) return null;
-        const incomeBySymbol = [...tradeAnalysis]
-          .filter((a) => a.totalIncomeUsd > 0)
-          .sort((a, b) => b.totalIncomeUsd - a.totalIncomeUsd);
-        return (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 text-white">
-                  <Coins className="h-5 w-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-base md:text-lg">{t(locale, "analysis.incomeSummary")}</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {t(locale, "analysis.totalIncome")} <span className="font-semibold text-amber-600 dark:text-amber-400">{fc(totalIncome)}</span>
-                  </p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t(locale, "analysis.incomeAsset")}</TableHead>
-                      <TableHead className="text-right">{t(locale, "analysis.incomeEntries")}</TableHead>
-                      <TableHead className="text-right">{t(locale, "analysis.incomeAmount")}</TableHead>
-                      <TableHead className="text-right">{t(locale, "analysis.incomePercent")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {incomeBySymbol.map((a) => (
-                      <TableRow key={a.symbol}>
-                        <TableCell className="font-medium">{a.symbol}</TableCell>
-                        <TableCell className="text-right">{a.totalIncomes}</TableCell>
-                        <TableCell className="text-right text-amber-600 dark:text-amber-400 font-medium">
-                          {fc(a.totalIncomeUsd)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatPercent((a.totalIncomeUsd / totalIncome) * 100)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })()}
-
-      <TradePatternCard tradeAnalysis={tradeAnalysis} currency={currency} rates={rates} />
 
     </div>
   );
