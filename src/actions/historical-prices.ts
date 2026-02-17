@@ -99,53 +99,32 @@ export async function getHistoricalPortfolioData(): Promise<{
   if (shouldBackfill) {
     const symbolEntries = Array.from(symbolInfo.entries());
     for (const [symbol, info] of symbolEntries) {
-      const fromDate = toMidnightUTC(info.firstDate);
-
-      // Check what we already have in the DB
-      const existingPrices = await db
-        .select()
+      // Find the latest existing price to avoid re-fetching everything
+      const latestExisting = await db
+        .select({ date: priceHistory.date })
         .from(priceHistory)
-        .where(
-          and(
-            eq(priceHistory.symbol, symbol),
-            gte(priceHistory.date, fromDate),
-            lte(priceHistory.date, today)
-          )
-        );
+        .where(eq(priceHistory.symbol, symbol))
+        .orderBy(asc(priceHistory.date))
+        .then((rows) => rows.at(-1));
 
-      // Calculate expected rough count of days
-      const daySpan = Math.ceil(
-        (today.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
-
-      // Check if recent days (last 3 days) have data
-      const threeDaysAgo = new Date(today);
-      threeDaysAgo.setUTCDate(threeDaysAgo.getUTCDate() - 3);
-      const recentPrices = existingPrices.filter(
-        (p) => new Date(p.date) >= threeDaysAgo
-      );
-      const hasRecentData = recentPrices.length >= 1;
-
-      // If we have at least 70% of expected days AND recent data exists, skip backfill
-      if (existingPrices.length > daySpan * 0.7 && daySpan > 0 && hasRecentData) {
-        continue;
+      let fetchFrom: Date;
+      if (latestExisting) {
+        // Start from the day after the latest existing record
+        fetchFrom = new Date(latestExisting.date);
+        fetchFrom.setUTCDate(fetchFrom.getUTCDate() + 1);
+        if (fetchFrom >= today) continue; // Already up to date
+      } else {
+        fetchFrom = toMidnightUTC(info.firstDate);
       }
 
-      // If overall coverage is fine but recent data is missing, only fetch last 7 days
-      if (existingPrices.length > daySpan * 0.7 && daySpan > 0 && !hasRecentData) {
-        const weekAgo = new Date(today);
-        weekAgo.setUTCDate(weekAgo.getUTCDate() - 7);
-        fromDate.setTime(weekAgo.getTime());
-      }
-
-      // Fetch historical prices
+      // Fetch historical prices from where we left off
       let fetched: HistoricalPrice[] = [];
       try {
         if (info.assetType === "crypto") {
-          fetched = await fetchCryptoHistoricalPrices(symbol, fromDate, today);
+          fetched = await fetchCryptoHistoricalPrices(symbol, fetchFrom, today);
           await delay(1500); // Rate limit for CoinGecko
         } else if (info.assetType === "stock") {
-          fetched = await fetchStockHistoricalPrices(symbol, fromDate, today);
+          fetched = await fetchStockHistoricalPrices(symbol, fetchFrom, today);
           await delay(500);
         }
       } catch (e) {
