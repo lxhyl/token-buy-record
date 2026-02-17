@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { SplashScreen } from "@/components/SplashScreen";
@@ -10,7 +10,15 @@ import { ColorSchemeProvider } from "@/components/ColorSchemeProvider";
 import { getLocaleFromCookie } from "@/actions/settings";
 import { getColorScheme } from "@/actions/settings";
 
-const inter = Inter({ subsets: ["latin"] });
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
   title: "TradeTracker - Personal Trading Record",
@@ -87,7 +95,7 @@ export default async function RootLayout({
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
-                font-family: system-ui, -apple-system, sans-serif;
+                font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
               }
               #app-splash .splash-bar {
                 width: 48px;
@@ -114,7 +122,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className}>
+      <body className={`${dmSans.variable} ${jetbrainsMono.variable} font-sans`}>
         <ThemeProvider>
           <I18nProvider locale={locale}>
             <ColorSchemeProvider scheme={colorScheme}>

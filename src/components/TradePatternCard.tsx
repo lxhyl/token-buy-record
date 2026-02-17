@@ -154,19 +154,19 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                 {filtered.map((a) => (
                   <TableRow key={a.symbol}>
                     <TableCell className="font-medium">{a.symbol}</TableCell>
-                    <TableCell className={`text-right font-medium ${
+                    <TableCell className={`text-right font-medium font-num ${
                       a.realizedPnl >= 0 ? c.gainText : c.lossText
                     }`}>
                       {a.realizedPnl !== 0 ? (a.realizedPnl >= 0 ? "+" : "") + fc(a.realizedPnl) : "-"}
                     </TableCell>
-                    <TableCell className="text-right">{fc(a.buyVolumeUsd)}</TableCell>
-                    <TableCell className="text-right">{a.sellVolumeUsd > 0 ? fc(a.sellVolumeUsd) : "-"}</TableCell>
-                    <TableCell className="text-right">{fc(a.avgBuyPrice)}</TableCell>
-                    <TableCell className="text-right">{a.avgSellPrice > 0 ? fc(a.avgSellPrice) : "-"}</TableCell>
-                    <TableCell className="text-right">{a.totalBuys}</TableCell>
-                    <TableCell className="text-right">{a.totalSells}</TableCell>
-                    <TableCell className="text-right">{formatNumber(a.buyVolume, 4)}</TableCell>
-                    <TableCell className="text-right">{a.sellVolume > 0 ? formatNumber(a.sellVolume, 4) : "-"}</TableCell>
+                    <TableCell className="text-right font-num">{fc(a.buyVolumeUsd)}</TableCell>
+                    <TableCell className="text-right font-num">{a.sellVolumeUsd > 0 ? fc(a.sellVolumeUsd) : "-"}</TableCell>
+                    <TableCell className="text-right font-num">{fc(a.avgBuyPrice)}</TableCell>
+                    <TableCell className="text-right font-num">{a.avgSellPrice > 0 ? fc(a.avgSellPrice) : "-"}</TableCell>
+                    <TableCell className="text-right font-num">{a.totalBuys}</TableCell>
+                    <TableCell className="text-right font-num">{a.totalSells}</TableCell>
+                    <TableCell className="text-right font-num">{formatNumber(a.buyVolume, 4)}</TableCell>
+                    <TableCell className="text-right font-num">{a.sellVolume > 0 ? formatNumber(a.sellVolume, 4) : "-"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -207,15 +207,15 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                   return (
                     <TableRow key={a.symbol}>
                       <TableCell className="font-medium">{a.symbol}</TableCell>
-                      <TableCell className={`text-right font-medium ${net >= 0 ? c.gainText : c.lossText}`}>
+                      <TableCell className={`text-right font-medium font-num ${net >= 0 ? c.gainText : c.lossText}`}>
                         {fc(net)}
                       </TableCell>
-                      <TableCell className="text-right">{fc(a.buyTotalAmountUsd)}</TableCell>
-                      <TableCell className="text-right">{a.sellTotalAmountUsd > 0 ? fc(a.sellTotalAmountUsd) : "-"}</TableCell>
-                      <TableCell className="text-right">{a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}</TableCell>
-                      <TableCell className="text-right">{a.totalBuys}</TableCell>
-                      <TableCell className="text-right">{a.totalSells > 0 ? a.totalSells : "-"}</TableCell>
-                      <TableCell className="text-right">{a.totalIncomes > 0 ? a.totalIncomes : "-"}</TableCell>
+                      <TableCell className="text-right font-num">{fc(a.buyTotalAmountUsd)}</TableCell>
+                      <TableCell className="text-right font-num">{a.sellTotalAmountUsd > 0 ? fc(a.sellTotalAmountUsd) : "-"}</TableCell>
+                      <TableCell className="text-right font-num">{a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}</TableCell>
+                      <TableCell className="text-right font-num">{a.totalBuys}</TableCell>
+                      <TableCell className="text-right font-num">{a.totalSells > 0 ? a.totalSells : "-"}</TableCell>
+                      <TableCell className="text-right font-num">{a.totalIncomes > 0 ? a.totalIncomes : "-"}</TableCell>
                     </TableRow>
                   );
                 })}

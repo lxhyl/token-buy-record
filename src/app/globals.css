@@ -64,6 +64,9 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+  h1, h2, h3, h4 {
+    letter-spacing: -0.025em;
+  }
   .dark select {
     background-color: hsl(var(--background));
   }
@@ -96,6 +99,11 @@
 
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600;
+  }
+
+  .font-num {
+    font-family: var(--font-mono), monospace;
+    font-variant-numeric: tabular-nums;
   }
 }
 

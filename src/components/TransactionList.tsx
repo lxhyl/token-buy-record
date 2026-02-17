@@ -375,10 +375,10 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                     </TableCell>
                     {showFixedIncomeColumns ? (
                       <>
-                        <TableCell className="text-right font-semibold">
+                        <TableCell className="text-right font-semibold font-num">
                           {fc(toUsd(parseFloat(tx.totalAmount), tx.currency || "USD", rates))}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-num">
                           {tx.interestRate && parseFloat(tx.interestRate) > 0
                             ? `${parseFloat(tx.interestRate).toFixed(2)}%`
                             : "-"}
@@ -391,13 +391,13 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                       </>
                     ) : (
                       <>
-                        <TableCell className="text-right font-medium">
+                        <TableCell className="text-right font-medium font-num">
                           {parseFloat(tx.quantity) > 0 ? formatNumber(parseFloat(tx.quantity), 8) : "-"}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-num">
                           {parseFloat(tx.price) > 0 ? fc(toUsd(parseFloat(tx.price), tx.currency || "USD", rates)) : "-"}
                         </TableCell>
-                        <TableCell className="text-right font-semibold">
+                        <TableCell className="text-right font-semibold font-num">
                           {fc(toUsd(parseFloat(tx.totalAmount), tx.currency || "USD", rates))}
                         </TableCell>
                         <TableCell className="text-right">
@@ -405,7 +405,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                             const pnlUsd = toUsd(parseFloat(tx.realizedPnl), tx.currency || "USD", rates);
                             const isProfit = pnlUsd >= 0;
                             return (
-                              <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold leading-none ${
+                              <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold font-num leading-none ${
                                 isProfit ? pnlColors.gainPill : pnlColors.lossPill
                               }`}>
                                 {isProfit ? (

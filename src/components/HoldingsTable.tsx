@@ -163,22 +163,22 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right font-medium">
+                  <TableCell className="text-right font-medium font-num">
                     {h.quantity > 0 ? formatNumber(h.quantity, 8) : "-"}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right font-num">
                     {h.avgCost > 0 ? fc(h.avgCost) : "-"}
                   </TableCell>
-                  <TableCell className="text-right font-medium">
+                  <TableCell className="text-right font-medium font-num">
                     {h.currentPrice > 0 ? fc(h.currentPrice) : "-"}
                   </TableCell>
-                  <TableCell className="text-right font-semibold">
+                  <TableCell className="text-right font-semibold font-num">
                     {h.currentValue > 0 ? fc(h.currentValue) : "-"}
                   </TableCell>
                   {hasIncome && (
                     <TableCell className="text-right">
                       {h.totalIncome > 0 ? (
-                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300">
+                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium font-num bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300">
                           <Coins className="h-3.5 w-3.5" />
                           {fc(h.totalIncome)}
                         </div>
@@ -186,7 +186,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                     </TableCell>
                   )}
                   <TableCell className="text-right">
-                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ${
+                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium font-num whitespace-nowrap ${
                       h.unrealizedPnL >= 0 ? c.gainPill : c.lossPill
                     }`}>
                       {h.unrealizedPnL >= 0 ? (

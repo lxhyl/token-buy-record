@@ -101,12 +101,12 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
                 </div>
               </div>
 
-              <div className={`text-lg md:text-2xl font-bold tracking-tight ${card.valueColor || "text-foreground"}`}>
+              <div className={`text-lg md:text-2xl font-bold tracking-tight font-num ${card.valueColor || "text-foreground"}`}>
                 {card.value}
               </div>
 
               {card.subtitle && (
-                <p className={`mt-1 text-sm font-medium ${card.valueColor}`}>
+                <p className={`mt-1 text-sm font-medium font-num ${card.valueColor}`}>
                   {card.subtitle}
                 </p>
               )}

@@ -139,17 +139,17 @@ export function FixedIncomeTable({
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right font-semibold">
+                      <TableCell className="text-right font-semibold font-num">
                         {fc(h.principal)}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right font-num">
                         {h.interestRate > 0
                           ? `${h.interestRate.toFixed(2)}%`
                           : "-"}
                       </TableCell>
                       <TableCell className="text-right">
                         {h.totalIncome > 0 ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium font-num bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300">
                             {fc(h.totalIncome)}
                           </span>
                         ) : (

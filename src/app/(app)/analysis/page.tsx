@@ -132,7 +132,7 @@ export default async function AnalysisPage() {
                       <TableCell>{index + 1}</TableCell>
                       <TableCell className="font-medium">{h.symbol}</TableCell>
                       <TableCell
-                        className={`text-right ${
+                        className={`text-right font-num ${
                           h.unrealizedPnL >= 0 ? gainTextClass : lossTextClass
                         }`}
                       >
@@ -179,7 +179,7 @@ export default async function AnalysisPage() {
                       <TableCell>{index + 1}</TableCell>
                       <TableCell className="font-medium">{h.symbol}</TableCell>
                       <TableCell
-                        className={`text-right ${
+                        className={`text-right font-num ${
                           h.unrealizedPnLPercent >= 0 ? gainTextClass : lossTextClass
                         }`}
                       >
@@ -213,7 +213,7 @@ export default async function AnalysisPage() {
                 <div>
                   <CardTitle className="text-base md:text-lg">{t(locale, "analysis.incomeSummary")}</CardTitle>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    {t(locale, "analysis.totalIncome")} <span className="font-semibold text-amber-600 dark:text-amber-400">{fc(totalIncome)}</span>
+                    {t(locale, "analysis.totalIncome")} <span className="font-semibold font-num text-amber-600 dark:text-amber-400">{fc(totalIncome)}</span>
                   </p>
                 </div>
               </div>
@@ -233,11 +233,11 @@ export default async function AnalysisPage() {
                     {incomeBySymbol.map((a) => (
                       <TableRow key={a.symbol}>
                         <TableCell className="font-medium">{a.symbol}</TableCell>
-                        <TableCell className="text-right">{a.totalIncomes}</TableCell>
-                        <TableCell className="text-right text-amber-600 dark:text-amber-400 font-medium">
+                        <TableCell className="text-right font-num">{a.totalIncomes}</TableCell>
+                        <TableCell className="text-right font-num text-amber-600 dark:text-amber-400 font-medium">
                           {fc(a.totalIncomeUsd)}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-num">
                           {formatPercent((a.totalIncomeUsd / totalIncome) * 100)}
                         </TableCell>
                       </TableRow>
@@ -277,9 +277,9 @@ export default async function AnalysisPage() {
                 <div>
                   <CardTitle className="text-base md:text-lg">{t(locale, "analysis.feeAnalysis")}</CardTitle>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    {t(locale, "analysis.totalFeesPaid")} <span className="font-semibold text-foreground">{fc(totalFees)}</span>
+                    {t(locale, "analysis.totalFeesPaid")} <span className="font-semibold font-num text-foreground">{fc(totalFees)}</span>
                     {totalTraded > 0 && (
-                      <span className="ml-2">({formatPercent(feePercent)} {t(locale, "analysis.ofVolume")})</span>
+                      <span className="ml-2 font-num">({formatPercent(feePercent)} {t(locale, "analysis.ofVolume")})</span>
                     )}
                   </p>
                 </div>
@@ -312,17 +312,17 @@ export default async function AnalysisPage() {
                         return (
                           <TableRow key={a.symbol}>
                             <TableCell className="font-medium">{a.symbol}</TableCell>
-                            <TableCell className="text-right">{tradeCount}</TableCell>
-                            <TableCell className="text-right text-orange-600 dark:text-orange-400 font-medium">
+                            <TableCell className="text-right font-num">{tradeCount}</TableCell>
+                            <TableCell className="text-right font-num text-orange-600 dark:text-orange-400 font-medium">
                               {fc(a.totalFees)}
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="text-right font-num">
                               {fc(avgFee)}
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="text-right font-num">
                               {fc(volume)}
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="text-right font-num">
                               {formatPercent(rate)}
                             </TableCell>
                           </TableRow>
@@ -331,23 +331,23 @@ export default async function AnalysisPage() {
                       {/* Total row */}
                       <TableRow className="border-t-2 font-semibold">
                         <TableCell>{t(locale, "common.total")}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-num">
                           {marketAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0)}
                         </TableCell>
-                        <TableCell className="text-right text-orange-600 dark:text-orange-400">
+                        <TableCell className="text-right font-num text-orange-600 dark:text-orange-400">
                           {fc(totalFees)}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-num">
                           {fc(
                             marketAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0) > 0
                               ? totalFees / marketAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0)
                               : 0
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-num">
                           {fc(totalTraded)}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-num">
                           {formatPercent(feePercent)}
                         </TableCell>
                       </TableRow>

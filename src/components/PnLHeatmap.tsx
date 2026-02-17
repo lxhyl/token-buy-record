@@ -109,12 +109,13 @@ export function PnLHeatmap({
               </span>
             </p>
             <p
-              className={`text-2xl font-bold mt-0.5 ${
+              className={`text-2xl font-bold font-num mt-0.5 ${
                 monthTotal >= 0 ? c.gainText : c.lossText
               }`}
             >
               {monthTotal >= 0 ? "+" : ""}{fc(monthTotal)}
             </p>
+
           </div>
 
           {/* Month selector */}
@@ -122,7 +123,7 @@ export function PnLHeatmap({
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigateMonth(-1)} disabled={isPending}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium tabular-nums">
+            <span className="text-sm font-medium font-num">
               {year}-{String(month).padStart(2, "0")}
             </span>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigateMonth(1)} disabled={isPending || isCurrentOrFuture}>
@@ -164,10 +165,10 @@ export function PnLHeatmap({
                   key={i}
                   className={`rounded-lg py-1.5 px-1 flex flex-col items-center justify-center ${bgClass}`}
                 >
-                  <span className="text-sm font-medium leading-tight">{dayNum}</span>
+                  <span className="text-sm font-medium font-num leading-tight">{dayNum}</span>
                   {hasData && pnl !== 0 && (
                     <span
-                      className={`text-[10px] sm:text-[11px] font-medium leading-tight mt-0.5 ${
+                      className={`text-[10px] sm:text-[11px] font-medium font-num leading-tight mt-0.5 ${
                         pnl > 0 ? c.gainText : c.lossText
                       }`}
                     >

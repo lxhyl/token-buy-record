@@ -84,7 +84,7 @@ export default async function DashboardPage() {
                       <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <p className="text-xl md:text-2xl font-bold text-blue-700 dark:text-blue-300">{holdings.length}</p>
+                      <p className="text-xl md:text-2xl font-bold font-num text-blue-700 dark:text-blue-300">{holdings.length}</p>
                       <p className="text-xs md:text-sm text-blue-600 dark:text-blue-400">{t(locale, "dashboard.assets")}</p>
                     </div>
                   </div>
@@ -93,7 +93,7 @@ export default async function DashboardPage() {
                       <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <p className="text-xl md:text-2xl font-bold text-purple-700 dark:text-purple-300">{transactions.length}</p>
+                      <p className="text-xl md:text-2xl font-bold font-num text-purple-700 dark:text-purple-300">{transactions.length}</p>
                       <p className="text-xs md:text-sm text-purple-600 dark:text-purple-400">{t(locale, "dashboard.trades")}</p>
                     </div>
                   </div>
@@ -102,7 +102,7 @@ export default async function DashboardPage() {
                       <Coins className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <p className="text-xl md:text-2xl font-bold text-pink-700 dark:text-pink-300">
+                      <p className="text-xl md:text-2xl font-bold font-num text-pink-700 dark:text-pink-300">
                         {holdings.filter((h) => h.assetType === "crypto").length}
                       </p>
                       <p className="text-xs md:text-sm text-pink-600 dark:text-pink-400">{t(locale, "dashboard.crypto")}</p>
@@ -113,7 +113,7 @@ export default async function DashboardPage() {
                       <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <p className="text-xl md:text-2xl font-bold text-cyan-700 dark:text-cyan-300">
+                      <p className="text-xl md:text-2xl font-bold font-num text-cyan-700 dark:text-cyan-300">
                         {holdings.filter((h) => h.assetType === "stock").length}
                       </p>
                       <p className="text-xs md:text-sm text-cyan-600 dark:text-cyan-400">{t(locale, "dashboard.stocks")}</p>
@@ -125,7 +125,7 @@ export default async function DashboardPage() {
                         <PiggyBank className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
                       <div>
-                        <p className="text-xl md:text-2xl font-bold text-green-700 dark:text-green-300">{depositCount}</p>
+                        <p className="text-xl md:text-2xl font-bold font-num text-green-700 dark:text-green-300">{depositCount}</p>
                         <p className="text-xs md:text-sm text-green-600 dark:text-green-400">{t(locale, "dashboard.deposits")}</p>
                       </div>
                     </div>
@@ -136,7 +136,7 @@ export default async function DashboardPage() {
                         <Landmark className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
                       <div>
-                        <p className="text-xl md:text-2xl font-bold text-amber-700 dark:text-amber-300">{bondCount}</p>
+                        <p className="text-xl md:text-2xl font-bold font-num text-amber-700 dark:text-amber-300">{bondCount}</p>
                         <p className="text-xs md:text-sm text-amber-600 dark:text-amber-400">{t(locale, "dashboard.bonds")}</p>
                       </div>
                     </div>

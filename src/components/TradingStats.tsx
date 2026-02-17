@@ -158,7 +158,7 @@ export function TradingStats({ chartData, currency, rates }: TradingStatsProps) 
               {stats.gainDays} {t("analysis.gain")} / {stats.lossDays} {t("analysis.loss")}
             </span>
           </div>
-          <div className="text-2xl font-bold mb-2">{stats.winRate.toFixed(1)}%</div>
+          <div className="text-2xl font-bold font-num mb-2">{stats.winRate.toFixed(1)}%</div>
           <div className={`flex h-2 rounded-full overflow-hidden ${c.lossBarBg}`}>
             <div
               className={`${c.gainBar} rounded-full transition-all`}
@@ -172,7 +172,7 @@ export function TradingStats({ chartData, currency, rates }: TradingStatsProps) 
           {statRows.map((row) => (
             <div key={row.label} className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">{row.label}</span>
-              <span className={`text-sm font-medium tabular-nums ${row.color ?? ""}`}>
+              <span className={`text-sm font-medium font-num ${row.color ?? ""}`}>
                 {row.value}
               </span>
             </div>
