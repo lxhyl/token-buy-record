@@ -78,42 +78,38 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("tradePattern.symbol")}</TableHead>
-                  <TableHead className="text-right">{t("tradePattern.buyTrades")}</TableHead>
-                  <TableHead className="text-right">{t("tradePattern.sellTrades")}</TableHead>
-                  <TableHead className="text-right hidden md:table-cell">{t("tradePattern.avgBuy")}</TableHead>
-                  <TableHead className="text-right hidden md:table-cell">{t("tradePattern.avgSell")}</TableHead>
-                  <TableHead className="text-right hidden lg:table-cell">{t("tradePattern.buyVol")}</TableHead>
+                  <TableHead className="text-right">{t("tradePattern.realizedPnl")}</TableHead>
                   <TableHead className="text-right">
                     {tInterpolate("tradePattern.buyAmount", { currency })}
                   </TableHead>
-                  <TableHead className="text-right hidden lg:table-cell">{t("tradePattern.sellVol")}</TableHead>
                   <TableHead className="text-right">
                     {tInterpolate("tradePattern.sellAmount", { currency })}
                   </TableHead>
-                  <TableHead className="text-right">
-                    {tInterpolate("tradePattern.incomeAmount", { currency })}
-                  </TableHead>
-                  <TableHead className="text-right">{t("tradePattern.realizedPnl")}</TableHead>
+                  <TableHead className="text-right hidden md:table-cell">{t("tradePattern.buyTrades")}</TableHead>
+                  <TableHead className="text-right hidden md:table-cell">{t("tradePattern.sellTrades")}</TableHead>
+                  <TableHead className="text-right hidden md:table-cell">{t("tradePattern.avgBuy")}</TableHead>
+                  <TableHead className="text-right hidden md:table-cell">{t("tradePattern.avgSell")}</TableHead>
+                  <TableHead className="text-right hidden lg:table-cell">{t("tradePattern.buyVol")}</TableHead>
+                  <TableHead className="text-right hidden lg:table-cell">{t("tradePattern.sellVol")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((a) => (
                   <TableRow key={a.symbol}>
                     <TableCell className="font-medium">{a.symbol}</TableCell>
-                    <TableCell className="text-right">{a.totalBuys}</TableCell>
-                    <TableCell className="text-right">{a.totalSells}</TableCell>
-                    <TableCell className="text-right hidden md:table-cell">{fc(a.avgBuyPrice)}</TableCell>
-                    <TableCell className="text-right hidden md:table-cell">{a.avgSellPrice > 0 ? fc(a.avgSellPrice) : "-"}</TableCell>
-                    <TableCell className="text-right hidden lg:table-cell">{formatNumber(a.buyVolume, 4)}</TableCell>
-                    <TableCell className="text-right">{fc(a.buyVolumeUsd)}</TableCell>
-                    <TableCell className="text-right hidden lg:table-cell">{a.sellVolume > 0 ? formatNumber(a.sellVolume, 4) : "-"}</TableCell>
-                    <TableCell className="text-right">{a.sellVolumeUsd > 0 ? fc(a.sellVolumeUsd) : "-"}</TableCell>
-                    <TableCell className="text-right">{a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}</TableCell>
                     <TableCell className={`text-right font-medium ${
                       a.realizedPnl >= 0 ? c.gainText : c.lossText
                     }`}>
                       {a.realizedPnl !== 0 ? (a.realizedPnl >= 0 ? "+" : "") + fc(a.realizedPnl) : "-"}
                     </TableCell>
+                    <TableCell className="text-right">{fc(a.buyVolumeUsd)}</TableCell>
+                    <TableCell className="text-right">{a.sellVolumeUsd > 0 ? fc(a.sellVolumeUsd) : "-"}</TableCell>
+                    <TableCell className="text-right hidden md:table-cell">{a.totalBuys}</TableCell>
+                    <TableCell className="text-right hidden md:table-cell">{a.totalSells}</TableCell>
+                    <TableCell className="text-right hidden md:table-cell">{fc(a.avgBuyPrice)}</TableCell>
+                    <TableCell className="text-right hidden md:table-cell">{a.avgSellPrice > 0 ? fc(a.avgSellPrice) : "-"}</TableCell>
+                    <TableCell className="text-right hidden lg:table-cell">{formatNumber(a.buyVolume, 4)}</TableCell>
+                    <TableCell className="text-right hidden lg:table-cell">{a.sellVolume > 0 ? formatNumber(a.sellVolume, 4) : "-"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
