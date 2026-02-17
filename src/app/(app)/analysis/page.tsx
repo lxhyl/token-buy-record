@@ -1,6 +1,6 @@
 import { getTransactions, getLatestPrices } from "@/actions/transactions";
 import { getDisplayCurrency } from "@/actions/settings";
-import { getExchangeRates } from "@/lib/currency";
+import { getExchangeRates } from "@/lib/exchange-rates";
 import {
   calculateHoldings,
   calculateFixedIncomeHoldings,

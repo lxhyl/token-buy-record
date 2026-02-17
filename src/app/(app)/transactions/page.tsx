@@ -1,6 +1,6 @@
 import { getTransactions } from "@/actions/transactions";
 import { getDisplayCurrency, getDisplayLanguage } from "@/actions/settings";
-import { getExchangeRates } from "@/lib/currency";
+import { getExchangeRates } from "@/lib/exchange-rates";
 import { TransactionList } from "@/components/TransactionList";
 import { t } from "@/lib/i18n";
 

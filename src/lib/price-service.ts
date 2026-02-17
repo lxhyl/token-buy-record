@@ -5,7 +5,7 @@
  */
 
 import YahooFinance from "yahoo-finance2";
-import { getExchangeRates } from "./currency";
+import { getExchangeRates } from "./exchange-rates";
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 

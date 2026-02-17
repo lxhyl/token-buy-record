@@ -6,7 +6,7 @@
 
 import YahooFinance from "yahoo-finance2";
 import { COINGECKO_ID_MAP } from "./price-service";
-import { getExchangeRates } from "./currency";
+import { getExchangeRates } from "./exchange-rates";
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 

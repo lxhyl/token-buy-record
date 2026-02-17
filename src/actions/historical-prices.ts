@@ -10,7 +10,8 @@ import {
   delay,
   type HistoricalPrice,
 } from "@/lib/historical-price-service";
-import { getExchangeRates, toUsd } from "@/lib/currency";
+import { toUsd } from "@/lib/currency";
+import { getExchangeRates } from "@/lib/exchange-rates";
 
 function toMidnightUTC(date: Date): Date {
   return new Date(

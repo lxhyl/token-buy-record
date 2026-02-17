@@ -1,5 +1,5 @@
 import { getDisplayCurrency, getDisplayLanguage } from "@/actions/settings";
-import { getExchangeRates } from "@/lib/currency";
+import { getExchangeRates } from "@/lib/exchange-rates";
 import { CurrencySettings } from "@/components/CurrencySettings";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ColorSchemeSettings } from "@/components/ColorSchemeSettings";

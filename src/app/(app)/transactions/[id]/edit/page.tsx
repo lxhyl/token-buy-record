@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTransaction } from "@/actions/transactions";
 import { getDisplayCurrency, getDisplayLanguage } from "@/actions/settings";
-import { getExchangeRates } from "@/lib/currency";
+import { getExchangeRates } from "@/lib/exchange-rates";
 import { TransactionForm } from "@/components/TransactionForm";
 import { t } from "@/lib/i18n";
 
