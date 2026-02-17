@@ -107,6 +107,18 @@
   }
 }
 
+/* Force date inputs to respect container width on mobile */
+input[type="date"] {
+  min-width: 0;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
