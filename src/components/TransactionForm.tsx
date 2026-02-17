@@ -22,6 +22,14 @@ interface TransactionFormProps {
   rates: ExchangeRates;
 }
 
+// Map stock exchange names (from Yahoo Finance) to currencies
+function exchangeToCurrency(exchange: string): SupportedCurrency | null {
+  const e = exchange.toLowerCase();
+  if (e.includes("hong kong") || e.includes("hkse")) return "HKD";
+  if (e.includes("shanghai") || e.includes("shenzhen") || e.includes("shh") || e.includes("shz")) return "CNY";
+  return "USD";
+}
+
 const ASSET_TYPES = [
   { value: "crypto", icon: Bitcoin, color: "blue" },
   { value: "stock", icon: TrendingUp, color: "indigo" },
@@ -166,7 +174,11 @@ export function TransactionForm({
               <button
                 key={value}
                 type="button"
-                onClick={() => setAssetType(value)}
+                onClick={() => {
+                  setAssetType(value);
+                  if (value === "crypto") setLiveCurrency("USD");
+                  else if (value !== assetType) setLiveCurrency(currency);
+                }}
                 className={`relative flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200 cursor-pointer ${
                   selected
                     ? `border-2 ${colors.selectedBorder} ${colors.selectedBg} scale-[1.02]`
@@ -335,9 +347,13 @@ export function TransactionForm({
               <SymbolAutocomplete
                 defaultValue={transaction?.symbol || ""}
                 placeholder={symbolPlaceholder}
-                onSelect={(symbol, name) => {
+                onSelect={(symbol, name, exchange) => {
                   setLiveSymbol(symbol);
                   if (name) setAutoName(name);
+                  if (exchange) {
+                    const inferred = exchangeToCurrency(exchange);
+                    if (inferred) setLiveCurrency(inferred);
+                  }
                 }}
               />
             ) : (
@@ -477,7 +493,7 @@ export function TransactionForm({
             <Select
               id="currency"
               name="currency"
-              defaultValue={defaultCurrency}
+              value={liveCurrency}
               onChange={(e) => setLiveCurrency(e.target.value)}
               className="h-11"
             >

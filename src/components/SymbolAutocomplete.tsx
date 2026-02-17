@@ -13,7 +13,7 @@ interface SearchResult {
 interface SymbolAutocompleteProps {
   defaultValue?: string;
   placeholder?: string;
-  onSelect?: (symbol: string, name: string) => void;
+  onSelect?: (symbol: string, name: string, exchange: string) => void;
 }
 
 export function SymbolAutocomplete({
@@ -65,7 +65,7 @@ export function SymbolAutocomplete({
     setValue(item.symbol);
     setIsOpen(false);
     setResults([]);
-    onSelect?.(item.symbol, item.name);
+    onSelect?.(item.symbol, item.name, item.exchange);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
