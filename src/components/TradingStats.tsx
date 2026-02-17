@@ -6,6 +6,7 @@ import { createCurrencyFormatter } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { Activity } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
+import { usePnLColors } from "@/components/ColorSchemeProvider";
 
 interface ChartDataPoint {
   date: string;
@@ -22,6 +23,7 @@ interface TradingStatsProps {
 export function TradingStats({ chartData, currency, rates }: TradingStatsProps) {
   const fc = createCurrencyFormatter(currency, rates);
   const { t } = useI18n();
+  const c = usePnLColors();
 
   const stats = useMemo(() => {
     if (chartData.length < 2) return null;
@@ -113,27 +115,27 @@ export function TradingStats({ chartData, currency, rates }: TradingStatsProps) 
     {
       label: t("analysis.bestDay"),
       value: `${formatDate(stats.bestDay.date)}  +${fc(stats.bestDay.pnl)}`,
-      color: "text-green-600 dark:text-green-400",
+      color: c.gainText,
     },
     {
       label: t("analysis.worstDay"),
       value: `${formatDate(stats.worstDay.date)}  ${fc(stats.worstDay.pnl)}`,
-      color: "text-red-600 dark:text-red-400",
+      color: c.lossText,
     },
     {
       label: t("analysis.avgDailyPnl"),
       value: `${stats.avgPnL >= 0 ? "+" : ""}${fc(stats.avgPnL)}`,
-      color: stats.avgPnL >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400",
+      color: stats.avgPnL >= 0 ? c.gainText : c.lossText,
     },
     {
       label: t("analysis.maxDrawdown"),
       value: `-${fc(stats.maxDrawdown)}`,
-      color: "text-red-600 dark:text-red-400",
+      color: c.lossText,
     },
     {
       label: t("analysis.profitFactor"),
       value: stats.profitFactor === Infinity ? "∞" : stats.profitFactor.toFixed(2),
-      color: stats.profitFactor >= 1 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400",
+      color: stats.profitFactor >= 1 ? c.gainText : c.lossText,
     },
   ];
 
@@ -157,9 +159,9 @@ export function TradingStats({ chartData, currency, rates }: TradingStatsProps) 
             </span>
           </div>
           <div className="text-2xl font-bold mb-2">{stats.winRate.toFixed(1)}%</div>
-          <div className="flex h-2 rounded-full overflow-hidden bg-red-500/20 dark:bg-red-500/30">
+          <div className={`flex h-2 rounded-full overflow-hidden ${c.lossBarBg}`}>
             <div
-              className="bg-green-500 rounded-full transition-all"
+              className={`${c.gainBar} rounded-full transition-all`}
               style={{ width: `${stats.winRate}%` }}
             />
           </div>
@@ -181,13 +183,13 @@ export function TradingStats({ chartData, currency, rates }: TradingStatsProps) 
         <div className="border-t mt-4 pt-3 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">{t("analysis.longestWinStreak")}</span>
-            <span className="text-sm font-medium text-green-600 dark:text-green-400">
+            <span className={`text-sm font-medium ${c.winStreakText}`}>
               {stats.longestWinStreak} {t("analysis.days")}
             </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">{t("analysis.longestLossStreak")}</span>
-            <span className="text-sm font-medium text-red-600 dark:text-red-400">
+            <span className={`text-sm font-medium ${c.lossStreakText}`}>
               {stats.longestLossStreak} {t("analysis.days")}
             </span>
           </div>

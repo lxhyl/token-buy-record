@@ -341,6 +341,12 @@ const translations = {
   },
   "settings.preferences": { en: "Preferences", zh: "偏好设置" },
   "settings.preferencesDesc": { en: "Customize your experience", zh: "自定义您的使用体验" },
+  "settings.colorScheme": { en: "Color Scheme", zh: "涨跌配色" },
+  "settings.colorSchemeDesc": { en: "Choose how gains and losses are colored", zh: "选择盈亏的颜色显示方式" },
+  "settings.colorSchemeUS": { en: "US Style", zh: "美股风格" },
+  "settings.colorSchemeUSDesc": { en: "Green up, red down", zh: "绿涨红跌" },
+  "settings.colorSchemeCN": { en: "CN Style", zh: "A股风格" },
+  "settings.colorSchemeCNDesc": { en: "Red up, green down", zh: "红涨绿跌" },
 
   // ── Currency ─────────────────────────────────────────────
   "currency.usdName": { en: "US Dollar", zh: "美元" },

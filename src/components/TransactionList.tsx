@@ -35,6 +35,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { usePnLColors } from "@/components/ColorSchemeProvider";
 
 type TabFilter = "all" | "market" | "fixed-income";
 type SortField = "date" | "symbol" | "total";
@@ -54,6 +55,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
   const fc = createCurrencyFormatter(currency, rates);
   const { toast } = useToast();
   const { t, tInterpolate } = useI18n();
+  const pnlColors = usePnLColors();
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -404,9 +406,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                             const isProfit = pnlUsd >= 0;
                             return (
                               <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold leading-none ${
-                                isProfit
-                                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-                                  : "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300"
+                                isProfit ? pnlColors.gainPill : pnlColors.lossPill
                               }`}>
                                 {isProfit ? (
                                   <ArrowUpRight className="h-3 w-3 shrink-0" />

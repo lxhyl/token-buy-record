@@ -27,7 +27,7 @@ import {
 import { TradePatternCard } from "@/components/TradePatternCard";
 import { formatPercent, createCurrencyFormatter } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Receipt, Coins } from "lucide-react";
-import { getDisplayLanguage } from "@/actions/settings";
+import { getDisplayLanguage, getColorScheme } from "@/actions/settings";
 import { t } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +37,7 @@ export default async function AnalysisPage() {
   const currentYear = nowUTC.getUTCFullYear();
   const currentMonth = nowUTC.getUTCMonth() + 1;
 
-  const [transactions, currentPrices, currency, rates, locale, historicalData, heatmapData] = await Promise.all([
+  const [transactions, currentPrices, currency, rates, locale, historicalData, heatmapData, colorScheme] = await Promise.all([
     getTransactions(),
     getLatestPrices(),
     getDisplayCurrency(),
@@ -45,6 +45,7 @@ export default async function AnalysisPage() {
     getDisplayLanguage(),
     getHistoricalPortfolioData(),
     getDailyPnLForMonth(currentYear, currentMonth),
+    getColorScheme(),
   ]);
 
   const holdings = calculateHoldings(transactions, currentPrices, rates);
@@ -54,6 +55,9 @@ export default async function AnalysisPage() {
   const tradeAnalysis = analyzeTradePatterns(transactions, rates);
 
   const fc = createCurrencyFormatter(currency, rates);
+  const isCN = colorScheme === "cn";
+  const gainTextClass = isCN ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400";
+  const lossTextClass = isCN ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
 
   // Filter out fixed-income from P&L rankings (no unrealized P&L)
   const marketHoldings = holdings.filter(
@@ -129,7 +133,7 @@ export default async function AnalysisPage() {
                       <TableCell className="font-medium">{h.symbol}</TableCell>
                       <TableCell
                         className={`text-right ${
-                          h.unrealizedPnL >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                          h.unrealizedPnL >= 0 ? gainTextClass : lossTextClass
                         }`}
                       >
                         <div className="flex items-center justify-end gap-1">
@@ -176,9 +180,7 @@ export default async function AnalysisPage() {
                       <TableCell className="font-medium">{h.symbol}</TableCell>
                       <TableCell
                         className={`text-right ${
-                          h.unrealizedPnLPercent >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
+                          h.unrealizedPnLPercent >= 0 ? gainTextClass : lossTextClass
                         }`}
                       >
                         {h.unrealizedPnLPercent >= 0 ? "+" : ""}

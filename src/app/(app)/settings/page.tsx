@@ -2,6 +2,7 @@ import { getDisplayCurrency, getDisplayLanguage } from "@/actions/settings";
 import { getExchangeRates } from "@/lib/currency";
 import { CurrencySettings } from "@/components/CurrencySettings";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ColorSchemeSettings } from "@/components/ColorSchemeSettings";
 import { AccountSection } from "@/components/AccountSection";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,30 +29,33 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      {/* Account */}
-      <section className="space-y-2">
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
-          {t(locale, "settings.account")}
-        </h2>
-        <AccountSection />
-      </section>
-
-      {/* Preferences */}
+      {/* Preferences - most frequently used, placed first */}
       <section className="space-y-2">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
           {t(locale, "settings.preferences")}
         </h2>
         <Card>
           <CardContent className="p-5 space-y-6 divide-y divide-border">
-            <ThemeToggle />
-            <div className="pt-6">
-              <LanguageSettings locale={locale} />
-            </div>
+            <LanguageSettings locale={locale} />
             <div className="pt-6">
               <CurrencySettings currency={currency} rates={rates} />
             </div>
+            <div className="pt-6">
+              <ColorSchemeSettings />
+            </div>
+            <div className="pt-6">
+              <ThemeToggle />
+            </div>
           </CardContent>
         </Card>
+      </section>
+
+      {/* Account - less frequently used, placed at bottom */}
+      <section className="space-y-2">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+          {t(locale, "settings.account")}
+        </h2>
+        <AccountSection />
       </section>
     </div>
   );

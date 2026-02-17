@@ -95,6 +95,57 @@ export async function getDisplayLanguage(): Promise<Locale> {
   return await getLocaleFromCookie();
 }
 
+// ── Color Scheme ──────────────────────────────────────────
+
+export type ColorScheme = "us" | "cn";
+
+export async function getColorScheme(): Promise<ColorScheme> {
+  try {
+    const userId = await getUserId();
+
+    const result = await db
+      .select()
+      .from(appSettings)
+      .where(
+        and(
+          eq(appSettings.userId, userId),
+          eq(appSettings.key, "colorScheme")
+        )
+      );
+
+    const value = result[0]?.value;
+    if (value === "us" || value === "cn") {
+      return value;
+    }
+    return "us";
+  } catch {
+    return "us";
+  }
+}
+
+export async function setColorScheme(scheme: ColorScheme) {
+  const userId = await getUserId();
+
+  await db
+    .insert(appSettings)
+    .values({
+      userId,
+      key: "colorScheme",
+      value: scheme,
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [appSettings.userId, appSettings.key],
+      set: { value: scheme, updatedAt: new Date() },
+    });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/holdings");
+  revalidatePath("/transactions");
+  revalidatePath("/analysis");
+  revalidatePath("/settings");
+}
+
 export async function setDisplayLanguage(locale: Locale) {
   // Always set cookie for immediate effect
   const cookieStore = cookies();

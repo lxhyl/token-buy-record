@@ -17,6 +17,7 @@ import { createCurrencyFormatter, formatNumber, formatPercent } from "@/lib/util
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { TrendingUp, TrendingDown, Wallet, Zap, Loader2, Check, AlertCircle, Coins } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
+import { usePnLColors } from "@/components/ColorSchemeProvider";
 
 interface HoldingsTableProps {
   holdings: Holding[];
@@ -38,6 +39,7 @@ const assetGradient = (assetType: string) => {
 
 export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps) {
   const fc = createCurrencyFormatter(currency, rates);
+  const c = usePnLColors();
   const hasIncome = holdings.some((h) => h.totalIncome > 0);
   const [refreshStatus, setRefreshStatus] = useState<RefreshStatus>("idle");
   const [refreshInfo, setRefreshInfo] = useState("");
@@ -185,9 +187,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                   )}
                   <TableCell className="text-right">
                     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ${
-                      h.unrealizedPnL >= 0
-                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
-                        : "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300"
+                      h.unrealizedPnL >= 0 ? c.gainPill : c.lossPill
                     }`}>
                       {h.unrealizedPnL >= 0 ? (
                         <TrendingUp className="h-3.5 w-3.5" />

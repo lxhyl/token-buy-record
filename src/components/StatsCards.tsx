@@ -5,6 +5,7 @@ import { createCurrencyFormatter, formatPercent } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { TrendingUp, TrendingDown, DollarSign, PiggyBank, Wallet, Target, Coins } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
+import { usePnLColors } from "@/components/ColorSchemeProvider";
 
 interface StatsCardsProps {
   summary: PortfolioSummary;
@@ -15,6 +16,7 @@ interface StatsCardsProps {
 export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
   const fc = createCurrencyFormatter(currency, rates);
   const { t } = useI18n();
+  const c = usePnLColors();
 
   const cards = [
     {
@@ -40,15 +42,11 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
       value: `${summary.totalUnrealizedPnL >= 0 ? "+" : ""}${fc(summary.totalUnrealizedPnL)}`,
       subtitle: `${summary.totalPnLPercent >= 0 ? "+" : ""}${formatPercent(summary.totalPnLPercent)}`,
       icon: summary.totalUnrealizedPnL >= 0 ? TrendingUp : TrendingDown,
-      gradient: summary.totalUnrealizedPnL >= 0
-        ? "from-emerald-500 to-teal-500"
-        : "from-red-500 to-rose-500",
-      shadowColor: summary.totalUnrealizedPnL >= 0
-        ? "shadow-emerald-500/25"
-        : "shadow-red-500/25",
-      bgLight: summary.totalUnrealizedPnL >= 0 ? "bg-emerald-50 dark:bg-emerald-950/40" : "bg-red-50 dark:bg-red-950/40",
-      iconColor: summary.totalUnrealizedPnL >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
-      valueColor: summary.totalUnrealizedPnL >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400",
+      gradient: summary.totalUnrealizedPnL >= 0 ? c.gainGradient : c.lossGradient,
+      shadowColor: summary.totalUnrealizedPnL >= 0 ? c.gainShadow : c.lossShadow,
+      bgLight: summary.totalUnrealizedPnL >= 0 ? c.gainBgLight : c.lossBgLight,
+      iconColor: summary.totalUnrealizedPnL >= 0 ? c.gainIcon : c.lossIcon,
+      valueColor: summary.totalUnrealizedPnL >= 0 ? c.gainIcon : c.lossIcon,
     },
     {
       title: t("stats.realizedPnL"),
@@ -56,13 +54,13 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
       icon: Target,
       gradient: summary.totalRealizedPnL >= 0
         ? "from-amber-500 to-orange-500"
-        : "from-red-500 to-rose-500",
+        : c.lossGradient,
       shadowColor: summary.totalRealizedPnL >= 0
         ? "shadow-amber-500/25"
-        : "shadow-red-500/25",
-      bgLight: summary.totalRealizedPnL >= 0 ? "bg-amber-50 dark:bg-amber-950/40" : "bg-red-50 dark:bg-red-950/40",
-      iconColor: summary.totalRealizedPnL >= 0 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400",
-      valueColor: summary.totalRealizedPnL >= 0 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400",
+        : c.lossShadow,
+      bgLight: summary.totalRealizedPnL >= 0 ? "bg-amber-50 dark:bg-amber-950/40" : c.lossBgLight,
+      iconColor: summary.totalRealizedPnL >= 0 ? "text-amber-600 dark:text-amber-400" : c.lossIcon,
+      valueColor: summary.totalRealizedPnL >= 0 ? "text-amber-600 dark:text-amber-400" : c.lossIcon,
     },
     ...(summary.totalIncome > 0
       ? [

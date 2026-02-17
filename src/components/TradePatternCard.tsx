@@ -15,6 +15,7 @@ import { createCurrencyFormatter, formatNumber } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { useI18n } from "@/components/I18nProvider";
 import { TranslationKey } from "@/lib/i18n";
+import { usePnLColors } from "@/components/ColorSchemeProvider";
 
 type Tab = "market" | "fixed-income";
 
@@ -37,6 +38,7 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
   const [activeTab, setActiveTab] = useState<Tab>("market");
   const fc = createCurrencyFormatter(currency, rates);
   const { t, tInterpolate } = useI18n();
+  const c = usePnLColors();
 
   const filtered = tradeAnalysis.filter((a) =>
     activeTab === "market" ? !isFixedIncome(a) : isFixedIncome(a)
@@ -108,9 +110,7 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                     <TableCell className="text-right">{a.sellVolumeUsd > 0 ? fc(a.sellVolumeUsd) : "-"}</TableCell>
                     <TableCell className="text-right">{a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}</TableCell>
                     <TableCell className={`text-right font-medium ${
-                      a.realizedPnl >= 0
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-red-600 dark:text-red-400"
+                      a.realizedPnl >= 0 ? c.gainText : c.lossText
                     }`}>
                       {a.realizedPnl !== 0 ? (a.realizedPnl >= 0 ? "+" : "") + fc(a.realizedPnl) : "-"}
                     </TableCell>
@@ -148,7 +148,7 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                       <TableCell className="text-right">{fc(a.buyTotalAmountUsd)}</TableCell>
                       <TableCell className="text-right">{a.sellTotalAmountUsd > 0 ? fc(a.sellTotalAmountUsd) : "-"}</TableCell>
                       <TableCell className="text-right">{a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}</TableCell>
-                      <TableCell className={`text-right font-medium ${net >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                      <TableCell className={`text-right font-medium ${net >= 0 ? c.gainText : c.lossText}`}>
                         {fc(net)}
                       </TableCell>
 

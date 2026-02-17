@@ -6,7 +6,9 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/Toast";
 import { I18nProvider } from "@/components/I18nProvider";
+import { ColorSchemeProvider } from "@/components/ColorSchemeProvider";
 import { getLocaleFromCookie } from "@/actions/settings";
+import { getColorScheme } from "@/actions/settings";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -39,7 +41,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocaleFromCookie();
+  const [locale, colorScheme] = await Promise.all([
+    getLocaleFromCookie(),
+    getColorScheme(),
+  ]);
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -112,6 +117,7 @@ export default async function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>
           <I18nProvider locale={locale}>
+            <ColorSchemeProvider scheme={colorScheme}>
             <ToastProvider>
               <SplashScreen />
               <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
@@ -119,6 +125,7 @@ export default async function RootLayout({
               </div>
               <ServiceWorkerRegister />
             </ToastProvider>
+            </ColorSchemeProvider>
           </I18nProvider>
         </ThemeProvider>
       </body>

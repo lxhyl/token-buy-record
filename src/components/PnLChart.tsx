@@ -19,6 +19,7 @@ import {
 } from "@/lib/currency";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
+import { usePnLColors } from "@/components/ColorSchemeProvider";
 import { lttb } from "@/lib/chart-utils";
 
 type TimeRange = "7d" | "1m" | "all";
@@ -38,6 +39,7 @@ export function PnLChart({ data, currency, rates }: PnLChartProps) {
   const [range, setRange] = useState<TimeRange>("all");
   const fc = createCurrencyFormatter(currency, rates);
   const { t } = useI18n();
+  const c = usePnLColors();
 
   const chartData = useMemo(() => {
     if (data.length === 0) return [];
@@ -104,15 +106,13 @@ export function PnLChart({ data, currency, rates }: PnLChartProps) {
           <p className="text-sm text-muted-foreground">{formatDateLabel(label)}</p>
           <div className="flex items-center gap-2 mt-1">
             {positive ? (
-              <TrendingUp className="h-4 w-4 text-green-500" />
+              <TrendingUp className={`h-4 w-4 ${c.gainTooltipIcon}`} />
             ) : (
-              <TrendingDown className="h-4 w-4 text-red-500" />
+              <TrendingDown className={`h-4 w-4 ${c.lossTooltipIcon}`} />
             )}
             <p
               className={`text-lg font-semibold ${
-                positive
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-red-600 dark:text-red-400"
+                positive ? c.gainText : c.lossText
               }`}
             >
               {positive ? "+" : ""}
@@ -132,9 +132,7 @@ export function PnLChart({ data, currency, rates }: PnLChartProps) {
           <div className="flex items-center gap-3">
             <div
               className={`flex h-10 w-10 items-center justify-center rounded-xl text-white ${
-                isPositive
-                  ? "bg-gradient-to-br from-green-500 to-emerald-500"
-                  : "bg-gradient-to-br from-red-500 to-rose-500"
+                isPositive ? c.gainHeaderGradient : c.lossHeaderGradient
               }`}
             >
               {isPositive ? (
@@ -147,9 +145,7 @@ export function PnLChart({ data, currency, rates }: PnLChartProps) {
               <CardTitle>{t("analysis.pnlOverTime")}</CardTitle>
               <p
                 className={`text-sm font-semibold mt-0.5 ${
-                  isPositive
-                    ? "text-green-600 dark:text-green-400"
-                    : "text-red-600 dark:text-red-400"
+                  isPositive ? c.gainText : c.lossText
                 }`}
               >
                 {isPositive ? "+" : ""}
@@ -188,12 +184,12 @@ export function PnLChart({ data, currency, rates }: PnLChartProps) {
             >
               <defs>
                 <linearGradient id="colorPnLPos" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                  <stop offset="5%" stopColor={c.gainHex} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={c.gainHex} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorPnLNeg" x1="0" y1="1" x2="0" y2="0">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                  <stop offset="5%" stopColor={c.lossHex} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={c.lossHex} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis
@@ -232,7 +228,7 @@ export function PnLChart({ data, currency, rates }: PnLChartProps) {
               <Area
                 type="monotone"
                 dataKey="pnl"
-                stroke={isPositive ? "#22c55e" : "#ef4444"}
+                stroke={isPositive ? c.gainHex : c.lossHex}
                 strokeWidth={2}
                 fill={isPositive ? "url(#colorPnLPos)" : "url(#colorPnLNeg)"}
               />

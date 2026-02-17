@@ -7,6 +7,7 @@ import { createCurrencyFormatter } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates, convertAmount } from "@/lib/currency";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
+import { usePnLColors } from "@/components/ColorSchemeProvider";
 import { getDailyPnLForMonth } from "@/actions/historical-prices";
 
 interface DayData {
@@ -46,6 +47,7 @@ export function PnLHeatmap({
   const [isPending, startTransition] = useTransition();
   const fc = createCurrencyFormatter(currency, rates);
   const { t, locale } = useI18n();
+  const c = usePnLColors();
 
   const dayHeaders = locale === "zh" ? DAY_HEADERS_ZH : DAY_HEADERS_EN;
 
@@ -108,9 +110,7 @@ export function PnLHeatmap({
             </p>
             <p
               className={`text-2xl font-bold mt-0.5 ${
-                monthTotal >= 0
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-red-600 dark:text-red-400"
+                monthTotal >= 0 ? c.gainText : c.lossText
               }`}
             >
               {monthTotal >= 0 ? "+" : ""}{fc(monthTotal)}
@@ -155,8 +155,8 @@ export function PnLHeatmap({
               // Cell background
               let bgClass = "";
               if (hasData) {
-                if (pnl > 0) bgClass = "bg-emerald-500/15 dark:bg-emerald-500/20";
-                else if (pnl < 0) bgClass = "bg-red-500/15 dark:bg-red-500/20";
+                if (pnl > 0) bgClass = c.gainCellBg;
+                else if (pnl < 0) bgClass = c.lossCellBg;
               }
 
               return (
@@ -168,9 +168,7 @@ export function PnLHeatmap({
                   {hasData && pnl !== 0 && (
                     <span
                       className={`text-[10px] sm:text-[11px] font-medium leading-tight mt-0.5 ${
-                        pnl > 0
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-red-600 dark:text-red-400"
+                        pnl > 0 ? c.gainText : c.lossText
                       }`}
                     >
                       {formatPnL(pnl)}
