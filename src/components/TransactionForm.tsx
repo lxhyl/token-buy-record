@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,6 +94,46 @@ export function TransactionForm({
       : ""
   );
   const [liveCurrency, setLiveCurrency] = useState(transaction?.currency || currency);
+
+  const [marketPrice, setMarketPrice] = useState<number | null>(null);
+  const [priceLoading, setPriceLoading] = useState(false);
+  const priceAbortRef = useRef<AbortController | null>(null);
+
+  const fetchMarketPrice = useCallback(async (symbol: string, type: string) => {
+    if (!symbol || (type !== "crypto" && type !== "stock")) {
+      setMarketPrice(null);
+      return;
+    }
+    priceAbortRef.current?.abort();
+    const controller = new AbortController();
+    priceAbortRef.current = controller;
+    setPriceLoading(true);
+    try {
+      const res = await fetch(
+        `/api/price-lookup?symbol=${encodeURIComponent(symbol)}&type=${type}`,
+        { signal: controller.signal }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (!controller.signal.aborted) setMarketPrice(data.price);
+      }
+    } catch {
+      // aborted or network error
+    } finally {
+      if (!controller.signal.aborted) setPriceLoading(false);
+    }
+  }, []);
+
+  // Fetch price when symbol or asset type changes
+  useEffect(() => {
+    const sym = liveSymbol.trim().toUpperCase();
+    if (sym && (assetType === "crypto" || assetType === "stock")) {
+      const timer = setTimeout(() => fetchMarketPrice(sym, assetType), 400);
+      return () => clearTimeout(timer);
+    } else {
+      setMarketPrice(null);
+    }
+  }, [liveSymbol, assetType, fetchMarketPrice]);
 
   const isIncome = tradeType === "income";
   const isCashIncome = isIncome && incomeMode === "cash";
@@ -470,9 +510,35 @@ export function TransactionForm({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="price">
-                  {isIncome ? t("form.marketPriceAtReceipt") : t("form.price")}
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="price">
+                    {isIncome ? t("form.marketPriceAtReceipt") : t("form.price")}
+                  </Label>
+                  {(assetType === "crypto" || assetType === "stock") && liveSymbol.trim() && (
+                    priceLoading ? (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <span className="inline-block h-3 w-3 animate-spin rounded-full border-[1.5px] border-muted-foreground border-t-transparent" />
+                      </span>
+                    ) : marketPrice !== null ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLivePrice(String(marketPrice));
+                          const el = document.getElementById("price") as HTMLInputElement;
+                          if (el) el.value = String(marketPrice);
+                        }}
+                        className="text-xs font-medium text-primary/70 hover:text-primary transition-colors cursor-pointer"
+                        title={t("form.useMarketPrice")}
+                      >
+                        {t("form.currentPrice")}{" "}
+                        <span className="font-mono tabular-nums">
+                          {marketPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
+                        </span>
+                        {" "}USD
+                      </button>
+                    ) : null
+                  )}
+                </div>
                 <Input
                   id="price"
                   name="price"

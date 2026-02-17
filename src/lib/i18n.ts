@@ -217,6 +217,8 @@ const translations = {
   "form.quantity": { en: "Quantity", zh: "数量" },
   "form.marketPriceAtReceipt": { en: "Market Price at Receipt", zh: "收到时市场价格" },
   "form.price": { en: "Price", zh: "价格" },
+  "form.currentPrice": { en: "Mkt", zh: "当前" },
+  "form.useMarketPrice": { en: "Click to fill market price", zh: "点击填入市场价" },
   "form.currency": { en: "Currency", zh: "货币" },
   "form.fee": { en: "Fee", zh: "手续费" },
   "form.interestRate": { en: "Interest Rate (%)", zh: "利率 (%)" },
