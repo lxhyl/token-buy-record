@@ -200,7 +200,7 @@ export function TransactionForm({
   };
 
   return (
-    <form action={handleSubmit} className="space-y-6">
+    <form action={handleSubmit} className="space-y-6 overflow-hidden">
       {/* Hidden fields for asset/trade type */}
       <input type="hidden" name="assetType" value={assetType} />
       <input type="hidden" name="tradeType" value={tradeType} />
@@ -383,7 +383,7 @@ export function TransactionForm({
             ? tradeType === "buy" ? t("form.depositDetails") : tradeType === "sell" ? t("form.withdrawalDetails") : t("form.incomeDetails")
             : isIncome ? t("form.incomeDetails") : t("form.tradeDetails")}
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 [&>div]:min-w-0">
           {/* Symbol */}
           <div className="space-y-2">
             <Label htmlFor="symbol">{t("form.symbol")}</Label>
@@ -615,7 +615,7 @@ export function TransactionForm({
                 name="maturityDate"
                 type="date"
                 defaultValue={formatDateForInput(transaction?.maturityDate || null)}
-                className="h-11"
+                className="h-11 min-w-0"
               />
             </div>
           )}
@@ -636,7 +636,7 @@ export function TransactionForm({
                 new Date().toISOString().split("T")[0]
               }
               required
-              className="h-11"
+              className="h-11 min-w-0"
             />
           </div>
         </div>
