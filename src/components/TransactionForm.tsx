@@ -599,8 +599,8 @@ export function TransactionForm({
                 id="interestRate"
                 name="interestRate"
                 type="number"
-                step="0.01"
-                placeholder="3.50"
+                step="0.0001"
+                placeholder="3.5000"
                 defaultValue={transaction?.interestRate || ""}
               />
             </div>
