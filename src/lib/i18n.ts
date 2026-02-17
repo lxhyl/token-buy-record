@@ -242,6 +242,16 @@ const translations = {
   "form.namePlaceholderStock": { en: "Apple Inc, Tencent...", zh: "苹果公司, 腾讯..." },
   "form.namePlaceholderDeposit": { en: "1-Year Fixed Deposit...", zh: "一年期定期存款..." },
   "form.namePlaceholderBond": { en: "US Treasury 10Y...", zh: "美国10年国债..." },
+  "form.cryptoDesc": { en: "BTC, ETH, SOL...", zh: "BTC, ETH, SOL..." },
+  "form.stockDesc": { en: "AAPL, TSLA, 0700.HK", zh: "AAPL, TSLA, 0700.HK" },
+  "form.depositDesc": { en: "Fixed & demand deposits", zh: "定期和活期存款" },
+  "form.bondDesc": { en: "Fixed income securities", zh: "固定收益证券" },
+  "form.summaryPlaceholder": { en: "Fill in details to see summary", zh: "填写详情后显示摘要" },
+  "form.totalAmount": { en: "Total", zh: "合计" },
+  "form.confirmTransaction": { en: "Confirm Transaction", zh: "确认交易" },
+  "form.confirmDeposit": { en: "Confirm Deposit", zh: "确认存入" },
+  "form.confirmWithdrawal": { en: "Confirm Withdrawal", zh: "确认取出" },
+  "form.confirmIncome": { en: "Record Income", zh: "记录收入" },
 
   // ── Analysis ──────────────────────────────────────────────
   "analysis.title": { en: "Analysis", zh: "分析" },
