@@ -96,6 +96,7 @@ export function TransactionForm({
   const [liveCurrency, setLiveCurrency] = useState(transaction?.currency || currency);
 
   const [marketPrice, setMarketPrice] = useState<number | null>(null);
+  const [marketPriceCurrency, setMarketPriceCurrency] = useState<string>("USD");
   const [priceLoading, setPriceLoading] = useState(false);
   const priceAbortRef = useRef<AbortController | null>(null);
 
@@ -115,7 +116,10 @@ export function TransactionForm({
       );
       if (res.ok) {
         const data = await res.json();
-        if (!controller.signal.aborted) setMarketPrice(data.price);
+        if (!controller.signal.aborted) {
+          setMarketPrice(data.price);
+          setMarketPriceCurrency(data.currency || "USD");
+        }
       }
     } catch {
       // aborted or network error
@@ -536,7 +540,7 @@ export function TransactionForm({
                         <span className="font-mono tabular-nums">
                           {marketPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
                         </span>
-                        {" "}USD
+                        {" "}{marketPriceCurrency}
                       </button>
                     ) : null
                   )}
