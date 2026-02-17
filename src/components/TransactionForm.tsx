@@ -75,6 +75,17 @@ export function TransactionForm({
       : "asset"
   );
   const [autoName, setAutoName] = useState(transaction?.name || "");
+  const [liveSymbol, setLiveSymbol] = useState(transaction?.symbol || "");
+  const [liveQuantity, setLiveQuantity] = useState(transaction?.quantity || "");
+  const [livePrice, setLivePrice] = useState(transaction?.price || "");
+  const [liveAmount, setLiveAmount] = useState(
+    transaction && (transaction.assetType === "deposit" || transaction.assetType === "bond")
+      ? transaction.totalAmount || ""
+      : transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
+      ? transaction?.totalAmount || ""
+      : ""
+  );
+  const [liveCurrency, setLiveCurrency] = useState(transaction?.currency || currency);
 
   const isIncome = tradeType === "income";
   const isCashIncome = isIncome && incomeMode === "cash";
@@ -324,7 +335,8 @@ export function TransactionForm({
               <SymbolAutocomplete
                 defaultValue={transaction?.symbol || ""}
                 placeholder={symbolPlaceholder}
-                onSelect={(_, name) => {
+                onSelect={(symbol, name) => {
+                  setLiveSymbol(symbol);
                   if (name) setAutoName(name);
                 }}
               />
@@ -334,6 +346,7 @@ export function TransactionForm({
                 name="symbol"
                 placeholder={symbolPlaceholder}
                 defaultValue={transaction?.symbol || ""}
+                onChange={(e) => setLiveSymbol(e.target.value)}
                 required
               />
             )}
@@ -372,6 +385,7 @@ export function TransactionForm({
                       ? transaction.totalAmount || ""
                       : ""
                   }
+                  onChange={(e) => setLiveAmount(e.target.value)}
                   required
                 />
               </div>
@@ -394,6 +408,7 @@ export function TransactionForm({
                       ? transaction?.totalAmount || ""
                       : ""
                   }
+                  onChange={(e) => setLiveAmount(e.target.value)}
                   required
                 />
               </div>
@@ -415,6 +430,7 @@ export function TransactionForm({
                       ? transaction?.totalAmount || ""
                       : ""
                   }
+                  onChange={(e) => setLiveAmount(e.target.value)}
                   required
                 />
               </div>
@@ -432,6 +448,7 @@ export function TransactionForm({
                   step="0.00000001"
                   placeholder="0.00"
                   defaultValue={transaction?.quantity || ""}
+                  onChange={(e) => setLiveQuantity(e.target.value)}
                   required
                 />
               </div>
@@ -447,6 +464,7 @@ export function TransactionForm({
                   step="0.00000001"
                   placeholder="0.00"
                   defaultValue={transaction?.price || ""}
+                  onChange={(e) => setLivePrice(e.target.value)}
                   required
                 />
               </div>
@@ -460,6 +478,7 @@ export function TransactionForm({
               id="currency"
               name="currency"
               defaultValue={defaultCurrency}
+              onChange={(e) => setLiveCurrency(e.target.value)}
               className="h-11"
             >
               <option value="USD">USD</option>
@@ -549,9 +568,53 @@ export function TransactionForm({
 
       {/* Summary & Actions */}
       <div className="rounded-xl border bg-muted/30 backdrop-blur-sm p-4 space-y-3">
-        <p className="text-sm text-muted-foreground">
-          {t("form.summaryPlaceholder")}
-        </p>
+        {(() => {
+          const qty = parseFloat(liveQuantity);
+          const prc = parseFloat(livePrice);
+          const amt = parseFloat(liveAmount);
+          const sym = liveSymbol.toUpperCase();
+          const cur = liveCurrency || defaultCurrency;
+
+          // For qty x price modes (market buy/sell, asset income)
+          const hasQtyPrice = !isNaN(qty) && qty > 0 && !isNaN(prc) && prc > 0 && sym;
+          // For amount-based modes (fixed income, cash income)
+          const hasAmount = !isNaN(amt) && amt > 0 && sym;
+
+          const tradeLabel = tradeType === "buy"
+            ? (isFixedIncome ? t("form.depositAction") : t("form.buy"))
+            : tradeType === "sell"
+            ? (isFixedIncome ? t("form.withdrawAction") : t("form.sell"))
+            : t("form.income");
+
+          if (hasQtyPrice) {
+            const total = qty * prc;
+            const fmtQty = qty.toLocaleString(undefined, { maximumFractionDigits: 8 });
+            const fmtPrice = prc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 });
+            const fmtTotal = total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return (
+              <p className="text-sm font-medium text-foreground">
+                {tradeLabel}{" "}
+                <span className="font-num">{fmtQty}</span> {sym} x{" "}
+                <span className="font-num">{fmtPrice}</span> ={" "}
+                <span className="font-num font-bold">{fmtTotal}</span> {cur}
+              </p>
+            );
+          } else if (hasAmount) {
+            const fmtAmount = amt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return (
+              <p className="text-sm font-medium text-foreground">
+                {tradeLabel}{" "}
+                <span className="font-num font-bold">{fmtAmount}</span> {cur} — {sym}
+              </p>
+            );
+          } else {
+            return (
+              <p className="text-sm text-muted-foreground">
+                {t("form.summaryPlaceholder")}
+              </p>
+            );
+          }
+        })()}
         <div className="flex gap-3">
           <Button
             type="submit"
