@@ -130,22 +130,22 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                   <TableHead className="text-right">
                     <SortButton field="sellVolumeUsd">{tInterpolate("tradePattern.sellAmount", { currency })}</SortButton>
                   </TableHead>
-                  <TableHead className="text-right hidden md:table-cell">
+                  <TableHead className="text-right">
                     <SortButton field="avgBuyPrice">{t("tradePattern.avgBuy")}</SortButton>
                   </TableHead>
-                  <TableHead className="text-right hidden md:table-cell">
+                  <TableHead className="text-right">
                     <SortButton field="avgSellPrice">{t("tradePattern.avgSell")}</SortButton>
                   </TableHead>
-                  <TableHead className="text-right hidden md:table-cell">
+                  <TableHead className="text-right">
                     <SortButton field="totalBuys">{t("tradePattern.buyTrades")}</SortButton>
                   </TableHead>
-                  <TableHead className="text-right hidden md:table-cell">
+                  <TableHead className="text-right">
                     <SortButton field="totalSells">{t("tradePattern.sellTrades")}</SortButton>
                   </TableHead>
-                  <TableHead className="text-right hidden lg:table-cell">
+                  <TableHead className="text-right">
                     <SortButton field="buyVolume">{t("tradePattern.buyVol")}</SortButton>
                   </TableHead>
-                  <TableHead className="text-right hidden lg:table-cell">
+                  <TableHead className="text-right">
                     <SortButton field="sellVolume">{t("tradePattern.sellVol")}</SortButton>
                   </TableHead>
                 </TableRow>
@@ -161,12 +161,12 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                     </TableCell>
                     <TableCell className="text-right">{fc(a.buyVolumeUsd)}</TableCell>
                     <TableCell className="text-right">{a.sellVolumeUsd > 0 ? fc(a.sellVolumeUsd) : "-"}</TableCell>
-                    <TableCell className="text-right hidden md:table-cell">{fc(a.avgBuyPrice)}</TableCell>
-                    <TableCell className="text-right hidden md:table-cell">{a.avgSellPrice > 0 ? fc(a.avgSellPrice) : "-"}</TableCell>
-                    <TableCell className="text-right hidden md:table-cell">{a.totalBuys}</TableCell>
-                    <TableCell className="text-right hidden md:table-cell">{a.totalSells}</TableCell>
-                    <TableCell className="text-right hidden lg:table-cell">{formatNumber(a.buyVolume, 4)}</TableCell>
-                    <TableCell className="text-right hidden lg:table-cell">{a.sellVolume > 0 ? formatNumber(a.sellVolume, 4) : "-"}</TableCell>
+                    <TableCell className="text-right">{fc(a.avgBuyPrice)}</TableCell>
+                    <TableCell className="text-right">{a.avgSellPrice > 0 ? fc(a.avgSellPrice) : "-"}</TableCell>
+                    <TableCell className="text-right">{a.totalBuys}</TableCell>
+                    <TableCell className="text-right">{a.totalSells}</TableCell>
+                    <TableCell className="text-right">{formatNumber(a.buyVolume, 4)}</TableCell>
+                    <TableCell className="text-right">{a.sellVolume > 0 ? formatNumber(a.sellVolume, 4) : "-"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -190,13 +190,13 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                   <TableHead className="text-right">
                     <SortButton field="totalIncomeUsd">{tInterpolate("tradePattern.incomeAmount", { currency })}</SortButton>
                   </TableHead>
-                  <TableHead className="text-right hidden md:table-cell">
+                  <TableHead className="text-right">
                     <SortButton field="totalBuys">{t("tradePattern.depositsCol")}</SortButton>
                   </TableHead>
-                  <TableHead className="text-right hidden md:table-cell">
+                  <TableHead className="text-right">
                     <SortButton field="totalSells">{t("tradePattern.withdrawals")}</SortButton>
                   </TableHead>
-                  <TableHead className="text-right hidden md:table-cell">
+                  <TableHead className="text-right">
                     <SortButton field="totalIncomes">{t("tradePattern.income")}</SortButton>
                   </TableHead>
                 </TableRow>
@@ -213,9 +213,9 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                       <TableCell className="text-right">{fc(a.buyTotalAmountUsd)}</TableCell>
                       <TableCell className="text-right">{a.sellTotalAmountUsd > 0 ? fc(a.sellTotalAmountUsd) : "-"}</TableCell>
                       <TableCell className="text-right">{a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}</TableCell>
-                      <TableCell className="text-right hidden md:table-cell">{a.totalBuys}</TableCell>
-                      <TableCell className="text-right hidden md:table-cell">{a.totalSells > 0 ? a.totalSells : "-"}</TableCell>
-                      <TableCell className="text-right hidden md:table-cell">{a.totalIncomes > 0 ? a.totalIncomes : "-"}</TableCell>
+                      <TableCell className="text-right">{a.totalBuys}</TableCell>
+                      <TableCell className="text-right">{a.totalSells > 0 ? a.totalSells : "-"}</TableCell>
+                      <TableCell className="text-right">{a.totalIncomes > 0 ? a.totalIncomes : "-"}</TableCell>
                     </TableRow>
                   );
                 })}
