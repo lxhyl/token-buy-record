@@ -280,12 +280,12 @@ export function TransactionForm({
               onClick={() => setSubType("fixed")}
               className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                 subType === "fixed"
-                  ? "border-green-500 bg-green-50 dark:bg-green-950/40"
-                  : "border-muted hover:border-green-300"
+                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40"
+                  : "border-muted hover:border-emerald-300"
               }`}
             >
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                subType === "fixed" ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"
+                subType === "fixed" ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
               }`}>
                 <Landmark className="h-5 w-5" />
               </div>
@@ -299,12 +299,12 @@ export function TransactionForm({
               onClick={() => setSubType("demand")}
               className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                 subType === "demand"
-                  ? "border-green-500 bg-green-50 dark:bg-green-950/40"
-                  : "border-muted hover:border-green-300"
+                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40"
+                  : "border-muted hover:border-emerald-300"
               }`}
             >
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                subType === "demand" ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"
+                subType === "demand" ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
               }`}>
                 <PiggyBank className="h-5 w-5" />
               </div>
@@ -556,13 +556,13 @@ export function TransactionForm({
 
       {/* Notes */}
       <div className="space-y-2">
-        <Label htmlFor="notes">{t("form.notes")}</Label>
+        <Label htmlFor="notes" className="text-xs text-muted-foreground">{t("form.notes")}</Label>
         <Textarea
           id="notes"
           name="notes"
           placeholder={t("form.notesPlaceholder")}
           defaultValue={transaction?.notes || ""}
-          className="min-h-[80px]"
+          className="min-h-[72px] text-sm bg-muted/20 border-dashed"
         />
       </div>
 

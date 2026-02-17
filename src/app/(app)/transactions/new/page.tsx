@@ -21,7 +21,7 @@ export default async function NewTransactionPage() {
         </p>
       </div>
 
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <TransactionForm currency={currency} rates={rates} />
       </div>
     </div>

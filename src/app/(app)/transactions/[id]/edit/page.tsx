@@ -34,7 +34,7 @@ export default async function EditTransactionPage({
         </p>
       </div>
 
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <TransactionForm
           transaction={transaction}
           mode="edit"
