@@ -50,13 +50,20 @@ export function TransactionForm({
 
   const handleSubmit = async (formData: FormData) => {
     startTransition(async () => {
+      let result: { error: string } | void;
       if (mode === "edit" && transaction) {
-        await updateTransaction(transaction.id, formData);
-        toast(t("form.transactionUpdated"), "success");
+        result = await updateTransaction(transaction.id, formData);
       } else {
-        await createTransaction(formData);
-        toast(t("form.transactionCreated"), "success");
+        result = await createTransaction(formData);
       }
+      if (result && "error" in result) {
+        toast(result.error, "error");
+        return;
+      }
+      toast(
+        mode === "edit" ? t("form.transactionUpdated") : t("form.transactionCreated"),
+        "success"
+      );
       router.push("/transactions");
     });
   };

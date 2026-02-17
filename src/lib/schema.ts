@@ -7,6 +7,8 @@ import {
   text,
   integer,
   primaryKey,
+  uniqueIndex,
+  unique,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
@@ -76,22 +78,34 @@ export const currentPrices = pgTable("current_prices", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const appSettings = pgTable("app_settings", {
-  id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(),
-  key: varchar("key", { length: 100 }).notNull(),
-  value: text("value").notNull(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+export const appSettings = pgTable(
+  "app_settings",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    key: varchar("key", { length: 100 }).notNull(),
+    value: text("value").notNull(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    unique("app_settings_user_key").on(table.userId, table.key),
+  ]
+);
 
-export const priceHistory = pgTable("price_history", {
-  id: serial("id").primaryKey(),
-  symbol: varchar("symbol", { length: 20 }).notNull(),
-  date: timestamp("date").notNull(),
-  price: decimal("price", { precision: 18, scale: 8 }).notNull(),
-  source: varchar("source", { length: 20 }).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const priceHistory = pgTable(
+  "price_history",
+  {
+    id: serial("id").primaryKey(),
+    symbol: varchar("symbol", { length: 20 }).notNull(),
+    date: timestamp("date").notNull(),
+    price: decimal("price", { precision: 18, scale: 8 }).notNull(),
+    source: varchar("source", { length: 20 }).notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("price_history_symbol_date").on(table.symbol, table.date),
+  ]
+);
 
 export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;

@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { transactions, priceHistory } from "@/lib/schema";
+import { transactions, priceHistory, appSettings } from "@/lib/schema";
 import { eq, and, gte, lte, asc } from "drizzle-orm";
 import { getUserId } from "@/lib/auth-utils";
 import {
@@ -68,64 +68,109 @@ export async function getHistoricalPortfolioData(): Promise<{
     }
   }
 
-  // 3. Backfill missing prices from external APIs
-  const today = toMidnightUTC(new Date());
-  const symbolEntries = Array.from(symbolInfo.entries());
-  for (const [symbol, info] of symbolEntries) {
-    const fromDate = toMidnightUTC(info.firstDate);
+  // 3. Backfill missing prices from external APIs (throttled to once per 6 hours)
+  const BACKFILL_THROTTLE_MS = 6 * 60 * 60 * 1000; // 6 hours
+  const BACKFILL_KEY = "_last_backfill_at";
 
-    // Check what we already have in the DB
-    const existingPrices = await db
+  let shouldBackfill = true;
+  try {
+    const lastBackfillResult = await db
       .select()
-      .from(priceHistory)
+      .from(appSettings)
       .where(
         and(
-          eq(priceHistory.symbol, symbol),
-          gte(priceHistory.date, fromDate),
-          lte(priceHistory.date, today)
+          eq(appSettings.userId, userId),
+          eq(appSettings.key, BACKFILL_KEY)
         )
       );
-
-    // Calculate expected rough count of days
-    const daySpan = Math.ceil(
-      (today.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    // If we have at least 70% of expected days, skip backfill
-    if (existingPrices.length > daySpan * 0.7 && daySpan > 0) {
-      continue;
-    }
-
-    // Fetch historical prices
-    let fetched: HistoricalPrice[] = [];
-    try {
-      if (info.assetType === "crypto") {
-        fetched = await fetchCryptoHistoricalPrices(symbol, fromDate, today);
-        await delay(1500); // Rate limit for CoinGecko
-      } else if (info.assetType === "stock") {
-        fetched = await fetchStockHistoricalPrices(symbol, fromDate, today);
-        await delay(500);
+    if (lastBackfillResult[0]?.value) {
+      const lastBackfillAt = parseInt(lastBackfillResult[0].value, 10);
+      if (Date.now() - lastBackfillAt < BACKFILL_THROTTLE_MS) {
+        shouldBackfill = false;
       }
-    } catch (e) {
-      console.warn(`[HistoricalPrices] Failed to fetch ${symbol}:`, e);
-      continue;
     }
+  } catch {
+    // If we can't check, allow backfill
+  }
 
-    // Insert to DB with ON CONFLICT DO NOTHING
-    for (const p of fetched) {
+  const today = toMidnightUTC(new Date());
+
+  if (shouldBackfill) {
+    const symbolEntries = Array.from(symbolInfo.entries());
+    for (const [symbol, info] of symbolEntries) {
+      const fromDate = toMidnightUTC(info.firstDate);
+
+      // Check what we already have in the DB
+      const existingPrices = await db
+        .select()
+        .from(priceHistory)
+        .where(
+          and(
+            eq(priceHistory.symbol, symbol),
+            gte(priceHistory.date, fromDate),
+            lte(priceHistory.date, today)
+          )
+        );
+
+      // Calculate expected rough count of days
+      const daySpan = Math.ceil(
+        (today.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      // If we have at least 70% of expected days, skip backfill
+      if (existingPrices.length > daySpan * 0.7 && daySpan > 0) {
+        continue;
+      }
+
+      // Fetch historical prices
+      let fetched: HistoricalPrice[] = [];
       try {
-        await db
-          .insert(priceHistory)
-          .values({
-            symbol: p.symbol,
-            date: p.date,
-            price: p.price.toString(),
-            source: p.source,
-          })
-          .onConflictDoNothing();
-      } catch {
-        // Skip duplicates
+        if (info.assetType === "crypto") {
+          fetched = await fetchCryptoHistoricalPrices(symbol, fromDate, today);
+          await delay(1500); // Rate limit for CoinGecko
+        } else if (info.assetType === "stock") {
+          fetched = await fetchStockHistoricalPrices(symbol, fromDate, today);
+          await delay(500);
+        }
+      } catch (e) {
+        console.warn(`[HistoricalPrices] Failed to fetch ${symbol}:`, e);
+        continue;
       }
+
+      // Insert to DB with ON CONFLICT DO NOTHING
+      for (const p of fetched) {
+        try {
+          await db
+            .insert(priceHistory)
+            .values({
+              symbol: p.symbol,
+              date: p.date,
+              price: p.price.toString(),
+              source: p.source,
+            })
+            .onConflictDoNothing();
+        } catch {
+          // Skip duplicates
+        }
+      }
+    }
+
+    // Record backfill timestamp
+    try {
+      await db
+        .insert(appSettings)
+        .values({
+          userId,
+          key: BACKFILL_KEY,
+          value: Date.now().toString(),
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [appSettings.userId, appSettings.key],
+          set: { value: Date.now().toString(), updatedAt: new Date() },
+        });
+    } catch {
+      // Non-critical
     }
   }
 

@@ -7,36 +7,34 @@ import { eq, desc, and, asc } from "drizzle-orm";
 import { fetchAllPrices } from "@/lib/price-service";
 import { getUserId } from "@/lib/auth-utils";
 import { normalizeStockSymbol } from "@/lib/stock-utils";
+import { parseTransactionFormData } from "@/lib/validation";
 
-export async function createTransaction(formData: FormData) {
+export async function createTransaction(formData: FormData): Promise<{ error: string } | void> {
   const userId = await getUserId();
 
-  const symbol = formData.get("symbol") as string;
-  const name = formData.get("name") as string;
-  const assetType = formData.get("assetType") as string;
-  const tradeType = formData.get("tradeType") as string;
-  const quantity = formData.get("quantity") as string;
-  const price = formData.get("price") as string;
-  const fee = formData.get("fee") as string;
-  const currency = (formData.get("currency") as string) || "USD";
-  const tradeDate = formData.get("tradeDate") as string;
-  const notes = formData.get("notes") as string;
+  const parsed = parseTransactionFormData(formData);
+  if (!parsed.success) {
+    return { error: parsed.error };
+  }
+  const v = parsed.data;
 
-  const interestRateRaw = formData.get("interestRate") as string;
-  const maturityDateRaw = formData.get("maturityDate") as string;
-  const subType = formData.get("subType") as string;
+  const symbol = String(v.symbol);
+  const name = v.name || "";
+  const assetType = v.assetType;
+  const tradeType = v.tradeType;
+  const quantity = String(v.quantity);
+  const price = String(v.price);
+  const fee = String(v.fee);
+  const currency = v.currency;
+  const tradeDate = v.tradeDate;
+  const notes = v.notes || "";
 
   const isFixedIncome = assetType === "deposit" || assetType === "bond";
   let totalAmount: string;
-  if (isFixedIncome || (tradeType === "income" && parseFloat(quantity) === 0)) {
-    // Fixed-income or cash income: totalAmount from incomeAmount field
-    const incomeAmount = formData.get("incomeAmount") as string;
-    totalAmount = parseFloat(incomeAmount || "0").toFixed(2);
+  if (isFixedIncome || (tradeType === "income" && v.quantity === 0)) {
+    totalAmount = (v.incomeAmount || 0).toFixed(2);
   } else {
-    totalAmount = (
-      parseFloat(quantity) * parseFloat(price) +
-      parseFloat(fee || "0")
-    ).toFixed(2);
+    totalAmount = (v.quantity * v.price + v.fee).toFixed(2);
   }
 
   // Calculate realized P&L for market sell transactions using FIFO
@@ -48,7 +46,7 @@ export async function createTransaction(formData: FormData) {
     realizedPnl = await calculateFifoRealizedPnl(
       userId,
       normalizedSymbol,
-      parseFloat(quantity),
+      v.quantity,
       parseFloat(totalAmount)
     );
   }
@@ -66,9 +64,9 @@ export async function createTransaction(formData: FormData) {
     currency,
     tradeDate: new Date(tradeDate),
     notes: notes || null,
-    interestRate: interestRateRaw ? parseFloat(interestRateRaw).toFixed(4) : null,
-    maturityDate: maturityDateRaw ? new Date(maturityDateRaw) : null,
-    subType: subType || null,
+    interestRate: v.interestRate ? v.interestRate.toFixed(4) : null,
+    maturityDate: v.maturityDate ? new Date(v.maturityDate) : null,
+    subType: v.subType || null,
     realizedPnl,
   });
 
@@ -78,33 +76,32 @@ export async function createTransaction(formData: FormData) {
   revalidatePath("/analysis");
 }
 
-export async function updateTransaction(id: number, formData: FormData) {
+export async function updateTransaction(id: number, formData: FormData): Promise<{ error: string } | void> {
   const userId = await getUserId();
 
-  const symbol = formData.get("symbol") as string;
-  const name = formData.get("name") as string;
-  const assetType = formData.get("assetType") as string;
-  const tradeType = formData.get("tradeType") as string;
-  const quantity = formData.get("quantity") as string;
-  const price = formData.get("price") as string;
-  const fee = formData.get("fee") as string;
-  const currency = (formData.get("currency") as string) || "USD";
-  const tradeDate = formData.get("tradeDate") as string;
-  const notes = formData.get("notes") as string;
-  const interestRateRaw = formData.get("interestRate") as string;
-  const maturityDateRaw = formData.get("maturityDate") as string;
-  const subType = formData.get("subType") as string;
+  const parsed = parseTransactionFormData(formData);
+  if (!parsed.success) {
+    return { error: parsed.error };
+  }
+  const v = parsed.data;
+
+  const symbol = String(v.symbol);
+  const name = v.name || "";
+  const assetType = v.assetType;
+  const tradeType = v.tradeType;
+  const quantity = String(v.quantity);
+  const price = String(v.price);
+  const fee = String(v.fee);
+  const currency = v.currency;
+  const tradeDate = v.tradeDate;
+  const notes = v.notes || "";
 
   const isFixedIncome = assetType === "deposit" || assetType === "bond";
   let totalAmount: string;
-  if (isFixedIncome || (tradeType === "income" && parseFloat(quantity) === 0)) {
-    const incomeAmount = formData.get("incomeAmount") as string;
-    totalAmount = parseFloat(incomeAmount || "0").toFixed(2);
+  if (isFixedIncome || (tradeType === "income" && v.quantity === 0)) {
+    totalAmount = (v.incomeAmount || 0).toFixed(2);
   } else {
-    totalAmount = (
-      parseFloat(quantity) * parseFloat(price) +
-      parseFloat(fee || "0")
-    ).toFixed(2);
+    totalAmount = (v.quantity * v.price + v.fee).toFixed(2);
   }
 
   const normalizedSymbol = normalizeStockSymbol(symbol, assetType);
@@ -116,7 +113,7 @@ export async function updateTransaction(id: number, formData: FormData) {
     updatedRealizedPnl = await calculateFifoRealizedPnl(
       userId,
       normalizedSymbol,
-      parseFloat(quantity),
+      v.quantity,
       parseFloat(totalAmount),
       id
     );
@@ -136,9 +133,9 @@ export async function updateTransaction(id: number, formData: FormData) {
       currency,
       tradeDate: new Date(tradeDate),
       notes: notes || null,
-      interestRate: interestRateRaw ? parseFloat(interestRateRaw).toFixed(4) : null,
-      maturityDate: maturityDateRaw ? new Date(maturityDateRaw) : null,
-      subType: subType || null,
+      interestRate: v.interestRate ? v.interestRate.toFixed(4) : null,
+      maturityDate: v.maturityDate ? new Date(v.maturityDate) : null,
+      subType: v.subType || null,
       realizedPnl: updatedRealizedPnl,
     })
     .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
