@@ -59,7 +59,9 @@ export async function GET(
     const buffer = Buffer.from(await imgRes.arrayBuffer());
 
     // 3. Cache in R2 (fire and forget)
-    uploadLogoToR2(symbol, buffer, contentType).catch(() => {});
+    uploadLogoToR2(symbol, buffer, contentType).catch((err) => {
+      console.error(`[R2 Upload] Failed to cache logo for ${symbol}:`, err);
+    });
 
     return new NextResponse(buffer, {
       headers: {

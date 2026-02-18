@@ -28,10 +28,13 @@ export async function getLogoFromR2(symbol: string): Promise<{ body: ReadableStr
 }
 
 export async function uploadLogoToR2(symbol: string, buffer: Buffer, contentType: string) {
+  const key = `logos/${symbol.toUpperCase()}`;
+  console.log(`[R2 Upload] Uploading ${key} (${buffer.length} bytes, ${contentType}) to bucket "${BUCKET}"`);
   await R2.send(new PutObjectCommand({
     Bucket: BUCKET,
-    Key: `logos/${symbol.toUpperCase()}`,
+    Key: key,
     Body: buffer,
     ContentType: contentType,
   }));
+  console.log(`[R2 Upload] Success: ${key}`);
 }
