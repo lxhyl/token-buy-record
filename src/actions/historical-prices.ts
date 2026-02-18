@@ -262,6 +262,7 @@ export async function getDailyPnLForMonth(
 
   // Walk through days with running state
   const holdings = new Map<string, number>();
+  const lastKnownPrice = new Map<string, number>();
   let invested = 0;
   let fixedIncomeValue = 0;
   let txIdx = 0;
@@ -306,7 +307,11 @@ export async function getDailyPnLForMonth(
       if (qty <= 0) return;
       const price = getPrice(symbol, dateStr, date);
       if (price !== undefined) {
+        lastKnownPrice.set(symbol, price);
         marketValue += qty * price;
+      } else {
+        const lkp = lastKnownPrice.get(symbol);
+        if (lkp !== undefined) marketValue += qty * lkp;
       }
     });
     return marketValue + fixedIncomeValue;
