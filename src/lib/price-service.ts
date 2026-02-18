@@ -56,32 +56,59 @@ export const COINGECKO_ID_MAP: Record<string, string> = {
   TON: "the-open-network",
 };
 
-async function fetchCryptoPricesFromBinance(
+const BINANCE_HOSTS = [
+  "https://api.binance.com",   // Global (blocked in some regions)
+  "https://api.binance.us",    // US-specific endpoint
+];
+
+async function fetchCryptoPricesFromBinanceHost(
+  host: string,
   symbols: string[]
 ): Promise<Map<string, number>> {
   const result = new Map<string, number>();
-  if (symbols.length === 0) return result;
 
-  try {
-    // Try batch request first
-    const pairs = symbols.map((s) => `"${s.toUpperCase()}USDT"`);
-    const url = `https://api.binance.com/api/v3/ticker/price?symbols=${encodeURIComponent(`[${pairs.join(",")}]`)}`;
-    const res = await fetchWithTimeout(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Binance batch failed: ${res.status}`);
+  // Try batch request first
+  const pairs = symbols.map((s) => `"${s.toUpperCase()}USDT"`);
+  const url = `${host}/api/v3/ticker/price?symbols=${encodeURIComponent(`[${pairs.join(",")}]`)}`;
+  const res = await fetchWithTimeout(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Binance (${host}) batch failed: ${res.status}`);
 
-    const data: BinanceTickerPrice[] = await res.json();
-    for (const item of data) {
-      const sym = item.symbol.replace(/USDT$/, "");
-      result.set(sym, parseFloat(item.price));
+  const data: BinanceTickerPrice[] = await res.json();
+  for (const item of data) {
+    const sym = item.symbol.replace(/USDT$/, "");
+    result.set(sym, parseFloat(item.price));
+  }
+
+  return result;
+}
+
+async function fetchCryptoPricesFromBinance(
+  symbols: string[]
+): Promise<Map<string, number>> {
+  if (symbols.length === 0) return new Map();
+
+  for (const host of BINANCE_HOSTS) {
+    try {
+      const result = await fetchCryptoPricesFromBinanceHost(host, symbols);
+      if (result.size > 0) {
+        console.log(`[Binance] Fetched ${result.size} prices from ${host}`);
+        return result;
+      }
+    } catch (e) {
+      console.warn(`[Binance] ${host} failed:`, (e as Error).message);
     }
-  } catch (e) {
-    console.warn("[Binance] Batch request failed, trying individually:", (e as Error).message);
-    // Fallback: try individually
-    for (const symbol of symbols) {
+  }
+
+  // Last resort: try individually on each host
+  const result = new Map<string, number>();
+  for (const host of BINANCE_HOSTS) {
+    const missing = symbols.filter((s) => !result.has(s.toUpperCase()));
+    if (missing.length === 0) break;
+    for (const symbol of missing) {
       try {
         const pair = `${symbol.toUpperCase()}USDT`;
         const res = await fetchWithTimeout(
-          `https://api.binance.com/api/v3/ticker/price?symbol=${pair}`,
+          `${host}/api/v3/ticker/price?symbol=${pair}`,
           { cache: "no-store" }
         );
         if (res.ok) {
@@ -92,6 +119,7 @@ async function fetchCryptoPricesFromBinance(
         // skip
       }
     }
+    if (result.size > 0) break; // This host works, no need to try next
   }
 
   return result;
