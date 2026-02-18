@@ -62,7 +62,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; symbol: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; symbol: string; assetType: string } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
 
@@ -91,8 +91,8 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
     return tx.tradeType.toUpperCase();
   }
 
-  const handleDelete = (id: number, symbol: string) => {
-    setDeleteConfirm({ id, symbol });
+  const handleDelete = (id: number, symbol: string, assetType: string) => {
+    setDeleteConfirm({ id, symbol, assetType });
   };
 
   const confirmDelete = () => {
@@ -422,7 +422,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => handleDelete(tx.id, tx.symbol)}
+                          onClick={() => handleDelete(tx.id, tx.symbol, tx.assetType)}
                           disabled={isPending}
                           aria-label={t("common.delete")}
                         >
@@ -486,9 +486,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/40">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-              </div>
+              <AssetLogo symbol={deleteConfirm.symbol} assetType={deleteConfirm.assetType} className="h-10 w-10" />
               <div>
                 <h3 className="font-semibold">{t("transactions.deleteTitle")}</h3>
                 <p className="text-sm text-muted-foreground">
