@@ -14,7 +14,6 @@ import { Bitcoin, TrendingUp, Landmark, FileText, DollarSign, Coins, PiggyBank, 
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/components/I18nProvider";
 import { SymbolAutocomplete } from "@/components/SymbolAutocomplete";
-import { AssetLogo } from "@/components/AssetLogo";
 
 interface TransactionFormProps {
   transaction?: Transaction;
@@ -388,36 +387,29 @@ export function TransactionForm({
           {/* Symbol */}
           <div className="space-y-2">
             <Label htmlFor="symbol">{t("form.symbol")}</Label>
-            <div className="flex items-center gap-2">
-              {liveSymbol.trim() && (
-                <AssetLogo symbol={liveSymbol.trim().toUpperCase()} assetType={assetType} className="h-9 w-9" />
-              )}
-              <div className="flex-1 min-w-0">
-                {assetType === "stock" ? (
-                  <SymbolAutocomplete
-                    defaultValue={transaction?.symbol || ""}
-                    placeholder={symbolPlaceholder}
-                    onSelect={(symbol, name, exchange) => {
-                      setLiveSymbol(symbol);
-                      if (name) setAutoName(name);
-                      if (exchange) {
-                        const inferred = exchangeToCurrency(exchange);
-                        if (inferred) setLiveCurrency(inferred);
-                      }
-                    }}
-                  />
-                ) : (
-                  <Input
-                    id="symbol"
-                    name="symbol"
-                    placeholder={symbolPlaceholder}
-                    defaultValue={transaction?.symbol || ""}
-                    onChange={(e) => setLiveSymbol(e.target.value)}
-                    required
-                  />
-                )}
-              </div>
-            </div>
+            {assetType === "stock" ? (
+              <SymbolAutocomplete
+                defaultValue={transaction?.symbol || ""}
+                placeholder={symbolPlaceholder}
+                onSelect={(symbol, name, exchange) => {
+                  setLiveSymbol(symbol);
+                  if (name) setAutoName(name);
+                  if (exchange) {
+                    const inferred = exchangeToCurrency(exchange);
+                    if (inferred) setLiveCurrency(inferred);
+                  }
+                }}
+              />
+            ) : (
+              <Input
+                id="symbol"
+                name="symbol"
+                placeholder={symbolPlaceholder}
+                defaultValue={transaction?.symbol || ""}
+                onChange={(e) => setLiveSymbol(e.target.value)}
+                required
+              />
+            )}
           </div>
 
           {/* Name */}

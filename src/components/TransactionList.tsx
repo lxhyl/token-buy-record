@@ -36,7 +36,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { usePnLColors } from "@/components/ColorSchemeProvider";
-import { AssetLogo } from "@/components/AssetLogo";
 
 type TabFilter = "all" | "market" | "fixed-income";
 type SortField = "date" | "symbol" | "total";
@@ -336,15 +335,12 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                       {formatDate(new Date(tx.tradeDate))}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        <AssetLogo symbol={tx.symbol} assetType={tx.assetType} className="h-9 w-9" />
-                        <div>
+                      <div>
                         <div className="font-semibold">{tx.symbol}</div>
                         <div className="text-xs text-muted-foreground capitalize">
                           {getAssetTypeLabel(tx.assetType)}
                         </div>
                       </div>
-                    </div>
                     </TableCell>
                     <TableCell>
                       <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
@@ -485,14 +481,11 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
             className="bg-popover text-popover-foreground border rounded-2xl shadow-xl p-6 mx-4 max-w-sm w-full animate-fade-in"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-3 mb-4">
-              <AssetLogo symbol={deleteConfirm.symbol} assetType={deleteConfirm.assetType} className="h-10 w-10" />
-              <div>
-                <h3 className="font-semibold">{t("transactions.deleteTitle")}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {tInterpolate("transactions.deleteConfirm", { symbol: deleteConfirm.symbol })}
-                </p>
-              </div>
+            <div className="mb-4">
+              <h3 className="font-semibold">{t("transactions.deleteTitle")}</h3>
+              <p className="text-sm text-muted-foreground">
+                {tInterpolate("transactions.deleteConfirm", { symbol: deleteConfirm.symbol })}
+              </p>
             </div>
             <div className="flex gap-2 justify-end">
               <Button variant="outline" size="sm" onClick={() => setDeleteConfirm(null)}>
