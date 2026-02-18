@@ -1,27 +1,28 @@
-import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { AwsClient } from "aws4fetch";
 
-const R2 = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-  forcePathStyle: true,
-});
+let _r2: AwsClient | null = null;
 
-const BUCKET = process.env.R2_BUCKET_NAME!;
+function getR2Client() {
+  if (!_r2) {
+    _r2 = new AwsClient({
+      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    });
+  }
+  return _r2;
+}
+
+function getR2Url() {
+  return `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${process.env.R2_BUCKET_NAME}`;
+}
 
 export async function getLogoFromR2(symbol: string): Promise<{ body: ReadableStream; contentType: string } | null> {
   try {
-    const res = await R2.send(new GetObjectCommand({
-      Bucket: BUCKET,
-      Key: `logos/${symbol.toUpperCase()}`,
-    }));
-    if (!res.Body) return null;
+    const res = await getR2Client().fetch(`${getR2Url()}/logos/${symbol.toUpperCase()}`);
+    if (!res.ok) return null;
     return {
-      body: res.Body.transformToWebStream(),
-      contentType: res.ContentType || "image/png",
+      body: res.body as ReadableStream,
+      contentType: res.headers.get("content-type") || "image/png",
     };
   } catch {
     return null;
@@ -30,12 +31,15 @@ export async function getLogoFromR2(symbol: string): Promise<{ body: ReadableStr
 
 export async function uploadLogoToR2(symbol: string, buffer: Buffer, contentType: string) {
   const key = `logos/${symbol.toUpperCase()}`;
-  console.log(`[R2 Upload] Uploading ${key} (${buffer.length} bytes, ${contentType}) to bucket "${BUCKET}"`);
-  await R2.send(new PutObjectCommand({
-    Bucket: BUCKET,
-    Key: key,
-    Body: buffer,
-    ContentType: contentType,
-  }));
+  console.log(`[R2 Upload] Uploading ${key} (${buffer.length} bytes, ${contentType})`);
+  const res = await getR2Client().fetch(`${getR2Url()}/${key}`, {
+    method: "PUT",
+    body: new Uint8Array(buffer),
+    headers: { "Content-Type": contentType },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`R2 upload failed: ${res.status} ${text}`);
+  }
   console.log(`[R2 Upload] Success: ${key}`);
 }
