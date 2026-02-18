@@ -17,6 +17,7 @@ import { useI18n } from "@/components/I18nProvider";
 import { TranslationKey } from "@/lib/i18n";
 import { usePnLColors } from "@/components/ColorSchemeProvider";
 import { ArrowUpDown } from "lucide-react";
+import { AssetLogo } from "@/components/AssetLogo";
 
 type Tab = "market" | "fixed-income";
 type SortDir = "asc" | "desc";
@@ -153,7 +154,12 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
               <TableBody>
                 {filtered.map((a) => (
                   <TableRow key={a.symbol}>
-                    <TableCell className="font-medium">{a.symbol}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <AssetLogo symbol={a.symbol} assetType={a.assetType} className="h-6 w-6" />
+                        <span className="font-medium">{a.symbol}</span>
+                      </div>
+                    </TableCell>
                     <TableCell className={`text-right font-medium font-num ${
                       a.realizedPnl >= 0 ? c.gainText : c.lossText
                     }`}>
@@ -206,7 +212,12 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                   const net = a.buyTotalAmountUsd - a.sellTotalAmountUsd;
                   return (
                     <TableRow key={a.symbol}>
-                      <TableCell className="font-medium">{a.symbol}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <AssetLogo symbol={a.symbol} assetType={a.assetType} className="h-6 w-6" />
+                          <span className="font-medium">{a.symbol}</span>
+                        </div>
+                      </TableCell>
                       <TableCell className={`text-right font-medium font-num ${net >= 0 ? c.gainText : c.lossText}`}>
                         {fc(net)}
                       </TableCell>

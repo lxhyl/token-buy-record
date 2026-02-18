@@ -29,6 +29,7 @@ import { formatPercent, createCurrencyFormatter } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Receipt, Coins } from "lucide-react";
 import { getDisplayLanguage, getColorScheme } from "@/actions/settings";
 import { t } from "@/lib/i18n";
+import { AssetLogo } from "@/components/AssetLogo";
 
 export const dynamic = "force-dynamic";
 
@@ -130,7 +131,12 @@ export default async function AnalysisPage() {
                   {sortedByPnL.slice(0, 10).map((h, index) => (
                     <TableRow key={h.symbol}>
                       <TableCell>{index + 1}</TableCell>
-                      <TableCell className="font-medium">{h.symbol}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <AssetLogo symbol={h.symbol} assetType={h.assetType} className="h-6 w-6" />
+                          <span className="font-medium">{h.symbol}</span>
+                        </div>
+                      </TableCell>
                       <TableCell
                         className={`text-right font-num ${
                           h.unrealizedPnL >= 0 ? gainTextClass : lossTextClass
@@ -177,7 +183,12 @@ export default async function AnalysisPage() {
                   {sortedByPnLPercent.slice(0, 10).map((h, index) => (
                     <TableRow key={h.symbol}>
                       <TableCell>{index + 1}</TableCell>
-                      <TableCell className="font-medium">{h.symbol}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <AssetLogo symbol={h.symbol} assetType={h.assetType} className="h-6 w-6" />
+                          <span className="font-medium">{h.symbol}</span>
+                        </div>
+                      </TableCell>
                       <TableCell
                         className={`text-right font-num ${
                           h.unrealizedPnLPercent >= 0 ? gainTextClass : lossTextClass
@@ -232,7 +243,12 @@ export default async function AnalysisPage() {
                   <TableBody>
                     {incomeBySymbol.map((a) => (
                       <TableRow key={a.symbol}>
-                        <TableCell className="font-medium">{a.symbol}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <AssetLogo symbol={a.symbol} assetType={a.assetType} className="h-6 w-6" />
+                            <span className="font-medium">{a.symbol}</span>
+                          </div>
+                        </TableCell>
                         <TableCell className="text-right font-num">{a.totalIncomes}</TableCell>
                         <TableCell className="text-right font-num text-amber-600 dark:text-amber-400 font-medium">
                           {fc(a.totalIncomeUsd)}
@@ -311,7 +327,12 @@ export default async function AnalysisPage() {
                         const rate = volume > 0 ? (a.totalFees / volume) * 100 : 0;
                         return (
                           <TableRow key={a.symbol}>
-                            <TableCell className="font-medium">{a.symbol}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <AssetLogo symbol={a.symbol} assetType={a.assetType} className="h-6 w-6" />
+                                <span className="font-medium">{a.symbol}</span>
+                              </div>
+                            </TableCell>
                             <TableCell className="text-right font-num">{tradeCount}</TableCell>
                             <TableCell className="text-right font-num text-orange-600 dark:text-orange-400 font-medium">
                               {fc(a.totalFees)}

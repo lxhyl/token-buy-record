@@ -3,6 +3,15 @@ import { getLogoFromR2, uploadLogoToR2 } from "@/lib/r2";
 
 const TWELVE_DATA_API_KEY = process.env.TWELVE_DATA_API_KEY;
 
+async function fetchLogoUrl(symbol: string): Promise<string | null> {
+  const res = await fetch(
+    `https://api.twelvedata.com/logo?symbol=${encodeURIComponent(symbol)}&apikey=${TWELVE_DATA_API_KEY}`
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.url || data.logo_base || null;
+}
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: { symbol: string } }
@@ -31,16 +40,11 @@ export async function GET(
   }
 
   try {
-    const res = await fetch(
-      `https://api.twelvedata.com/logo?symbol=${encodeURIComponent(symbol)}&apikey=${TWELVE_DATA_API_KEY}`
-    );
-
-    if (!res.ok) {
-      return NextResponse.json({ error: "Logo not found" }, { status: 404 });
+    // Try as-is first (works for stocks), then try as crypto pair (BTC → BTC/USD)
+    let logoUrl = await fetchLogoUrl(symbol);
+    if (!logoUrl) {
+      logoUrl = await fetchLogoUrl(`${symbol}/USD`);
     }
-
-    const data = await res.json();
-    const logoUrl = data.url;
     if (!logoUrl) {
       return NextResponse.json({ error: "No logo URL" }, { status: 404 });
     }
