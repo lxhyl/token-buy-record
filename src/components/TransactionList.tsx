@@ -36,6 +36,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { usePnLColors } from "@/components/ColorSchemeProvider";
+import { AssetLogo } from "@/components/AssetLogo";
 
 type TabFilter = "all" | "market" | "fixed-income";
 type SortField = "date" | "symbol" | "total";
@@ -336,17 +337,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className={`flex h-9 w-9 items-center justify-center rounded-lg font-bold text-white text-xs ${
-                          tx.assetType === "crypto"
-                            ? "bg-gradient-to-br from-purple-500 to-pink-500"
-                            : tx.assetType === "deposit"
-                            ? "bg-gradient-to-br from-green-500 to-emerald-500"
-                            : tx.assetType === "bond"
-                            ? "bg-gradient-to-br from-amber-500 to-yellow-500"
-                            : "bg-gradient-to-br from-blue-500 to-cyan-500"
-                        }`}>
-                          {tx.symbol.slice(0, 2)}
-                        </div>
+                        <AssetLogo symbol={tx.symbol} assetType={tx.assetType} className="h-9 w-9" />
                         <div>
                         <div className="font-semibold">{tx.symbol}</div>
                         <div className="text-xs text-muted-foreground capitalize">
