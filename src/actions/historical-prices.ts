@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { transactions, priceHistory } from "@/lib/schema";
-import { eq, and, gte, lte, asc } from "drizzle-orm";
+import { eq, and, gte, lte, lt, asc, desc } from "drizzle-orm";
 import { getUserId } from "@/lib/auth-utils";
 import { toUsd } from "@/lib/currency";
 import { getExchangeRates } from "@/lib/exchange-rates";
@@ -221,6 +221,7 @@ export async function getDailyPnLForMonth(
 
   const allSymbols = Array.from(symbolTypes.keys());
   const priceMap = new Map<string, Map<string, number>>();
+  const lastKnownPrice = new Map<string, number>();
 
   for (const symbol of allSymbols) {
     const prices = await db
@@ -243,6 +244,26 @@ export async function getDailyPnLForMonth(
       dateMap.set(dateStr, parseFloat(p.price));
     }
     priceMap.set(symbol, dateMap);
+
+    // Pre-seed lastKnownPrice: find the most recent price before the loaded range
+    // so holdings with long price gaps (e.g. A-shares during holidays) don't drop to 0
+    if (dateMap.size === 0 || !dateMap.has(lookbackStart.toISOString().slice(0, 10))) {
+      const fallback = await db
+        .select({ price: priceHistory.price })
+        .from(priceHistory)
+        .where(
+          and(
+            eq(priceHistory.symbol, symbol),
+            lt(priceHistory.date, lookbackStart)
+          )
+        )
+        .orderBy(desc(priceHistory.date))
+        .limit(1);
+
+      if (fallback.length > 0) {
+        lastKnownPrice.set(symbol, parseFloat(fallback[0].price));
+      }
+    }
   }
 
   // Helper: look up price with carry-forward
@@ -262,7 +283,6 @@ export async function getDailyPnLForMonth(
 
   // Walk through days with running state
   const holdings = new Map<string, number>();
-  const lastKnownPrice = new Map<string, number>();
   let invested = 0;
   let fixedIncomeValue = 0;
   let txIdx = 0;
