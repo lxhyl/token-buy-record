@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getLogoFromR2, uploadLogoToR2 } from "@/lib/r2";
+import { db } from "@/lib/db";
+import { assetLogos } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 
 const TWELVE_DATA_API_KEY = process.env.TWELVE_DATA_API_KEY;
 
@@ -23,14 +25,17 @@ export async function GET(
     return NextResponse.json({ error: "Invalid symbol" }, { status: 400 });
   }
 
-  // 1. Try R2 cache
-  const cached = await getLogoFromR2(symbol);
+  // 1. Check DB cache
+  const [cached] = await db
+    .select()
+    .from(assetLogos)
+    .where(eq(assetLogos.symbol, symbol))
+    .limit(1);
+
   if (cached) {
-    return new NextResponse(cached.body, {
-      headers: {
-        "Content-Type": cached.contentType,
-        "Cache-Control": "public, max-age=604800, immutable",
-      },
+    return NextResponse.redirect(cached.url, {
+      status: 302,
+      headers: { "Cache-Control": "public, max-age=604800, immutable" },
     });
   }
 
@@ -49,25 +54,20 @@ export async function GET(
       return NextResponse.json({ error: "No logo URL" }, { status: 404 });
     }
 
-    // Fetch the actual image
-    const imgRes = await fetch(logoUrl);
-    if (!imgRes.ok) {
-      return NextResponse.json({ error: "Failed to fetch logo image" }, { status: 404 });
-    }
+    // 3. Save URL to DB (fire and forget)
+    db.insert(assetLogos)
+      .values({ symbol, url: logoUrl })
+      .onConflictDoUpdate({
+        target: assetLogos.symbol,
+        set: { url: logoUrl, updatedAt: new Date() },
+      })
+      .catch((err) => {
+        console.error(`[Logo] Failed to cache URL for ${symbol}:`, err);
+      });
 
-    const contentType = imgRes.headers.get("content-type") || "image/png";
-    const buffer = Buffer.from(await imgRes.arrayBuffer());
-
-    // 3. Cache in R2 (fire and forget)
-    uploadLogoToR2(symbol, buffer, contentType).catch((err) => {
-      console.error(`[R2 Upload] Failed to cache logo for ${symbol}:`, err);
-    });
-
-    return new NextResponse(buffer, {
-      headers: {
-        "Content-Type": contentType,
-        "Cache-Control": "public, max-age=604800, immutable",
-      },
+    return NextResponse.redirect(logoUrl, {
+      status: 302,
+      headers: { "Cache-Control": "public, max-age=604800, immutable" },
     });
   } catch {
     return NextResponse.json({ error: "Failed to fetch logo" }, { status: 404 });

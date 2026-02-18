@@ -322,4 +322,15 @@ if (sellsToBackfill.length > 0) {
   console.log("Backfill complete.");
 }
 
+// ── Asset logos table ────────────────────────────────────────────
+
+await sql`
+  CREATE TABLE IF NOT EXISTS "asset_logos" (
+    "id" serial PRIMARY KEY NOT NULL,
+    "symbol" varchar(20) NOT NULL UNIQUE,
+    "url" text NOT NULL,
+    "updated_at" timestamp DEFAULT now()
+  )
+`;
+
 console.log("Migrations complete");

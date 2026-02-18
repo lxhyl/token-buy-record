@@ -114,3 +114,12 @@ export type NewCurrentPrice = typeof currentPrices.$inferInsert;
 export type AppSetting = typeof appSettings.$inferSelect;
 export type PriceHistory = typeof priceHistory.$inferSelect;
 export type NewPriceHistory = typeof priceHistory.$inferInsert;
+
+// ── Asset logos ──────────────────────────────────────────────
+
+export const assetLogos = pgTable("asset_logos", {
+  id: serial("id").primaryKey(),
+  symbol: varchar("symbol", { length: 20 }).notNull().unique(),
+  url: text("url").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
