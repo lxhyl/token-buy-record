@@ -18,6 +18,7 @@ import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { TrendingUp, TrendingDown, Wallet, Zap, Loader2, Check, AlertCircle, Coins } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { usePnLColors } from "@/components/ColorSchemeProvider";
+import { AssetLogo } from "@/components/AssetLogo";
 
 interface HoldingsTableProps {
   holdings: Holding[];
@@ -26,16 +27,6 @@ interface HoldingsTableProps {
 }
 
 type RefreshStatus = "idle" | "loading" | "success" | "error";
-
-const assetGradient = (assetType: string) => {
-  switch (assetType) {
-    case "crypto": return "bg-gradient-to-br from-purple-500 to-pink-500";
-    case "stock": return "bg-gradient-to-br from-blue-500 to-cyan-500";
-    case "deposit": return "bg-gradient-to-br from-green-500 to-emerald-500";
-    case "bond": return "bg-gradient-to-br from-amber-500 to-yellow-500";
-    default: return "bg-gradient-to-br from-gray-500 to-slate-500";
-  }
-};
 
 export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps) {
   const fc = createCurrencyFormatter(currency, rates);
@@ -150,9 +141,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                 <TableRow key={h.symbol}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl font-bold text-white ${assetGradient(h.assetType)}`}>
-                        {h.symbol.slice(0, 2)}
-                      </div>
+                      <AssetLogo symbol={h.symbol} assetType={h.assetType} />
                       <div>
                         <div className="font-semibold">{h.symbol}</div>
                         {h.name && (
