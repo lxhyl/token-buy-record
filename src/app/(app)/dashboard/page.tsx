@@ -58,6 +58,9 @@ export default async function DashboardPage() {
       {/* Stats Cards */}
       <StatsCards summary={summary} currency={currency} rates={rates} />
 
+      {/* Holdings Table */}
+      <HoldingsTable holdings={holdings} currency={currency} rates={rates} />
+
       {/* Charts Row */}
       <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
         <AllocationPieChart data={allocationData} currency={currency} rates={rates} />
@@ -147,9 +150,6 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Holdings Table */}
-      <HoldingsTable holdings={holdings} currency={currency} rates={rates} />
 
       {/* Fixed-Income Holdings */}
       {fixedIncomeHoldings.length > 0 && (
