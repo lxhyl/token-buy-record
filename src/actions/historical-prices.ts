@@ -128,6 +128,11 @@ export async function getHistoricalPortfolioData(): Promise<{
         if (tx.tradeType === "buy") {
           investedCumulative += amountUsd;
           holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
+          // Seed lastKnownPrice from transaction price so holdings don't
+          // drop to zero value before the first market price is available
+          if (qty > 0 && !lastKnownPrice.has(tx.symbol)) {
+            lastKnownPrice.set(tx.symbol, amountUsd / qty);
+          }
         } else if (tx.tradeType === "sell") {
           investedCumulative -= amountUsd;
           holdings.set(tx.symbol, Math.max(0, (holdings.get(tx.symbol) || 0) - qty));
@@ -303,6 +308,11 @@ export async function getDailyPnLForMonth(
         if (tx.tradeType === "buy") {
           invested += amountUsd;
           holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
+          // Seed lastKnownPrice from transaction price so holdings don't
+          // drop to zero value before the first market price is available
+          if (qty > 0 && !lastKnownPrice.has(tx.symbol)) {
+            lastKnownPrice.set(tx.symbol, amountUsd / qty);
+          }
         } else if (tx.tradeType === "sell") {
           invested -= amountUsd;
           holdings.set(

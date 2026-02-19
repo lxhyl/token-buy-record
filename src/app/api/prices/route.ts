@@ -73,53 +73,106 @@ export async function GET() {
         .onConflictDoNothing();
     }
 
-    // 4. Backfill missing days between last recorded date and yesterday
+    // 4. Backfill missing days in price history
     const yesterday = new Date(today);
     yesterday.setUTCDate(yesterday.getUTCDate() - 1);
 
+    // Find earliest transaction date per symbol for backward backfill
+    const firstTxDate = new Map<string, Date>();
+    for (const tx of allTx) {
+      if (tx.assetType === "deposit" || tx.assetType === "bond") continue;
+      const existing = firstTxDate.get(tx.symbol);
+      const txDate = toMidnightUTC(new Date(tx.tradeDate));
+      if (!existing || txDate < existing) {
+        firstTxDate.set(tx.symbol, txDate);
+      }
+    }
+
     for (const { symbol, assetType } of marketAssets) {
-      const latestRow = await db
+      const allRows = await db
         .select({ date: priceHistory.date })
         .from(priceHistory)
         .where(eq(priceHistory.symbol, symbol))
-        .orderBy(asc(priceHistory.date))
-        .then((rows) => rows.at(-1));
+        .orderBy(asc(priceHistory.date));
 
-      if (!latestRow) continue; // No history at all — full backfill handled by analysis page
+      const earliestRow = allRows.at(0);
+      const latestRow = allRows.at(-1);
 
-      const lastDate = toMidnightUTC(new Date(latestRow.date));
-      const gapDays = Math.floor(
-        (yesterday.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
+      // Forward backfill: from latest recorded date to yesterday
+      if (latestRow) {
+        const lastDate = toMidnightUTC(new Date(latestRow.date));
+        const gapDays = Math.floor(
+          (yesterday.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
 
-      if (gapDays <= 0) continue; // No gap to fill
+        if (gapDays > 0) {
+          const fetchFrom = new Date(lastDate);
+          fetchFrom.setUTCDate(fetchFrom.getUTCDate() + 1);
 
-      const fetchFrom = new Date(lastDate);
-      fetchFrom.setUTCDate(fetchFrom.getUTCDate() + 1);
+          try {
+            let fetched;
+            if (assetType === "crypto") {
+              fetched = await fetchCryptoHistoricalPrices(symbol, fetchFrom, today);
+              await delay(1500);
+            } else {
+              fetched = await fetchStockHistoricalPrices(symbol, fetchFrom, today);
+              await delay(500);
+            }
 
-      try {
-        let fetched;
-        if (assetType === "crypto") {
-          fetched = await fetchCryptoHistoricalPrices(symbol, fetchFrom, today);
-          await delay(1500);
-        } else {
-          fetched = await fetchStockHistoricalPrices(symbol, fetchFrom, today);
-          await delay(500);
+            for (const p of fetched) {
+              await db
+                .insert(priceHistory)
+                .values({
+                  symbol: p.symbol,
+                  date: p.date,
+                  price: p.price.toString(),
+                  source: p.source,
+                })
+                .onConflictDoNothing();
+            }
+          } catch (e) {
+            console.warn(`[PriceBackfill] Forward fill failed for ${symbol}:`, (e as Error).message);
+          }
         }
+      }
 
-        for (const p of fetched) {
-          await db
-            .insert(priceHistory)
-            .values({
-              symbol: p.symbol,
-              date: p.date,
-              price: p.price.toString(),
-              source: p.source,
-            })
-            .onConflictDoNothing();
+      // Backward backfill: from first transaction date to earliest recorded price
+      const txStart = firstTxDate.get(symbol);
+      if (txStart) {
+        const earliest = earliestRow ? toMidnightUTC(new Date(earliestRow.date)) : today;
+        const backGapDays = Math.floor(
+          (earliest.getTime() - txStart.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        if (backGapDays > 1) {
+          const fetchTo = new Date(earliest);
+          fetchTo.setUTCDate(fetchTo.getUTCDate() - 1);
+
+          try {
+            let fetched;
+            if (assetType === "crypto") {
+              fetched = await fetchCryptoHistoricalPrices(symbol, txStart, fetchTo);
+              await delay(1500);
+            } else {
+              fetched = await fetchStockHistoricalPrices(symbol, txStart, fetchTo);
+              await delay(500);
+            }
+
+            for (const p of fetched) {
+              await db
+                .insert(priceHistory)
+                .values({
+                  symbol: p.symbol,
+                  date: p.date,
+                  price: p.price.toString(),
+                  source: p.source,
+                })
+                .onConflictDoNothing();
+            }
+          } catch (e) {
+            console.warn(`[PriceBackfill] Backward fill failed for ${symbol}:`, (e as Error).message);
+          }
         }
-      } catch (e) {
-        console.warn(`[PriceBackfill] Failed for ${symbol}:`, (e as Error).message);
       }
     }
 
