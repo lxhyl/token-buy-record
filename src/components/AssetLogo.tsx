@@ -6,8 +6,6 @@ const assetGradient = (assetType: string) => {
   switch (assetType) {
     case "crypto": return "bg-gradient-to-br from-purple-500 to-pink-500";
     case "stock": return "bg-gradient-to-br from-blue-500 to-cyan-500";
-    case "deposit": return "bg-gradient-to-br from-green-500 to-emerald-500";
-    case "bond": return "bg-gradient-to-br from-amber-500 to-yellow-500";
     default: return "bg-gradient-to-br from-gray-500 to-slate-500";
   }
 };

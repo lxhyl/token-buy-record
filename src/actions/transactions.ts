@@ -29,20 +29,18 @@ export async function createTransaction(formData: FormData): Promise<{ error: st
   const tradeDate = v.tradeDate;
   const notes = v.notes || "";
 
-  const isFixedIncome = assetType === "deposit" || assetType === "bond";
   let totalAmount: string;
-  if (isFixedIncome || (tradeType === "income" && v.quantity === 0)) {
+  if (tradeType === "income" && v.quantity === 0) {
     totalAmount = (v.incomeAmount || 0).toFixed(2);
   } else {
     totalAmount = (v.quantity * v.price + v.fee).toFixed(2);
   }
 
-  // Calculate realized P&L for market sell transactions using FIFO
+  // Calculate realized P&L for sell transactions using FIFO
   let realizedPnl: string | null = null;
-  const isMarketType = assetType !== "deposit" && assetType !== "bond";
   const normalizedSymbol = normalizeStockSymbol(symbol, assetType);
 
-  if (tradeType === "sell" && isMarketType) {
+  if (tradeType === "sell") {
     const available = await getAvailableQuantity(userId, normalizedSymbol);
     if (v.quantity > available + 0.00000001) {
       return {
@@ -70,9 +68,6 @@ export async function createTransaction(formData: FormData): Promise<{ error: st
     currency,
     tradeDate: new Date(tradeDate),
     notes: notes || null,
-    interestRate: v.interestRate ? v.interestRate.toFixed(4) : null,
-    maturityDate: v.maturityDate ? new Date(v.maturityDate) : null,
-    subType: v.subType || null,
     realizedPnl,
   });
 
@@ -102,9 +97,8 @@ export async function updateTransaction(id: number, formData: FormData): Promise
   const tradeDate = v.tradeDate;
   const notes = v.notes || "";
 
-  const isFixedIncome = assetType === "deposit" || assetType === "bond";
   let totalAmount: string;
-  if (isFixedIncome || (tradeType === "income" && v.quantity === 0)) {
+  if (tradeType === "income" && v.quantity === 0) {
     totalAmount = (v.incomeAmount || 0).toFixed(2);
   } else {
     totalAmount = (v.quantity * v.price + v.fee).toFixed(2);
@@ -112,10 +106,9 @@ export async function updateTransaction(id: number, formData: FormData): Promise
 
   const normalizedSymbol = normalizeStockSymbol(symbol, assetType);
 
-  // Recalculate realized P&L for market sell transactions using FIFO
+  // Recalculate realized P&L for sell transactions using FIFO
   let updatedRealizedPnl: string | null = null;
-  const isMarketTypeUpdate = assetType !== "deposit" && assetType !== "bond";
-  if (tradeType === "sell" && isMarketTypeUpdate) {
+  if (tradeType === "sell") {
     const available = await getAvailableQuantity(userId, normalizedSymbol, id);
     if (v.quantity > available + 0.00000001) {
       return {
@@ -145,9 +138,6 @@ export async function updateTransaction(id: number, formData: FormData): Promise
       currency,
       tradeDate: new Date(tradeDate),
       notes: notes || null,
-      interestRate: v.interestRate ? v.interestRate.toFixed(4) : null,
-      maturityDate: v.maturityDate ? new Date(v.maturityDate) : null,
-      subType: v.subType || null,
       realizedPnl: updatedRealizedPnl,
     })
     .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
@@ -268,9 +258,8 @@ export async function getLatestPrices() {
 
   if (!needsRefresh) return dbPrices;
 
-  // Fetch fresh prices from APIs (skip deposit/bond — no market prices)
+  // Fetch fresh prices from APIs
   const assets = Array.from(assetMap.entries())
-    .filter(([_, assetType]) => assetType === "crypto" || assetType === "stock")
     .map(([symbol, assetType]) => ({
       symbol,
       assetType,
@@ -347,12 +336,8 @@ async function calculateFifoRealizedPnl(
     )
     .orderBy(asc(transactions.tradeDate), asc(transactions.id));
 
-  const marketTxs = allTxs.filter(
-    t => t.assetType !== "deposit" && t.assetType !== "bond"
-  );
-
   // Build FIFO lot queue from buys/income
-  const lots = marketTxs
+  const lots = allTxs
     .filter(t => t.tradeType === "buy" || t.tradeType === "income")
     .map(t => ({
       remaining: parseFloat(t.quantity),
@@ -360,7 +345,7 @@ async function calculateFifoRealizedPnl(
     }));
 
   // Consume lots for all prior sells (excluding the current one if updating)
-  const priorSells = marketTxs.filter(
+  const priorSells = allTxs.filter(
     t => t.tradeType === "sell" && t.id !== excludeSellId
   );
 
@@ -412,7 +397,6 @@ async function getAvailableQuantity(
 
   let available = 0;
   for (const tx of allTxs) {
-    if (tx.assetType === "deposit" || tx.assetType === "bond") continue;
     if (excludeTxId !== undefined && tx.id === excludeTxId) continue;
     const qty = parseFloat(tx.quantity);
     if (tx.tradeType === "buy" || tx.tradeType === "income") {

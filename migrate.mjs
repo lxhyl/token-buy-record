@@ -333,4 +333,73 @@ await sql`
   )
 `;
 
+// ── Deposits table ────────────────────────────────────────────
+
+await sql`
+  CREATE TABLE IF NOT EXISTS "deposits" (
+    "id" serial PRIMARY KEY NOT NULL,
+    "user_id" text NOT NULL,
+    "symbol" varchar(20) NOT NULL,
+    "name" varchar(100),
+    "principal" numeric(18, 2) NOT NULL,
+    "interest_rate" numeric(8, 4) NOT NULL,
+    "currency" varchar(10) NOT NULL DEFAULT 'USD',
+    "start_date" timestamp NOT NULL,
+    "maturity_date" timestamp,
+    "notes" text,
+    "created_at" timestamp DEFAULT now()
+  )
+`;
+
+// ── Migrate existing deposit/bond transactions to deposits table ──
+
+const depositTxGroups = await sql`
+  SELECT user_id, symbol,
+    MAX(name) as name,
+    SUM(CASE WHEN trade_type = 'buy' THEN CAST(total_amount AS numeric) ELSE 0 END) as total_buys,
+    SUM(CASE WHEN trade_type = 'sell' THEN CAST(total_amount AS numeric) ELSE 0 END) as total_sells,
+    COALESCE(
+      SUM(CASE WHEN trade_type = 'buy' AND interest_rate IS NOT NULL THEN CAST(interest_rate AS numeric) * CAST(total_amount AS numeric) ELSE 0 END) /
+      NULLIF(SUM(CASE WHEN trade_type = 'buy' THEN CAST(total_amount AS numeric) ELSE 0 END), 0),
+      0
+    ) as weighted_rate,
+    MIN(trade_date) as earliest_date,
+    MIN(CASE WHEN maturity_date IS NOT NULL AND maturity_date > NOW() THEN maturity_date ELSE NULL END) as nearest_maturity,
+    MAX(currency) as currency
+  FROM transactions
+  WHERE asset_type IN ('deposit', 'bond')
+  GROUP BY user_id, symbol
+`;
+
+if (depositTxGroups.length > 0) {
+  console.log(`Migrating ${depositTxGroups.length} deposit/bond group(s) to deposits table...`);
+
+  for (const group of depositTxGroups) {
+    const principal = (parseFloat(group.total_buys) - parseFloat(group.total_sells)).toFixed(2);
+    if (parseFloat(principal) <= 0) continue;
+
+    // Check if already migrated
+    const existing = await sql`
+      SELECT id FROM deposits WHERE user_id = ${group.user_id} AND symbol = ${group.symbol} LIMIT 1
+    `;
+    if (existing.length > 0) continue;
+
+    await sql`
+      INSERT INTO deposits (user_id, symbol, name, principal, interest_rate, currency, start_date, maturity_date)
+      VALUES (
+        ${group.user_id},
+        ${group.symbol},
+        ${group.name || null},
+        ${principal},
+        ${parseFloat(group.weighted_rate || 0).toFixed(4)},
+        ${group.currency || 'USD'},
+        ${group.earliest_date},
+        ${group.nearest_maturity || null}
+      )
+    `;
+  }
+
+  console.log("Deposit migration complete.");
+}
+
 console.log("Migrations complete");

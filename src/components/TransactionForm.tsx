@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createTransaction, updateTransaction } from "@/actions/transactions";
 import { Transaction } from "@/lib/schema";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
-import { Bitcoin, TrendingUp, Landmark, FileText, DollarSign, Coins, PiggyBank, X } from "lucide-react";
+import { Bitcoin, TrendingUp, DollarSign, Coins, X } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/components/I18nProvider";
 import { SymbolAutocomplete } from "@/components/SymbolAutocomplete";
@@ -33,8 +33,6 @@ function exchangeToCurrency(exchange: string): SupportedCurrency | null {
 const ASSET_TYPES = [
   { value: "crypto", icon: Bitcoin, color: "blue" },
   { value: "stock", icon: TrendingUp, color: "indigo" },
-  { value: "deposit", icon: Landmark, color: "emerald" },
-  { value: "bond", icon: FileText, color: "amber" },
 ] as const;
 
 const ASSET_COLOR_MAP: Record<string, { iconBg: string; selectedBorder: string; selectedBg: string; hoverBorder: string }> = {
@@ -50,18 +48,6 @@ const ASSET_COLOR_MAP: Record<string, { iconBg: string; selectedBorder: string; 
     selectedBg: "bg-indigo-50/50 dark:bg-indigo-950/30",
     hoverBorder: "hover:border-indigo-300",
   },
-  emerald: {
-    iconBg: "bg-gradient-to-br from-emerald-500 to-emerald-600",
-    selectedBorder: "border-emerald-500",
-    selectedBg: "bg-emerald-50/50 dark:bg-emerald-950/30",
-    hoverBorder: "hover:border-emerald-300",
-  },
-  amber: {
-    iconBg: "bg-gradient-to-br from-amber-500 to-amber-600",
-    selectedBorder: "border-amber-500",
-    selectedBg: "bg-amber-50/50 dark:bg-amber-950/30",
-    hoverBorder: "hover:border-amber-300",
-  },
 };
 
 export function TransactionForm({
@@ -76,7 +62,6 @@ export function TransactionForm({
   const [isPending, startTransition] = useTransition();
   const [assetType, setAssetType] = useState(transaction?.assetType || "crypto");
   const [tradeType, setTradeType] = useState(transaction?.tradeType || "buy");
-  const [subType, setSubType] = useState(transaction?.subType || "fixed");
   const [incomeMode, setIncomeMode] = useState<"cash" | "asset">(
     transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
       ? "cash"
@@ -87,9 +72,7 @@ export function TransactionForm({
   const [liveQuantity, setLiveQuantity] = useState(transaction?.quantity || "");
   const [livePrice, setLivePrice] = useState(transaction?.price || "");
   const [liveAmount, setLiveAmount] = useState(
-    transaction && (transaction.assetType === "deposit" || transaction.assetType === "bond")
-      ? transaction.totalAmount || ""
-      : transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
+    transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
       ? transaction?.totalAmount || ""
       : ""
   );
@@ -141,8 +124,6 @@ export function TransactionForm({
 
   const isIncome = tradeType === "income";
   const isCashIncome = isIncome && incomeMode === "cash";
-  const isFixedIncome = assetType === "deposit" || assetType === "bond";
-  const showMaturity = isFixedIncome && (subType === "fixed" || assetType === "bond");
 
   const handleSubmit = async (formData: FormData) => {
     startTransition(async () => {
@@ -174,29 +155,21 @@ export function TransactionForm({
   const symbolPlaceholder = {
     crypto: t("form.symbolPlaceholderCrypto"),
     stock: t("form.symbolPlaceholderStock"),
-    deposit: t("form.symbolPlaceholderDeposit"),
-    bond: t("form.symbolPlaceholderBond"),
   }[assetType] || t("form.symbol");
 
   const namePlaceholder = {
     crypto: t("form.namePlaceholderCrypto"),
     stock: t("form.namePlaceholderStock"),
-    deposit: t("form.namePlaceholderDeposit"),
-    bond: t("form.namePlaceholderBond"),
   }[assetType] || t("form.nameOptional");
 
   const assetDescKey: Record<string, string> = {
     crypto: "form.cryptoDesc",
     stock: "form.stockDesc",
-    deposit: "form.depositDesc",
-    bond: "form.bondDesc",
   };
 
   const assetLabelKey: Record<string, string> = {
     crypto: "form.crypto",
     stock: "form.stock",
-    deposit: "form.depositType",
-    bond: "form.bondType",
   };
 
   return (
@@ -210,7 +183,7 @@ export function TransactionForm({
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
           {t("form.assetType")}
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {ASSET_TYPES.map(({ value, icon: Icon, color }) => {
             const colors = ASSET_COLOR_MAP[color];
             const selected = assetType === value;
@@ -249,9 +222,9 @@ export function TransactionForm({
           {(["buy", "sell", "income"] as const).map((type) => {
             const selected = tradeType === type;
             const label = type === "buy"
-              ? (isFixedIncome ? t("form.depositAction") : t("form.buy"))
+              ? t("form.buy")
               : type === "sell"
-              ? (isFixedIncome ? t("form.withdrawAction") : t("form.sell"))
+              ? t("form.sell")
               : t("form.income");
             const selectedClass = type === "buy"
               ? "bg-emerald-500 text-white"
@@ -274,8 +247,8 @@ export function TransactionForm({
         </div>
       </div>
 
-      {/* Income Mode Toggle — only for non-fixed-income assets */}
-      {isIncome && !isFixedIncome && (
+      {/* Income Mode Toggle */}
+      {isIncome && (
         <div className="animate-section-reveal space-y-3">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             {t("form.incomeTypeSection")}
@@ -323,65 +296,13 @@ export function TransactionForm({
         </div>
       )}
 
-      {/* Deposit Sub-type Toggle */}
-      {isFixedIncome && assetType === "deposit" && tradeType === "buy" && (
-        <div className="animate-section-reveal space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            {t("form.depositTypeSection")}
-          </h3>
-          <input type="hidden" name="subType" value={subType} />
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setSubType("fixed")}
-              className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
-                subType === "fixed"
-                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40"
-                  : "border-muted hover:border-emerald-300"
-              }`}
-            >
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                subType === "fixed" ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
-              }`}>
-                <Landmark className="h-5 w-5" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-sm">{t("form.fixedTerm")}</p>
-                <p className="text-xs text-muted-foreground">{t("form.fixedTermDesc")}</p>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => setSubType("demand")}
-              className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
-                subType === "demand"
-                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40"
-                  : "border-muted hover:border-emerald-300"
-              }`}
-            >
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                subType === "demand" ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
-              }`}>
-                <PiggyBank className="h-5 w-5" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-sm">{t("form.demandType")}</p>
-                <p className="text-xs text-muted-foreground">{t("form.demandDesc")}</p>
-              </div>
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Section 3: Form Fields with Animation */}
       <div
         key={`${assetType}-${tradeType}-${incomeMode}`}
         className="animate-section-reveal space-y-4"
       >
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          {isFixedIncome
-            ? tradeType === "buy" ? t("form.depositDetails") : tradeType === "sell" ? t("form.withdrawalDetails") : t("form.incomeDetails")
-            : isIncome ? t("form.incomeDetails") : t("form.tradeDetails")}
+          {isIncome ? t("form.incomeDetails") : t("form.tradeDetails")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 [&>div]:min-w-0">
           {/* Symbol */}
@@ -425,55 +346,7 @@ export function TransactionForm({
           </div>
 
           {/* Conditional trade detail fields */}
-          {isFixedIncome && tradeType !== "income" ? (
-            <>
-              <input type="hidden" name="quantity" value="1" />
-              <input type="hidden" name="price" value="0" />
-              <input type="hidden" name="fee" value="0" />
-              <div className="space-y-2">
-                <Label htmlFor="incomeAmount">
-                  {tradeType === "buy" ? t("form.principalAmount") : t("form.withdrawalAmount")}
-                </Label>
-                <Input
-                  id="incomeAmount"
-                  name="incomeAmount"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  defaultValue={
-                    transaction && (transaction.assetType === "deposit" || transaction.assetType === "bond")
-                      ? transaction.totalAmount || ""
-                      : ""
-                  }
-                  onChange={(e) => setLiveAmount(e.target.value)}
-                  required
-                />
-              </div>
-            </>
-          ) : isFixedIncome && tradeType === "income" ? (
-            <>
-              <input type="hidden" name="quantity" value="0" />
-              <input type="hidden" name="price" value="0" />
-              <input type="hidden" name="fee" value="0" />
-              <div className="space-y-2">
-                <Label htmlFor="incomeAmount">{t("form.incomeAmount")}</Label>
-                <Input
-                  id="incomeAmount"
-                  name="incomeAmount"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  defaultValue={
-                    transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
-                      ? transaction?.totalAmount || ""
-                      : ""
-                  }
-                  onChange={(e) => setLiveAmount(e.target.value)}
-                  required
-                />
-              </div>
-            </>
-          ) : isCashIncome ? (
+          {isCashIncome ? (
             <>
               <input type="hidden" name="quantity" value="0" />
               <input type="hidden" name="price" value="0" />
@@ -520,7 +393,7 @@ export function TransactionForm({
                   <Label htmlFor="price">
                     {isIncome ? t("form.marketPriceAtReceipt") : t("form.price")}
                   </Label>
-                  {(assetType === "crypto" || assetType === "stock") && liveSymbol.trim() && (
+                  {liveSymbol.trim() && (
                     priceLoading ? (
                       <span className="flex items-center gap-1 text-xs text-muted-foreground">
                         <span className="inline-block h-3 w-3 animate-spin rounded-full border-[1.5px] border-muted-foreground border-t-transparent" />
@@ -576,7 +449,7 @@ export function TransactionForm({
           </div>
 
           {/* Fee */}
-          {!isCashIncome && !isFixedIncome && (
+          {!isCashIncome && (
             <div className="space-y-2">
               <Label htmlFor="fee">{t("form.fee")}</Label>
               <Input
@@ -589,43 +462,12 @@ export function TransactionForm({
               />
             </div>
           )}
-          {(isCashIncome && !isFixedIncome) && <input type="hidden" name="fee" value="0" />}
-
-          {/* Interest Rate — for deposit/bond buy */}
-          {isFixedIncome && tradeType === "buy" && (
-            <div className="space-y-2">
-              <Label htmlFor="interestRate">{t("form.interestRate")}</Label>
-              <Input
-                id="interestRate"
-                name="interestRate"
-                type="number"
-                step="0.0001"
-                placeholder="3.5000"
-                defaultValue={transaction?.interestRate || ""}
-              />
-            </div>
-          )}
-
-          {/* Maturity Date — for fixed deposits and bonds */}
-          {showMaturity && tradeType === "buy" && (
-            <div className="space-y-2">
-              <Label htmlFor="maturityDate">{t("form.maturityDate")}</Label>
-              <Input
-                id="maturityDate"
-                name="maturityDate"
-                type="date"
-                defaultValue={formatDateForInput(transaction?.maturityDate || null)}
-                className="h-11 min-w-0"
-              />
-            </div>
-          )}
+          {isCashIncome && <input type="hidden" name="fee" value="0" />}
 
           {/* Trade Date */}
           <div className="space-y-2">
             <Label htmlFor="tradeDate">
-              {isFixedIncome
-                ? tradeType === "buy" ? t("form.depositDate") : tradeType === "sell" ? t("form.withdrawalDate") : t("form.incomeDate")
-                : isIncome ? t("form.incomeDate") : t("form.tradeDate")}
+              {isIncome ? t("form.incomeDate") : t("form.tradeDate")}
             </Label>
             <Input
               id="tradeDate"
@@ -665,13 +507,13 @@ export function TransactionForm({
 
           // For qty x price modes (market buy/sell, asset income)
           const hasQtyPrice = !isNaN(qty) && qty > 0 && !isNaN(prc) && prc > 0 && sym;
-          // For amount-based modes (fixed income, cash income)
+          // For amount-based modes (cash income)
           const hasAmount = !isNaN(amt) && amt > 0 && sym;
 
           const tradeLabel = tradeType === "buy"
-            ? (isFixedIncome ? t("form.depositAction") : t("form.buy"))
+            ? t("form.buy")
             : tradeType === "sell"
-            ? (isFixedIncome ? t("form.withdrawAction") : t("form.sell"))
+            ? t("form.sell")
             : t("form.income");
 
           if (hasQtyPrice) {
@@ -717,11 +559,9 @@ export function TransactionForm({
           >
             {isPending
               ? t("form.saving")
-              : tradeType === "buy"
-              ? (isFixedIncome ? t("form.confirmDeposit") : t("form.confirmTransaction"))
-              : tradeType === "sell"
-              ? (isFixedIncome ? t("form.confirmWithdrawal") : t("form.confirmTransaction"))
-              : t("form.confirmIncome")}
+              : isIncome
+              ? t("form.confirmIncome")
+              : t("form.confirmTransaction")}
           </Button>
           <Button
             type="button"

@@ -1,9 +1,10 @@
 import { getTransactions, getLatestPrices } from "@/actions/transactions";
+import { getDeposits } from "@/actions/deposits";
 import { getDisplayCurrency } from "@/actions/settings";
 import { getExchangeRates } from "@/lib/exchange-rates";
 import {
   calculateHoldings,
-  calculateFixedIncomeHoldings,
+  calculateDepositHoldings,
   calculatePortfolioSummary,
   calculateAllocationData,
   analyzeTradePatterns,
@@ -38,9 +39,10 @@ export default async function AnalysisPage() {
   const currentYear = nowUTC.getUTCFullYear();
   const currentMonth = nowUTC.getUTCMonth() + 1;
 
-  const [transactions, currentPrices, currency, rates, locale, historicalData, heatmapData, colorScheme] = await Promise.all([
+  const [transactions, currentPrices, deposits, currency, rates, locale, historicalData, heatmapData, colorScheme] = await Promise.all([
     getTransactions(),
     getLatestPrices(),
+    getDeposits(),
     getDisplayCurrency(),
     getExchangeRates(),
     getDisplayLanguage(),
@@ -50,9 +52,9 @@ export default async function AnalysisPage() {
   ]);
 
   const holdings = calculateHoldings(transactions, currentPrices, rates);
-  const fixedIncomeHoldings = calculateFixedIncomeHoldings(transactions, rates);
-  const summary = calculatePortfolioSummary(holdings, fixedIncomeHoldings);
-  const allocationData = calculateAllocationData(holdings, fixedIncomeHoldings);
+  const depositHoldings = calculateDepositHoldings(deposits, rates);
+  const summary = calculatePortfolioSummary(holdings, depositHoldings);
+  const allocationData = calculateAllocationData(holdings, depositHoldings);
   const tradeAnalysis = analyzeTradePatterns(transactions, rates);
 
   const fc = createCurrencyFormatter(currency, rates);
@@ -60,14 +62,10 @@ export default async function AnalysisPage() {
   const gainTextClass = isCN ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400";
   const lossTextClass = isCN ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
 
-  // Filter out fixed-income from P&L rankings (no unrealized P&L)
-  const marketHoldings = holdings.filter(
-    (h) => h.assetType !== "deposit" && h.assetType !== "bond"
-  );
-  const sortedByPnL = [...marketHoldings].sort(
+  const sortedByPnL = [...holdings].sort(
     (a, b) => b.unrealizedPnL - a.unrealizedPnL
   );
-  const sortedByPnLPercent = [...marketHoldings].sort(
+  const sortedByPnLPercent = [...holdings].sort(
     (a, b) => b.unrealizedPnLPercent - a.unrealizedPnLPercent
   );
 
@@ -268,16 +266,13 @@ export default async function AnalysisPage() {
 
       <TradePatternCard tradeAnalysis={tradeAnalysis} currency={currency} rates={rates} />
 
-      {/* Fee Analysis — market assets only (fixed-income has zero fees) */}
+      {/* Fee Analysis */}
       {(() => {
-        const marketAnalysis = tradeAnalysis.filter(
-          (a) => a.assetType !== "deposit" && a.assetType !== "bond"
-        );
-        const totalFees = marketAnalysis.reduce((sum, a) => sum + a.totalFees, 0);
-        const feeBySymbol = [...marketAnalysis]
+        const totalFees = tradeAnalysis.reduce((sum, a) => sum + a.totalFees, 0);
+        const feeBySymbol = [...tradeAnalysis]
           .filter((a) => a.totalFees > 0)
           .sort((a, b) => b.totalFees - a.totalFees);
-        const totalTraded = marketAnalysis.reduce(
+        const totalTraded = tradeAnalysis.reduce(
           (sum, a) => sum + a.buyVolumeUsd + a.sellVolumeUsd,
           0
         );
@@ -353,15 +348,15 @@ export default async function AnalysisPage() {
                       <TableRow className="border-t-2 font-semibold">
                         <TableCell>{t(locale, "common.total")}</TableCell>
                         <TableCell className="text-right font-num">
-                          {marketAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0)}
+                          {tradeAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0)}
                         </TableCell>
                         <TableCell className="text-right font-num text-orange-600 dark:text-orange-400">
                           {fc(totalFees)}
                         </TableCell>
                         <TableCell className="text-right font-num">
                           {fc(
-                            marketAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0) > 0
-                              ? totalFees / marketAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0)
+                            tradeAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0) > 0
+                              ? totalFees / tradeAnalysis.reduce((s, a) => s + a.totalBuys + a.totalSells, 0)
                               : 0
                           )}
                         </TableCell>

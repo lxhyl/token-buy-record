@@ -47,7 +47,6 @@ export async function getHistoricalPortfolioData(): Promise<{
     { assetType: string; firstDate: Date; lastDate: Date }
   >();
   for (const tx of allTx) {
-    if (tx.assetType === "deposit" || tx.assetType === "bond") continue;
     const sym = tx.symbol;
     const existing = symbolInfo.get(sym);
     const txDate = new Date(tx.tradeDate);
@@ -97,7 +96,6 @@ export async function getHistoricalPortfolioData(): Promise<{
   // 6. Build chart data by walking through sample dates
   const holdings = new Map<string, number>();
   let investedCumulative = 0;
-  let fixedIncomeValue = 0;
   let txIdx = 0;
   const lastKnownPrice = new Map<string, number>();
   const chartData: ChartDataPoint[] = [];
@@ -114,33 +112,21 @@ export async function getHistoricalPortfolioData(): Promise<{
       const amountUsd = toUsd(parseFloat(tx.totalAmount), tx.currency || "USD", rates);
       const qty = parseFloat(tx.quantity);
 
-      if (tx.assetType === "deposit" || tx.assetType === "bond") {
-        if (tx.tradeType === "buy") {
-          investedCumulative += amountUsd;
-          fixedIncomeValue += amountUsd;
-        } else if (tx.tradeType === "sell") {
-          investedCumulative -= amountUsd;
-          fixedIncomeValue -= amountUsd;
-        } else if (tx.tradeType === "income") {
-          investedCumulative += amountUsd;
+      if (tx.tradeType === "buy") {
+        investedCumulative += amountUsd;
+        holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
+        // Seed lastKnownPrice from transaction price so holdings don't
+        // drop to zero value before the first market price is available
+        if (qty > 0 && !lastKnownPrice.has(tx.symbol)) {
+          lastKnownPrice.set(tx.symbol, amountUsd / qty);
         }
-      } else {
-        if (tx.tradeType === "buy") {
-          investedCumulative += amountUsd;
+      } else if (tx.tradeType === "sell") {
+        investedCumulative -= amountUsd;
+        holdings.set(tx.symbol, Math.max(0, (holdings.get(tx.symbol) || 0) - qty));
+      } else if (tx.tradeType === "income") {
+        investedCumulative += amountUsd;
+        if (qty > 0) {
           holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
-          // Seed lastKnownPrice from transaction price so holdings don't
-          // drop to zero value before the first market price is available
-          if (qty > 0 && !lastKnownPrice.has(tx.symbol)) {
-            lastKnownPrice.set(tx.symbol, amountUsd / qty);
-          }
-        } else if (tx.tradeType === "sell") {
-          investedCumulative -= amountUsd;
-          holdings.set(tx.symbol, Math.max(0, (holdings.get(tx.symbol) || 0) - qty));
-        } else if (tx.tradeType === "income") {
-          investedCumulative += amountUsd;
-          if (qty > 0) {
-            holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
-          }
         }
       }
 
@@ -178,7 +164,7 @@ export async function getHistoricalPortfolioData(): Promise<{
     chartData.push({
       date: sampleDateStr,
       invested: Math.round(investedCumulative * 100) / 100,
-      value: Math.round((marketValue + fixedIncomeValue) * 100) / 100,
+      value: Math.round(marketValue * 100) / 100,
     });
   }
 
@@ -209,7 +195,6 @@ export async function getDailyPnLForMonth(
   // Identify market symbols
   const symbolTypes = new Map<string, string>();
   for (const tx of allTx) {
-    if (tx.assetType === "deposit" || tx.assetType === "bond") continue;
     if (!symbolTypes.has(tx.symbol)) {
       symbolTypes.set(tx.symbol, tx.assetType);
     }
@@ -289,7 +274,6 @@ export async function getDailyPnLForMonth(
   // Walk through days with running state
   const holdings = new Map<string, number>();
   let invested = 0;
-  let fixedIncomeValue = 0;
   let txIdx = 0;
 
   function applyTransactionsUpTo(targetDate: Date) {
@@ -301,29 +285,22 @@ export async function getDailyPnLForMonth(
       const amountUsd = toUsd(parseFloat(tx.totalAmount), tx.currency || "USD", rates);
       const qty = parseFloat(tx.quantity);
 
-      if (tx.assetType === "deposit" || tx.assetType === "bond") {
-        if (tx.tradeType === "buy") fixedIncomeValue += amountUsd;
-        else if (tx.tradeType === "sell") fixedIncomeValue -= amountUsd;
-      } else {
-        if (tx.tradeType === "buy") {
-          invested += amountUsd;
+      if (tx.tradeType === "buy") {
+        invested += amountUsd;
+        holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
+        if (qty > 0 && !lastKnownPrice.has(tx.symbol)) {
+          lastKnownPrice.set(tx.symbol, amountUsd / qty);
+        }
+      } else if (tx.tradeType === "sell") {
+        invested -= amountUsd;
+        holdings.set(
+          tx.symbol,
+          Math.max(0, (holdings.get(tx.symbol) || 0) - qty)
+        );
+      } else if (tx.tradeType === "income") {
+        invested += amountUsd;
+        if (qty > 0) {
           holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
-          // Seed lastKnownPrice from transaction price so holdings don't
-          // drop to zero value before the first market price is available
-          if (qty > 0 && !lastKnownPrice.has(tx.symbol)) {
-            lastKnownPrice.set(tx.symbol, amountUsd / qty);
-          }
-        } else if (tx.tradeType === "sell") {
-          invested -= amountUsd;
-          holdings.set(
-            tx.symbol,
-            Math.max(0, (holdings.get(tx.symbol) || 0) - qty)
-          );
-        } else if (tx.tradeType === "income") {
-          invested += amountUsd;
-          if (qty > 0) {
-            holdings.set(tx.symbol, (holdings.get(tx.symbol) || 0) + qty);
-          }
         }
       }
       txIdx++;
@@ -344,12 +321,12 @@ export async function getDailyPnLForMonth(
         if (lkp !== undefined) marketValue += qty * lkp;
       }
     });
-    return marketValue + fixedIncomeValue;
+    return marketValue;
   }
 
   // Advance to day before month start
   applyTransactionsUpTo(dayBefore);
-  let prevUnrealizedPnL = computePortfolioValue(dayBefore) - invested - fixedIncomeValue;
+  let prevUnrealizedPnL = computePortfolioValue(dayBefore) - invested;
 
   const daysInMonth = lastDay.getUTCDate();
   const results: { date: string; pnl: number }[] = [];
@@ -359,7 +336,7 @@ export async function getDailyPnLForMonth(
     if (date > todayUTC) break;
 
     applyTransactionsUpTo(date);
-    const unrealizedPnL = computePortfolioValue(date) - invested - fixedIncomeValue;
+    const unrealizedPnL = computePortfolioValue(date) - invested;
     const dailyPnL = unrealizedPnL - prevUnrealizedPnL;
 
     results.push({

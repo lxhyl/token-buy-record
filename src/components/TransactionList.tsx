@@ -19,7 +19,6 @@ import { createCurrencyFormatter, formatNumber, formatDate } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates, toUsd } from "@/lib/currency";
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/components/I18nProvider";
-import { TranslationKey } from "@/lib/i18n";
 import {
   Pencil,
   Trash2,
@@ -31,20 +30,14 @@ import {
   Search,
   ArrowUpDown,
   Download,
-  AlertTriangle,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { usePnLColors } from "@/components/ColorSchemeProvider";
 import { AssetLogo } from "@/components/AssetLogo";
 
-type TabFilter = "all" | "market" | "fixed-income";
 type SortField = "date" | "symbol" | "total";
 type SortDir = "asc" | "desc";
-
-function isFixedIncome(t: Transaction) {
-  return t.assetType === "deposit" || t.assetType === "bond";
-}
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -58,7 +51,6 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
   const { t, tInterpolate } = useI18n();
   const pnlColors = usePnLColors();
   const [isPending, startTransition] = useTransition();
-  const [activeTab, setActiveTab] = useState<TabFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -66,25 +58,13 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
 
-  const TABS: { key: TabFilter; labelKey: TranslationKey }[] = [
-    { key: "all", labelKey: "transactions.all" },
-    { key: "market", labelKey: "transactions.market" },
-    { key: "fixed-income", labelKey: "transactions.fixedIncome" },
-  ];
-
   function getAssetTypeLabel(assetType: string): string {
     if (assetType === "crypto") return t("form.crypto");
     if (assetType === "stock") return t("form.stock");
-    if (assetType === "deposit") return t("form.depositType");
-    if (assetType === "bond") return t("form.bondType");
     return assetType;
   }
 
   function getTradeTypeLabel(tx: Transaction): string {
-    if (isFixedIncome(tx)) {
-      if (tx.tradeType === "buy") return t("transactions.deposit");
-      if (tx.tradeType === "sell") return t("transactions.withdraw");
-    }
     if (tx.tradeType === "buy") return t("transactions.buy");
     if (tx.tradeType === "sell") return t("transactions.sell");
     if (tx.tradeType === "income") return t("transactions.incomeType");
@@ -115,11 +95,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
   };
 
   const filtered = useMemo(() => {
-    let result = transactions.filter((tx) => {
-      if (activeTab === "market") return !isFixedIncome(tx);
-      if (activeTab === "fixed-income") return isFixedIncome(tx);
-      return true;
-    });
+    let result = [...transactions];
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -147,14 +123,12 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
     });
 
     return result;
-  }, [transactions, activeTab, searchQuery, sortField, sortDir]);
+  }, [transactions, searchQuery, sortField, sortDir]);
 
   // Reset to page 1 when filters change
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginated = filtered.slice((safeCurrentPage - 1) * PAGE_SIZE, safeCurrentPage * PAGE_SIZE);
-
-  const showFixedIncomeColumns = activeTab === "fixed-income";
 
   const handleExportCSV = () => {
     const headers = [
@@ -238,26 +212,9 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {/* Tab Filter + Search */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 px-4 md:px-6 pt-4 pb-2">
-            <div className="flex gap-1" role="tablist">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  role="tab"
-                  aria-selected={activeTab === tab.key}
-                  onClick={() => { setActiveTab(tab.key); setCurrentPage(1); }}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    activeTab === tab.key
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  }`}
-                >
-                  {t(tab.labelKey)}
-                </button>
-              ))}
-            </div>
-            {transactions.length > 0 && (
+          {/* Search */}
+          {transactions.length > 0 && (
+            <div className="flex items-center px-4 md:px-6 pt-4 pb-2">
               <div className="relative sm:ml-auto">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
@@ -267,8 +224,8 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                   className="pl-8 h-8 text-xs w-full sm:w-48"
                 />
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -281,11 +238,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
               <p className="text-sm text-muted-foreground mt-1 mb-4">
                 {searchQuery
                   ? t("transactions.tryDifferent")
-                  : activeTab === "all"
-                  ? t("transactions.addFirst")
-                  : activeTab === "market"
-                  ? t("transactions.noMarket")
-                  : t("transactions.noFixedIncome")}
+                  : t("transactions.addFirst")}
               </p>
               {!searchQuery && (
                 <Link href="/transactions/new">
@@ -308,24 +261,12 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                     <SortButton field="symbol">{t("transactions.asset")}</SortButton>
                   </TableHead>
                   <TableHead>{t("transactions.type")}</TableHead>
-                  {showFixedIncomeColumns ? (
-                    <>
-                      <TableHead className="text-right">
-                        <SortButton field="total">{t("transactions.amount")}</SortButton>
-                      </TableHead>
-                      <TableHead className="text-right">{t("transactions.rateCol")}</TableHead>
-                      <TableHead className="text-right">{t("transactions.maturityCol")}</TableHead>
-                    </>
-                  ) : (
-                    <>
-                      <TableHead className="text-right">{t("transactions.quantity")}</TableHead>
-                      <TableHead className="text-right">{t("transactions.price")}</TableHead>
-                      <TableHead className="text-right">
-                        <SortButton field="total">{t("transactions.total")}</SortButton>
-                      </TableHead>
-                      <TableHead className="text-right">{t("transactions.realizedPnl")}</TableHead>
-                    </>
-                  )}
+                  <TableHead className="text-right">{t("transactions.quantity")}</TableHead>
+                  <TableHead className="text-right">{t("transactions.price")}</TableHead>
+                  <TableHead className="text-right">
+                    <SortButton field="total">{t("transactions.total")}</SortButton>
+                  </TableHead>
+                  <TableHead className="text-right">{t("transactions.realizedPnl")}</TableHead>
                   <TableHead className="text-right">{t("transactions.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -364,53 +305,33 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                         {getTradeTypeLabel(tx)}
                       </div>
                     </TableCell>
-                    {showFixedIncomeColumns ? (
-                      <>
-                        <TableCell className="text-right font-semibold font-num">
-                          {fc(toUsd(parseFloat(tx.totalAmount), tx.currency || "USD", rates))}
-                        </TableCell>
-                        <TableCell className="text-right font-num">
-                          {tx.interestRate && parseFloat(tx.interestRate) > 0
-                            ? `${parseFloat(tx.interestRate).toFixed(2)}%`
-                            : "-"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {tx.maturityDate
-                            ? formatDate(new Date(tx.maturityDate))
-                            : "-"}
-                        </TableCell>
-                      </>
-                    ) : (
-                      <>
-                        <TableCell className="text-right font-medium font-num">
-                          {parseFloat(tx.quantity) > 0 ? formatNumber(parseFloat(tx.quantity), 8) : "-"}
-                        </TableCell>
-                        <TableCell className="text-right font-num">
-                          {parseFloat(tx.price) > 0 ? fc(toUsd(parseFloat(tx.price), tx.currency || "USD", rates)) : "-"}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold font-num">
-                          {fc(toUsd(parseFloat(tx.totalAmount), tx.currency || "USD", rates))}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {tx.tradeType === "sell" && tx.realizedPnl ? (() => {
-                            const pnlUsd = toUsd(parseFloat(tx.realizedPnl), tx.currency || "USD", rates);
-                            const isProfit = pnlUsd >= 0;
-                            return (
-                              <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold font-num leading-none ${
-                                isProfit ? pnlColors.gainPill : pnlColors.lossPill
-                              }`}>
-                                {isProfit ? (
-                                  <ArrowUpRight className="h-3 w-3 shrink-0" />
-                                ) : (
-                                  <ArrowDownRight className="h-3 w-3 shrink-0" />
-                                )}
-                                <span className="whitespace-nowrap">{isProfit ? "+" : ""}{fc(pnlUsd)}</span>
-                              </div>
-                            );
-                          })() : <span className="text-muted-foreground">-</span>}
-                        </TableCell>
-                      </>
-                    )}
+                    <TableCell className="text-right font-medium font-num">
+                      {parseFloat(tx.quantity) > 0 ? formatNumber(parseFloat(tx.quantity), 8) : "-"}
+                    </TableCell>
+                    <TableCell className="text-right font-num">
+                      {parseFloat(tx.price) > 0 ? fc(toUsd(parseFloat(tx.price), tx.currency || "USD", rates)) : "-"}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold font-num">
+                      {fc(toUsd(parseFloat(tx.totalAmount), tx.currency || "USD", rates))}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {tx.tradeType === "sell" && tx.realizedPnl ? (() => {
+                        const pnlUsd = toUsd(parseFloat(tx.realizedPnl), tx.currency || "USD", rates);
+                        const isProfit = pnlUsd >= 0;
+                        return (
+                          <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold font-num leading-none ${
+                            isProfit ? pnlColors.gainPill : pnlColors.lossPill
+                          }`}>
+                            {isProfit ? (
+                              <ArrowUpRight className="h-3 w-3 shrink-0" />
+                            ) : (
+                              <ArrowDownRight className="h-3 w-3 shrink-0" />
+                            )}
+                            <span className="whitespace-nowrap">{isProfit ? "+" : ""}{fc(pnlUsd)}</span>
+                          </div>
+                        );
+                      })() : <span className="text-muted-foreground">-</span>}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <Link href={`/transactions/${tx.id}/edit`}>

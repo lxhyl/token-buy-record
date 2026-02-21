@@ -45,22 +45,12 @@ export const transactionSchema = z
         return d < tomorrow;
       }, "Trade date cannot be in the future"),
     notes: z.string().optional().default(""),
-    interestRate: z.coerce
-      .number()
-      .min(0, "Interest rate cannot be negative")
-      .max(100, "Interest rate cannot exceed 100%")
-      .optional()
-      .nullable(),
-    maturityDate: z.string().optional().default(""),
-    subType: z.string().optional().default(""),
   })
   .refine(
     (data) => {
-      const isFixedIncome =
-        data.assetType === "deposit" || data.assetType === "bond";
       const isCashIncome =
         data.tradeType === "income" && data.quantity === 0;
-      if (isFixedIncome || isCashIncome) {
+      if (isCashIncome) {
         return (
           data.incomeAmount !== undefined && data.incomeAmount > 0
         );
@@ -93,14 +83,63 @@ export function parseTransactionFormData(formData: FormData): {
     currency: formData.get("currency") ?? "USD",
     tradeDate: formData.get("tradeDate") ?? "",
     notes: formData.get("notes") ?? "",
-    interestRate: formData.get("interestRate")
-      ? Number(formData.get("interestRate"))
-      : undefined,
-    maturityDate: formData.get("maturityDate") ?? "",
-    subType: formData.get("subType") ?? "",
   };
 
   const result = transactionSchema.safeParse(raw);
+  if (!result.success) {
+    const firstIssue = result.error.issues[0];
+    return { success: false, error: firstIssue.message };
+  }
+  return { success: true, data: result.data };
+}
+
+// ── Deposit validation ────────────────────────────────────────
+
+export const depositSchema = z.object({
+  symbol: z
+    .string()
+    .min(1, "Symbol is required")
+    .max(20, "Symbol must be 20 characters or less"),
+  name: z.string().max(100).optional().default(""),
+  principal: z.coerce
+    .number({ error: "Principal must be a number" })
+    .positive("Principal must be greater than 0"),
+  interestRate: z.coerce
+    .number({ error: "Interest rate must be a number" })
+    .min(0, "Interest rate cannot be negative")
+    .max(100, "Interest rate cannot exceed 100%"),
+  currency: z.enum(CURRENCIES, {
+    error: "Invalid currency",
+  }),
+  startDate: z
+    .string()
+    .min(1, "Start date is required")
+    .refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
+  maturityDate: z.string().optional().default(""),
+  notes: z.string().optional().default(""),
+});
+
+export type DepositFormData = z.infer<typeof depositSchema>;
+
+export function parseDepositFormData(formData: FormData): {
+  success: true;
+  data: DepositFormData;
+} | {
+  success: false;
+  error: string;
+} {
+  const raw = {
+    symbol: formData.get("symbol") ?? "",
+    name: formData.get("name") ?? "",
+    principal: formData.get("principal") ?? "0",
+    interestRate: formData.get("interestRate") ?? "0",
+    currency: formData.get("currency") ?? "USD",
+    startDate: formData.get("startDate") ?? "",
+    maturityDate: formData.get("maturityDate") ?? "",
+    notes: formData.get("notes") ?? "",
+  };
+
+  const result = depositSchema.safeParse(raw);
   if (!result.success) {
     const firstIssue = result.error.issues[0];
     return { success: false, error: firstIssue.message };

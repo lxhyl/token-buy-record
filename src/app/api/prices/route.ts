@@ -80,7 +80,6 @@ export async function GET() {
     // Find earliest transaction date per symbol for backward backfill
     const firstTxDate = new Map<string, Date>();
     for (const tx of allTx) {
-      if (tx.assetType === "deposit" || tx.assetType === "bond") continue;
       const existing = firstTxDate.get(tx.symbol);
       const txDate = toMidnightUTC(new Date(tx.tradeDate));
       if (!existing || txDate < existing) {

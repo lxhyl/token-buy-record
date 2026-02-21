@@ -14,22 +14,11 @@ import { TradeAnalysis } from "@/lib/calculations";
 import { createCurrencyFormatter, formatNumber } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
 import { useI18n } from "@/components/I18nProvider";
-import { TranslationKey } from "@/lib/i18n";
 import { usePnLColors } from "@/components/ColorSchemeProvider";
 import { ArrowUpDown } from "lucide-react";
 import { AssetLogo } from "@/components/AssetLogo";
 
-type Tab = "market" | "fixed-income";
 type SortDir = "asc" | "desc";
-
-const TABS: { key: Tab; labelKey: TranslationKey }[] = [
-  { key: "market", labelKey: "tradePattern.market" },
-  { key: "fixed-income", labelKey: "tradePattern.fixedIncome" },
-];
-
-function isFixedIncome(a: TradeAnalysis) {
-  return a.assetType === "deposit" || a.assetType === "bond";
-}
 
 interface TradePatternCardProps {
   tradeAnalysis: TradeAnalysis[];
@@ -38,7 +27,6 @@ interface TradePatternCardProps {
 }
 
 export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatternCardProps) {
-  const [activeTab, setActiveTab] = useState<Tab>("market");
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const fc = createCurrencyFormatter(currency, rates);
@@ -46,23 +34,15 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
   const c = usePnLColors();
 
   const filtered = useMemo(() => {
-    const base = tradeAnalysis.filter((a) =>
-      activeTab === "market" ? !isFixedIncome(a) : isFixedIncome(a)
-    );
+    const base = [...tradeAnalysis];
     if (!sortField) return base;
 
-    return [...base].sort((a, b) => {
-      let va: number, vb: number;
-      if (sortField === "net") {
-        va = a.buyTotalAmountUsd - a.sellTotalAmountUsd;
-        vb = b.buyTotalAmountUsd - b.sellTotalAmountUsd;
-      } else {
-        va = (a as unknown as Record<string, number>)[sortField] ?? 0;
-        vb = (b as unknown as Record<string, number>)[sortField] ?? 0;
-      }
+    return base.sort((a, b) => {
+      const va = (a as unknown as Record<string, number>)[sortField] ?? 0;
+      const vb = (b as unknown as Record<string, number>)[sortField] ?? 0;
       return sortDir === "asc" ? va - vb : vb - va;
     });
-  }, [tradeAnalysis, activeTab, sortField, sortDir]);
+  }, [tradeAnalysis, sortField, sortDir]);
 
   function toggleSort(field: string) {
     if (sortField === field) {
@@ -71,11 +51,6 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
       setSortField(field);
       setSortDir("desc");
     }
-  }
-
-  function handleTabChange(tab: Tab) {
-    setActiveTab(tab);
-    setSortField(null);
   }
 
   const SortButton = ({ field, children, className }: { field: string; children: React.ReactNode; className?: string }) => (
@@ -94,29 +69,11 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
         <CardTitle className="text-base md:text-lg">{t("tradePattern.title")}</CardTitle>
       </CardHeader>
       <CardContent className="px-0 md:px-6">
-        <div className="flex gap-1 px-4 md:px-0 pb-4" role="tablist">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              role="tab"
-              aria-selected={activeTab === tab.key}
-              onClick={() => handleTabChange(tab.key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                activeTab === tab.key
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              {t(tab.labelKey)}
-            </button>
-          ))}
-        </div>
-
         {filtered.length === 0 ? (
           <p className="text-center text-muted-foreground py-4">
             {t("tradePattern.noTrades")}
           </p>
-        ) : activeTab === "market" ? (
+        ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -175,61 +132,6 @@ export function TradePatternCard({ tradeAnalysis, currency, rates }: TradePatter
                     <TableCell className="text-right font-num">{a.sellVolume > 0 ? formatNumber(a.sellVolume, 4) : "-"}</TableCell>
                   </TableRow>
                 ))}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("tradePattern.symbol")}</TableHead>
-                  <TableHead className="text-right">
-                    <SortButton field="net">{t("tradePattern.net")}</SortButton>
-                  </TableHead>
-                  <TableHead className="text-right">
-                    <SortButton field="buyTotalAmountUsd">{t("tradePattern.deposited")}</SortButton>
-                  </TableHead>
-                  <TableHead className="text-right">
-                    <SortButton field="sellTotalAmountUsd">{t("tradePattern.withdrawn")}</SortButton>
-                  </TableHead>
-                  <TableHead className="text-right">
-                    <SortButton field="totalIncomeUsd">{tInterpolate("tradePattern.incomeAmount", { currency })}</SortButton>
-                  </TableHead>
-                  <TableHead className="text-right">
-                    <SortButton field="totalBuys">{t("tradePattern.depositsCol")}</SortButton>
-                  </TableHead>
-                  <TableHead className="text-right">
-                    <SortButton field="totalSells">{t("tradePattern.withdrawals")}</SortButton>
-                  </TableHead>
-                  <TableHead className="text-right">
-                    <SortButton field="totalIncomes">{t("tradePattern.income")}</SortButton>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((a) => {
-                  const net = a.buyTotalAmountUsd - a.sellTotalAmountUsd;
-                  return (
-                    <TableRow key={a.symbol}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <AssetLogo symbol={a.symbol} assetType={a.assetType} className="h-6 w-6" />
-                          <span className="font-medium">{a.symbol}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className={`text-right font-medium font-num ${net >= 0 ? c.gainText : c.lossText}`}>
-                        {fc(net)}
-                      </TableCell>
-                      <TableCell className="text-right font-num">{fc(a.buyTotalAmountUsd)}</TableCell>
-                      <TableCell className="text-right font-num">{a.sellTotalAmountUsd > 0 ? fc(a.sellTotalAmountUsd) : "-"}</TableCell>
-                      <TableCell className="text-right font-num">{a.totalIncomeUsd > 0 ? fc(a.totalIncomeUsd) : "-"}</TableCell>
-                      <TableCell className="text-right font-num">{a.totalBuys}</TableCell>
-                      <TableCell className="text-right font-num">{a.totalSells > 0 ? a.totalSells : "-"}</TableCell>
-                      <TableCell className="text-right font-num">{a.totalIncomes > 0 ? a.totalIncomes : "-"}</TableCell>
-                    </TableRow>
-                  );
-                })}
               </TableBody>
             </Table>
           </div>

@@ -1,4 +1,4 @@
-import { Transaction, CurrentPrice } from "./schema";
+import { Transaction, CurrentPrice, Deposit } from "./schema";
 import { ExchangeRates, toUsd } from "./currency";
 
 export interface Holding {
@@ -17,17 +17,17 @@ export interface Holding {
   firstBuyDate: Date;
 }
 
-export interface FixedIncomeHolding {
+export interface DepositHolding {
+  id: number;
   symbol: string;
   name: string | null;
-  assetType: string;
-  subType: string | null;
   principal: number;
   interestRate: number;
-  totalIncome: number;
-  maturityDate: Date | null;
   currency: string;
-  firstDate: Date;
+  startDate: Date;
+  maturityDate: Date | null;
+  accruedInterest: number;
+  currentValue: number;
 }
 
 export interface PortfolioSummary {
@@ -45,11 +45,6 @@ export function calculateHoldings(
   currentPrices: CurrentPrice[],
   rates: ExchangeRates = { USD: 1 }
 ): Holding[] {
-  // Filter out deposit/bond — they go through calculateFixedIncomeHoldings
-  const marketTransactions = transactions.filter(
-    (t) => t.assetType !== "deposit" && t.assetType !== "bond"
-  );
-
   const priceMap = new Map<string, number>();
   currentPrices.forEach((p) => {
     priceMap.set(p.symbol, parseFloat(p.price));
@@ -70,7 +65,7 @@ export function calculateHoldings(
   >();
 
   // Group transactions by symbol, converting prices to USD
-  marketTransactions.forEach((t) => {
+  transactions.forEach((t) => {
     if (!holdingsMap.has(t.symbol)) {
       holdingsMap.set(t.symbol, {
         symbol: t.symbol,
@@ -206,134 +201,52 @@ export function calculateHoldings(
   return holdings.sort((a, b) => b.currentValue - a.currentValue);
 }
 
-export function calculateFixedIncomeHoldings(
-  transactions: Transaction[],
+export function calculateDepositHoldings(
+  deposits: Deposit[],
   rates: ExchangeRates = { USD: 1 }
-): FixedIncomeHolding[] {
-  const fixedTx = transactions.filter(
-    (t) => t.assetType === "deposit" || t.assetType === "bond"
-  );
+): DepositHolding[] {
+  const now = new Date();
 
-  const groupMap = new Map<
-    string,
-    {
-      symbol: string;
-      name: string | null;
-      assetType: string;
-      subType: string | null;
-      buys: { amountUsd: number; rate: number; maturity: Date | null; date: Date }[];
-      withdrawals: number;
-      incomeTotal: number;
-      currency: string;
-      firstDate: Date | null;
-    }
-  >();
+  return deposits.map((d) => {
+    const principal = toUsd(parseFloat(d.principal), d.currency || "USD", rates);
+    const interestRate = parseFloat(d.interestRate);
+    const startDate = new Date(d.startDate);
 
-  fixedTx.forEach((t) => {
-    if (!groupMap.has(t.symbol)) {
-      groupMap.set(t.symbol, {
-        symbol: t.symbol,
-        name: t.name,
-        assetType: t.assetType,
-        subType: t.subType,
-        buys: [],
-        withdrawals: 0,
-        incomeTotal: 0,
-        currency: t.currency || "USD",
-        firstDate: null,
-      });
-    }
+    // Calculate accrued interest: principal × rate% × days / 365
+    const daysSinceStart = Math.max(0, (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const accruedInterest = principal * (interestRate / 100) * (daysSinceStart / 365);
+    const currentValue = principal + accruedInterest;
 
-    const group = groupMap.get(t.symbol)!;
-    const txCurrency = t.currency || "USD";
-    const rawTotal = parseFloat(t.totalAmount);
-    const totalUsd = toUsd(rawTotal, txCurrency, rates);
-    const date = new Date(t.tradeDate);
-
-    if (t.tradeType === "buy") {
-      const rate = t.interestRate ? parseFloat(t.interestRate) : 0;
-      const maturity = t.maturityDate ? new Date(t.maturityDate) : null;
-      group.buys.push({ amountUsd: totalUsd, rate, maturity, date });
-      if (!group.firstDate || date < group.firstDate) {
-        group.firstDate = date;
-      }
-      // Use subType from this tx if available
-      if (t.subType) group.subType = t.subType;
-    } else if (t.tradeType === "sell") {
-      group.withdrawals += totalUsd;
-    } else if (t.tradeType === "income") {
-      group.incomeTotal += totalUsd;
-      if (!group.firstDate || date < group.firstDate) {
-        group.firstDate = date;
-      }
-    }
-  });
-
-  const holdings: FixedIncomeHolding[] = [];
-
-  groupMap.forEach((data) => {
-    const totalBuy = data.buys.reduce((sum, b) => sum + b.amountUsd, 0);
-    const principal = totalBuy - data.withdrawals;
-
-    if (principal <= 0 && data.incomeTotal <= 0) return;
-
-    // Weighted average interest rate (weighted by buy amount)
-    let weightedRate = 0;
-    if (totalBuy > 0) {
-      const weightedSum = data.buys.reduce(
-        (sum, b) => sum + b.rate * b.amountUsd,
-        0
-      );
-      weightedRate = weightedSum / totalBuy;
-    }
-
-    // Nearest future maturity date
-    const now = new Date();
-    const futureMaturities = data.buys
-      .filter((b) => b.maturity && b.maturity > now)
-      .map((b) => b.maturity!)
-      .sort((a, b) => a.getTime() - b.getTime());
-    const nearestMaturity = futureMaturities.length > 0 ? futureMaturities[0] : null;
-
-    // If no future maturity, find the most recent past maturity
-    const pastMaturities = data.buys
-      .filter((b) => b.maturity && b.maturity <= now)
-      .map((b) => b.maturity!)
-      .sort((a, b) => b.getTime() - a.getTime());
-    const maturityDate = nearestMaturity || (pastMaturities.length > 0 ? pastMaturities[0] : null);
-
-    holdings.push({
-      symbol: data.symbol,
-      name: data.name,
-      assetType: data.assetType,
-      subType: data.subType,
-      principal: Math.max(principal, 0),
-      interestRate: weightedRate,
-      totalIncome: data.incomeTotal,
-      maturityDate,
-      currency: data.currency,
-      firstDate: data.firstDate || new Date(),
-    });
-  });
-
-  return holdings.sort((a, b) => b.principal - a.principal);
+    return {
+      id: d.id,
+      symbol: d.symbol,
+      name: d.name,
+      principal,
+      interestRate,
+      currency: d.currency || "USD",
+      startDate,
+      maturityDate: d.maturityDate ? new Date(d.maturityDate) : null,
+      accruedInterest,
+      currentValue,
+    };
+  }).sort((a, b) => b.principal - a.principal);
 }
 
 export function calculatePortfolioSummary(
   holdings: Holding[],
-  fixedIncomeHoldings: FixedIncomeHolding[] = []
+  depositHoldings: DepositHolding[] = []
 ): PortfolioSummary {
-  const fiPrincipal = fixedIncomeHoldings.reduce((sum, h) => sum + h.principal, 0);
-  const fiIncome = fixedIncomeHoldings.reduce((sum, h) => sum + h.totalIncome, 0);
+  const depositPrincipal = depositHoldings.reduce((sum, h) => sum + h.principal, 0);
+  const depositInterest = depositHoldings.reduce((sum, h) => sum + h.accruedInterest, 0);
 
-  const totalInvested = holdings.reduce((sum, h) => sum + h.totalCost, 0) + fiPrincipal;
-  const totalCurrentValue = holdings.reduce((sum, h) => sum + h.currentValue, 0) + fiPrincipal;
+  const totalInvested = holdings.reduce((sum, h) => sum + h.totalCost, 0) + depositPrincipal;
+  const totalCurrentValue = holdings.reduce((sum, h) => sum + h.currentValue, 0) + depositPrincipal + depositInterest;
   const totalUnrealizedPnL = holdings.reduce(
     (sum, h) => sum + h.unrealizedPnL,
     0
   );
   const totalRealizedPnL = holdings.reduce((sum, h) => sum + h.realizedPnL, 0);
-  const totalIncome = holdings.reduce((sum, h) => sum + h.totalIncome, 0) + fiIncome;
+  const totalIncome = holdings.reduce((sum, h) => sum + h.totalIncome, 0) + depositInterest;
   const totalPnL = totalUnrealizedPnL + totalRealizedPnL + totalIncome;
   const totalPnLPercent =
     totalInvested > 0 ? (totalUnrealizedPnL / totalInvested) * 100 : 0;
@@ -351,11 +264,11 @@ export function calculatePortfolioSummary(
 
 export function calculateAllocationData(
   holdings: Holding[],
-  fixedIncomeHoldings: FixedIncomeHolding[] = []
+  depositHoldings: DepositHolding[] = []
 ) {
   const marketValue = holdings.reduce((sum, h) => sum + h.currentValue, 0);
-  const fiValue = fixedIncomeHoldings.reduce((sum, h) => sum + h.principal, 0);
-  const totalValue = marketValue + fiValue;
+  const depositValue = depositHoldings.reduce((sum, h) => sum + h.currentValue, 0);
+  const totalValue = marketValue + depositValue;
 
   const marketItems = holdings.map((h) => ({
     name: h.symbol,
@@ -363,13 +276,13 @@ export function calculateAllocationData(
     percentage: totalValue > 0 ? (h.currentValue / totalValue) * 100 : 0,
   }));
 
-  const fiItems = fixedIncomeHoldings.map((h) => ({
+  const depositItems = depositHoldings.map((h) => ({
     name: h.symbol,
-    value: h.principal,
-    percentage: totalValue > 0 ? (h.principal / totalValue) * 100 : 0,
+    value: h.currentValue,
+    percentage: totalValue > 0 ? (h.currentValue / totalValue) * 100 : 0,
   }));
 
-  return [...marketItems, ...fiItems];
+  return [...marketItems, ...depositItems];
 }
 
 export interface TradeAnalysis {

@@ -12,9 +12,8 @@ import {
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
-export const ASSET_TYPES = ["crypto", "stock", "deposit", "bond"] as const;
+export const ASSET_TYPES = ["crypto", "stock"] as const;
 export const TRADE_TYPES = ["buy", "sell", "income"] as const;
-export const SUB_TYPES = ["fixed", "demand"] as const;
 
 // ── Auth tables ──────────────────────────────────────────────
 
@@ -71,6 +70,20 @@ export const transactions = pgTable("transactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const deposits = pgTable("deposits", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  symbol: varchar("symbol", { length: 20 }).notNull(),
+  name: varchar("name", { length: 100 }),
+  principal: decimal("principal", { precision: 18, scale: 2 }).notNull(),
+  interestRate: decimal("interest_rate", { precision: 8, scale: 4 }).notNull(),
+  currency: varchar("currency", { length: 10 }).default("USD").notNull(),
+  startDate: timestamp("start_date").notNull(),
+  maturityDate: timestamp("maturity_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const currentPrices = pgTable("current_prices", {
   id: serial("id").primaryKey(),
   symbol: varchar("symbol", { length: 20 }).notNull().unique(),
@@ -109,6 +122,8 @@ export const priceHistory = pgTable(
 
 export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;
+export type Deposit = typeof deposits.$inferSelect;
+export type NewDeposit = typeof deposits.$inferInsert;
 export type CurrentPrice = typeof currentPrices.$inferSelect;
 export type NewCurrentPrice = typeof currentPrices.$inferInsert;
 export type AppSetting = typeof appSettings.$inferSelect;
