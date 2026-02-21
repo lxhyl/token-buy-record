@@ -83,7 +83,7 @@ export function DepositTable({
                 {t("deposit.title")}
               </CardTitle>
             </div>
-            <Link href="/deposits/new">
+            <Link href="/transactions/new?type=deposit">
               <Button size="sm" className="md:h-10 md:px-4">
                 <Plus className="h-4 w-4 mr-1 md:mr-2" />
                 <span className="hidden sm:inline">{t("deposit.addDeposit")}</span>
@@ -104,7 +104,7 @@ export function DepositTable({
               <p className="text-sm text-muted-foreground mt-1 mb-4">
                 {t("deposit.emptyHint")}
               </p>
-              <Link href="/deposits/new">
+              <Link href="/transactions/new?type=deposit">
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
                   {t("deposit.addDeposit")}

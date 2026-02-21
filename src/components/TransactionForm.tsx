@@ -8,16 +8,19 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createTransaction, updateTransaction } from "@/actions/transactions";
-import { Transaction } from "@/lib/schema";
+import { createDeposit, updateDeposit } from "@/actions/deposits";
+import { Transaction, Deposit } from "@/lib/schema";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
-import { Bitcoin, TrendingUp, DollarSign, Coins, X } from "lucide-react";
+import { Bitcoin, TrendingUp, PiggyBank, DollarSign, Coins, X } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/components/I18nProvider";
 import { SymbolAutocomplete } from "@/components/SymbolAutocomplete";
 
 interface TransactionFormProps {
   transaction?: Transaction;
+  deposit?: Deposit;
   mode?: "create" | "edit";
+  initialAssetType?: string;
   currency: SupportedCurrency;
   rates: ExchangeRates;
 }
@@ -33,6 +36,7 @@ function exchangeToCurrency(exchange: string): SupportedCurrency | null {
 const ASSET_TYPES = [
   { value: "crypto", icon: Bitcoin, color: "blue" },
   { value: "stock", icon: TrendingUp, color: "indigo" },
+  { value: "deposit", icon: PiggyBank, color: "green" },
 ] as const;
 
 const ASSET_COLOR_MAP: Record<string, { iconBg: string; selectedBorder: string; selectedBg: string; hoverBorder: string }> = {
@@ -48,11 +52,19 @@ const ASSET_COLOR_MAP: Record<string, { iconBg: string; selectedBorder: string; 
     selectedBg: "bg-indigo-50/50 dark:bg-indigo-950/30",
     hoverBorder: "hover:border-indigo-300",
   },
+  green: {
+    iconBg: "bg-gradient-to-br from-green-500 to-emerald-500",
+    selectedBorder: "border-green-500",
+    selectedBg: "bg-green-50/50 dark:bg-green-950/30",
+    hoverBorder: "hover:border-green-300",
+  },
 };
 
 export function TransactionForm({
   transaction,
+  deposit,
   mode = "create",
+  initialAssetType: initialAssetTypeProp,
   currency,
   rates,
 }: TransactionFormProps) {
@@ -60,15 +72,19 @@ export function TransactionForm({
   const { toast } = useToast();
   const { t } = useI18n();
   const [isPending, startTransition] = useTransition();
-  const [assetType, setAssetType] = useState(transaction?.assetType || "crypto");
+
+  const initialAssetType = deposit ? "deposit" : (initialAssetTypeProp || transaction?.assetType || "crypto");
+  const [assetType, setAssetType] = useState(initialAssetType);
+  const isDeposit = assetType === "deposit";
+
   const [tradeType, setTradeType] = useState(transaction?.tradeType || "buy");
   const [incomeMode, setIncomeMode] = useState<"cash" | "asset">(
     transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
       ? "cash"
       : "asset"
   );
-  const [autoName, setAutoName] = useState(transaction?.name || "");
-  const [liveSymbol, setLiveSymbol] = useState(transaction?.symbol || "");
+  const [autoName, setAutoName] = useState(transaction?.name || deposit?.name || "");
+  const [liveSymbol, setLiveSymbol] = useState(transaction?.symbol || deposit?.symbol || "");
   const [liveQuantity, setLiveQuantity] = useState(transaction?.quantity || "");
   const [livePrice, setLivePrice] = useState(transaction?.price || "");
   const [liveAmount, setLiveAmount] = useState(
@@ -76,7 +92,11 @@ export function TransactionForm({
       ? transaction?.totalAmount || ""
       : ""
   );
-  const [liveCurrency, setLiveCurrency] = useState(transaction?.currency || currency);
+  const [liveCurrency, setLiveCurrency] = useState(transaction?.currency || deposit?.currency || currency);
+
+  // Deposit-specific state
+  const [livePrincipal, setLivePrincipal] = useState(deposit?.principal || "");
+  const [liveRate, setLiveRate] = useState(deposit?.interestRate || "");
 
   const [marketPrice, setMarketPrice] = useState<number | null>(null);
   const [marketPriceCurrency, setMarketPriceCurrency] = useState<string>("USD");
@@ -128,62 +148,86 @@ export function TransactionForm({
   const handleSubmit = async (formData: FormData) => {
     startTransition(async () => {
       let result: { error: string } | void;
-      if (mode === "edit" && transaction) {
-        result = await updateTransaction(transaction.id, formData);
+
+      if (isDeposit) {
+        // Deposit flow
+        if (mode === "edit" && deposit) {
+          result = await updateDeposit(deposit.id, formData);
+        } else {
+          result = await createDeposit(formData);
+        }
+        if (result && "error" in result) {
+          toast(result.error, "error");
+          return;
+        }
+        toast(
+          mode === "edit" ? t("deposit.updated") : t("deposit.created"),
+          "success"
+        );
+        router.push("/dashboard");
       } else {
-        result = await createTransaction(formData);
+        // Transaction flow
+        if (mode === "edit" && transaction) {
+          result = await updateTransaction(transaction.id, formData);
+        } else {
+          result = await createTransaction(formData);
+        }
+        if (result && "error" in result) {
+          toast(result.error, "error");
+          return;
+        }
+        toast(
+          mode === "edit" ? t("form.transactionUpdated") : t("form.transactionCreated"),
+          "success"
+        );
+        router.push("/transactions");
       }
-      if (result && "error" in result) {
-        toast(result.error, "error");
-        return;
-      }
-      toast(
-        mode === "edit" ? t("form.transactionUpdated") : t("form.transactionCreated"),
-        "success"
-      );
-      router.push("/transactions");
     });
   };
 
-  const formatDateForInput = (date: Date | null) => {
+  const formatDateForInput = (date: Date | null | undefined) => {
     if (!date) return "";
     return new Date(date).toISOString().split("T")[0];
   };
 
-  const defaultCurrency = transaction?.currency || currency;
+  const defaultCurrency = transaction?.currency || deposit?.currency || currency;
 
-  const symbolPlaceholder = {
+  const symbolPlaceholder: Record<string, string> = {
     crypto: t("form.symbolPlaceholderCrypto"),
     stock: t("form.symbolPlaceholderStock"),
-  }[assetType] || t("form.symbol");
+    deposit: t("form.symbolPlaceholderDeposit"),
+  };
 
-  const namePlaceholder = {
+  const namePlaceholder: Record<string, string> = {
     crypto: t("form.namePlaceholderCrypto"),
     stock: t("form.namePlaceholderStock"),
-  }[assetType] || t("form.nameOptional");
+    deposit: t("form.namePlaceholderDeposit"),
+  };
 
   const assetDescKey: Record<string, string> = {
     crypto: "form.cryptoDesc",
     stock: "form.stockDesc",
+    deposit: "form.depositDesc",
   };
 
   const assetLabelKey: Record<string, string> = {
     crypto: "form.crypto",
     stock: "form.stock",
+    deposit: "form.depositType",
   };
 
   return (
     <form action={handleSubmit} className="space-y-6 overflow-hidden">
       {/* Hidden fields for asset/trade type */}
       <input type="hidden" name="assetType" value={assetType} />
-      <input type="hidden" name="tradeType" value={tradeType} />
+      {!isDeposit && <input type="hidden" name="tradeType" value={tradeType} />}
 
       {/* Section 1: Asset Type Cards */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
           {t("form.assetType")}
         </h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {ASSET_TYPES.map(({ value, icon: Icon, color }) => {
             const colors = ASSET_COLOR_MAP[color];
             const selected = assetType === value;
@@ -213,42 +257,44 @@ export function TransactionForm({
         </div>
       </div>
 
-      {/* Section 2: Trade Type Pills */}
-      <div className="animate-section-reveal space-y-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          {t("form.tradeType")}
-        </h3>
-        <div className="flex gap-2">
-          {(["buy", "sell", "income"] as const).map((type) => {
-            const selected = tradeType === type;
-            const label = type === "buy"
-              ? t("form.buy")
-              : type === "sell"
-              ? t("form.sell")
-              : t("form.income");
-            const selectedClass = type === "buy"
-              ? "bg-emerald-500 text-white"
-              : type === "sell"
-              ? "bg-red-500 text-white"
-              : "bg-amber-500 text-white";
-            return (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setTradeType(type)}
-                className={`h-10 px-5 rounded-full font-medium text-sm transition-all duration-200 ${
-                  selected ? selectedClass : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
+      {/* Section 2: Trade Type Pills (not shown for deposits) */}
+      {!isDeposit && (
+        <div className="animate-section-reveal space-y-3">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            {t("form.tradeType")}
+          </h3>
+          <div className="flex gap-2">
+            {(["buy", "sell", "income"] as const).map((type) => {
+              const selected = tradeType === type;
+              const label = type === "buy"
+                ? t("form.buy")
+                : type === "sell"
+                ? t("form.sell")
+                : t("form.income");
+              const selectedClass = type === "buy"
+                ? "bg-emerald-500 text-white"
+                : type === "sell"
+                ? "bg-red-500 text-white"
+                : "bg-amber-500 text-white";
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setTradeType(type)}
+                  className={`h-10 px-5 rounded-full font-medium text-sm transition-all duration-200 ${
+                    selected ? selectedClass : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Income Mode Toggle */}
-      {isIncome && (
+      {!isDeposit && isIncome && (
         <div className="animate-section-reveal space-y-3">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             {t("form.incomeTypeSection")}
@@ -296,13 +342,17 @@ export function TransactionForm({
         </div>
       )}
 
-      {/* Section 3: Form Fields with Animation */}
+      {/* Section 3: Form Fields */}
       <div
         key={`${assetType}-${tradeType}-${incomeMode}`}
         className="animate-section-reveal space-y-4"
       >
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          {isIncome ? t("form.incomeDetails") : t("form.tradeDetails")}
+          {isDeposit
+            ? t("form.depositDetails")
+            : isIncome
+            ? t("form.incomeDetails")
+            : t("form.tradeDetails")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 [&>div]:min-w-0">
           {/* Symbol */}
@@ -311,7 +361,7 @@ export function TransactionForm({
             {assetType === "stock" ? (
               <SymbolAutocomplete
                 defaultValue={transaction?.symbol || ""}
-                placeholder={symbolPlaceholder}
+                placeholder={symbolPlaceholder[assetType]}
                 onSelect={(symbol, name, exchange) => {
                   setLiveSymbol(symbol);
                   if (name) setAutoName(name);
@@ -325,8 +375,8 @@ export function TransactionForm({
               <Input
                 id="symbol"
                 name="symbol"
-                placeholder={symbolPlaceholder}
-                defaultValue={transaction?.symbol || ""}
+                placeholder={symbolPlaceholder[assetType]}
+                defaultValue={transaction?.symbol || deposit?.symbol || ""}
                 onChange={(e) => setLiveSymbol(e.target.value)}
                 required
               />
@@ -339,148 +389,229 @@ export function TransactionForm({
             <Input
               id="name"
               name="name"
-              placeholder={namePlaceholder}
+              placeholder={namePlaceholder[assetType]}
               value={autoName}
               onChange={(e) => setAutoName(e.target.value)}
             />
           </div>
 
-          {/* Conditional trade detail fields */}
-          {isCashIncome ? (
+          {/* ── Deposit-specific fields ── */}
+          {isDeposit ? (
             <>
-              <input type="hidden" name="quantity" value="0" />
-              <input type="hidden" name="price" value="0" />
+              {/* Principal */}
               <div className="space-y-2">
-                <Label htmlFor="incomeAmount">{t("form.incomeAmount")}</Label>
+                <Label htmlFor="principal">{t("deposit.principal")}</Label>
                 <Input
-                  id="incomeAmount"
-                  name="incomeAmount"
+                  id="principal"
+                  name="principal"
                   type="number"
                   step="0.01"
-                  placeholder="0.00"
-                  defaultValue={
-                    transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
-                      ? transaction?.totalAmount || ""
-                      : ""
-                  }
-                  onChange={(e) => setLiveAmount(e.target.value)}
+                  placeholder="10000.00"
+                  defaultValue={deposit?.principal || ""}
+                  onChange={(e) => setLivePrincipal(e.target.value)}
                   required
+                />
+              </div>
+
+              {/* Interest Rate */}
+              <div className="space-y-2">
+                <Label htmlFor="interestRate">{t("deposit.interestRate")}</Label>
+                <Input
+                  id="interestRate"
+                  name="interestRate"
+                  type="number"
+                  step="0.0001"
+                  placeholder="3.5000"
+                  defaultValue={deposit?.interestRate || ""}
+                  onChange={(e) => setLiveRate(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Currency */}
+              <div className="space-y-2">
+                <Label htmlFor="currency">{t("form.currency")}</Label>
+                <Select
+                  id="currency"
+                  name="currency"
+                  value={liveCurrency}
+                  onChange={(e) => setLiveCurrency(e.target.value)}
+                  className="h-11"
+                >
+                  <option value="USD">USD</option>
+                  <option value="CNY">CNY</option>
+                  <option value="HKD">HKD</option>
+                </Select>
+              </div>
+
+              {/* Start Date */}
+              <div className="space-y-2">
+                <Label htmlFor="startDate">{t("deposit.startDate")}</Label>
+                <Input
+                  id="startDate"
+                  name="startDate"
+                  type="date"
+                  defaultValue={
+                    formatDateForInput(deposit?.startDate) ||
+                    new Date().toISOString().split("T")[0]
+                  }
+                  required
+                  className="h-11 min-w-0"
+                />
+              </div>
+
+              {/* Maturity Date */}
+              <div className="space-y-2">
+                <Label htmlFor="maturityDate">{t("deposit.maturityDate")}</Label>
+                <Input
+                  id="maturityDate"
+                  name="maturityDate"
+                  type="date"
+                  defaultValue={formatDateForInput(deposit?.maturityDate)}
+                  className="h-11 min-w-0"
                 />
               </div>
             </>
           ) : (
             <>
+              {/* ── Transaction-specific fields ── */}
+              {isCashIncome ? (
+                <>
+                  <input type="hidden" name="quantity" value="0" />
+                  <input type="hidden" name="price" value="0" />
+                  <div className="space-y-2">
+                    <Label htmlFor="incomeAmount">{t("form.incomeAmount")}</Label>
+                    <Input
+                      id="incomeAmount"
+                      name="incomeAmount"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      defaultValue={
+                        transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
+                          ? transaction?.totalAmount || ""
+                          : ""
+                      }
+                      onChange={(e) => setLiveAmount(e.target.value)}
+                      required
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex items-center h-5">
+                      <Label htmlFor="quantity">
+                        {isIncome ? t("form.quantityReceived") : t("form.quantity")}
+                      </Label>
+                    </div>
+                    <Input
+                      id="quantity"
+                      name="quantity"
+                      type="number"
+                      step="0.00000001"
+                      placeholder="0.00"
+                      defaultValue={transaction?.quantity || ""}
+                      onChange={(e) => setLiveQuantity(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between h-5">
+                      <Label htmlFor="price">
+                        {isIncome ? t("form.marketPriceAtReceipt") : t("form.price")}
+                      </Label>
+                      {liveSymbol.trim() && (
+                        priceLoading ? (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <span className="inline-block h-3 w-3 animate-spin rounded-full border-[1.5px] border-muted-foreground border-t-transparent" />
+                          </span>
+                        ) : marketPrice !== null ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLivePrice(String(marketPrice));
+                              const el = document.getElementById("price") as HTMLInputElement;
+                              if (el) el.value = String(marketPrice);
+                            }}
+                            className="text-xs font-medium text-primary/70 hover:text-primary transition-colors cursor-pointer"
+                            title={t("form.useMarketPrice")}
+                          >
+                            {t("form.currentPrice")}{" "}
+                            <span className="font-mono tabular-nums">
+                              {marketPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
+                            </span>
+                            {" "}{marketPriceCurrency}
+                          </button>
+                        ) : null
+                      )}
+                    </div>
+                    <Input
+                      id="price"
+                      name="price"
+                      type="number"
+                      step="0.00000001"
+                      placeholder="0.00"
+                      defaultValue={transaction?.price || ""}
+                      onChange={(e) => setLivePrice(e.target.value)}
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Currency */}
               <div className="space-y-2">
-                <div className="flex items-center h-5">
-                  <Label htmlFor="quantity">
-                    {isIncome ? t("form.quantityReceived") : t("form.quantity")}
-                  </Label>
-                </div>
-                <Input
-                  id="quantity"
-                  name="quantity"
-                  type="number"
-                  step="0.00000001"
-                  placeholder="0.00"
-                  defaultValue={transaction?.quantity || ""}
-                  onChange={(e) => setLiveQuantity(e.target.value)}
-                  required
-                />
+                <Label htmlFor="currency">{t("form.currency")}</Label>
+                <Select
+                  id="currency"
+                  name="currency"
+                  value={liveCurrency}
+                  onChange={(e) => setLiveCurrency(e.target.value)}
+                  className="h-11"
+                >
+                  <option value="USD">USD</option>
+                  <option value="CNY">CNY</option>
+                  <option value="HKD">HKD</option>
+                </Select>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between h-5">
-                  <Label htmlFor="price">
-                    {isIncome ? t("form.marketPriceAtReceipt") : t("form.price")}
-                  </Label>
-                  {liveSymbol.trim() && (
-                    priceLoading ? (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <span className="inline-block h-3 w-3 animate-spin rounded-full border-[1.5px] border-muted-foreground border-t-transparent" />
-                      </span>
-                    ) : marketPrice !== null ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLivePrice(String(marketPrice));
-                          const el = document.getElementById("price") as HTMLInputElement;
-                          if (el) el.value = String(marketPrice);
-                        }}
-                        className="text-xs font-medium text-primary/70 hover:text-primary transition-colors cursor-pointer"
-                        title={t("form.useMarketPrice")}
-                      >
-                        {t("form.currentPrice")}{" "}
-                        <span className="font-mono tabular-nums">
-                          {marketPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
-                        </span>
-                        {" "}{marketPriceCurrency}
-                      </button>
-                    ) : null
-                  )}
+              {/* Fee */}
+              {!isCashIncome && (
+                <div className="space-y-2">
+                  <Label htmlFor="fee">{t("form.fee")}</Label>
+                  <Input
+                    id="fee"
+                    name="fee"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    defaultValue={transaction?.fee || "0"}
+                  />
                 </div>
+              )}
+              {isCashIncome && <input type="hidden" name="fee" value="0" />}
+
+              {/* Trade Date */}
+              <div className="space-y-2">
+                <Label htmlFor="tradeDate">
+                  {isIncome ? t("form.incomeDate") : t("form.tradeDate")}
+                </Label>
                 <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  step="0.00000001"
-                  placeholder="0.00"
-                  defaultValue={transaction?.price || ""}
-                  onChange={(e) => setLivePrice(e.target.value)}
+                  id="tradeDate"
+                  name="tradeDate"
+                  type="date"
+                  defaultValue={
+                    formatDateForInput(transaction?.tradeDate) ||
+                    new Date().toISOString().split("T")[0]
+                  }
                   required
+                  className="h-11 min-w-0"
                 />
               </div>
             </>
           )}
-
-          {/* Currency */}
-          <div className="space-y-2">
-            <Label htmlFor="currency">{t("form.currency")}</Label>
-            <Select
-              id="currency"
-              name="currency"
-              value={liveCurrency}
-              onChange={(e) => setLiveCurrency(e.target.value)}
-              className="h-11"
-            >
-              <option value="USD">USD</option>
-              <option value="CNY">CNY</option>
-              <option value="HKD">HKD</option>
-            </Select>
-          </div>
-
-          {/* Fee */}
-          {!isCashIncome && (
-            <div className="space-y-2">
-              <Label htmlFor="fee">{t("form.fee")}</Label>
-              <Input
-                id="fee"
-                name="fee"
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                defaultValue={transaction?.fee || "0"}
-              />
-            </div>
-          )}
-          {isCashIncome && <input type="hidden" name="fee" value="0" />}
-
-          {/* Trade Date */}
-          <div className="space-y-2">
-            <Label htmlFor="tradeDate">
-              {isIncome ? t("form.incomeDate") : t("form.tradeDate")}
-            </Label>
-            <Input
-              id="tradeDate"
-              name="tradeDate"
-              type="date"
-              defaultValue={
-                formatDateForInput(transaction?.tradeDate || null) ||
-                new Date().toISOString().split("T")[0]
-              }
-              required
-              className="h-11 min-w-0"
-            />
-          </div>
         </div>
       </div>
 
@@ -490,8 +621,8 @@ export function TransactionForm({
         <Textarea
           id="notes"
           name="notes"
-          placeholder={t("form.notesPlaceholder")}
-          defaultValue={transaction?.notes || ""}
+          placeholder={isDeposit ? t("deposit.notesPlaceholder") : t("form.notesPlaceholder")}
+          defaultValue={transaction?.notes || deposit?.notes || ""}
           className="min-h-[72px] text-sm bg-muted/20 border-dashed"
         />
       </div>
@@ -499,15 +630,39 @@ export function TransactionForm({
       {/* Summary & Actions */}
       <div className="rounded-xl border bg-muted/30 backdrop-blur-sm p-4 space-y-3">
         {(() => {
+          if (isDeposit) {
+            const principal = parseFloat(String(livePrincipal));
+            const rate = parseFloat(String(liveRate));
+            const sym = liveSymbol.toUpperCase();
+            const cur = liveCurrency || defaultCurrency;
+            if (!isNaN(principal) && principal > 0 && !isNaN(rate) && rate > 0 && sym) {
+              const dailyInterest = (principal * rate / 100 / 365);
+              const fmtPrincipal = principal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              const fmtDaily = dailyInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+              return (
+                <p className="text-sm font-medium text-foreground">
+                  {sym} — {t("deposit.principal")}: <span className="font-num font-bold">{fmtPrincipal}</span> {cur}
+                  {" @ "}
+                  <span className="font-num">{rate.toFixed(2)}%</span>
+                  {" = "}
+                  <span className="font-num">{fmtDaily}</span> {cur}/{t("deposit.perDay")}
+                </p>
+              );
+            }
+            return (
+              <p className="text-sm text-muted-foreground">
+                {t("form.summaryPlaceholder")}
+              </p>
+            );
+          }
+
           const qty = parseFloat(liveQuantity);
           const prc = parseFloat(livePrice);
           const amt = parseFloat(liveAmount);
           const sym = liveSymbol.toUpperCase();
           const cur = liveCurrency || defaultCurrency;
 
-          // For qty x price modes (market buy/sell, asset income)
           const hasQtyPrice = !isNaN(qty) && qty > 0 && !isNaN(prc) && prc > 0 && sym;
-          // For amount-based modes (cash income)
           const hasAmount = !isNaN(amt) && amt > 0 && sym;
 
           const tradeLabel = tradeType === "buy"
@@ -550,7 +705,9 @@ export function TransactionForm({
             type="submit"
             disabled={isPending}
             className={`flex-1 md:flex-none h-11 px-6 rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02] ${
-              tradeType === "buy"
+              isDeposit
+                ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+                : tradeType === "buy"
                 ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
                 : tradeType === "sell"
                 ? "bg-gradient-to-r from-red-500 to-rose-500 text-white"
@@ -559,6 +716,8 @@ export function TransactionForm({
           >
             {isPending
               ? t("form.saving")
+              : isDeposit
+              ? (mode === "edit" ? t("deposit.update") : t("deposit.confirm"))
               : isIncome
               ? t("form.confirmIncome")
               : t("form.confirmTransaction")}
