@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { fetchCryptoPrices } from "@/lib/price-service";
+import { detectAssetType, isKnownCrypto } from "@/lib/asset-detection";
 import YahooFinance from "yahoo-finance2";
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
@@ -10,7 +11,10 @@ const API_TIMEOUT_MS = 8000;
 
 /**
  * GET /api/price-lookup?symbol=BTC&type=crypto
+ * GET /api/price-lookup?symbol=BTC  (auto-detect mode)
+ *
  * Returns price in the asset's native currency (crypto→USD, stock→native).
+ * When type is omitted, auto-detects and returns detectedType.
  */
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -21,18 +25,21 @@ export async function GET(request: NextRequest) {
   const symbol = request.nextUrl.searchParams.get("symbol")?.trim().toUpperCase();
   const type = request.nextUrl.searchParams.get("type")?.trim();
 
-  if (!symbol || !type) {
-    return NextResponse.json({ error: "Missing symbol or type" }, { status: 400 });
+  if (!symbol) {
+    return NextResponse.json({ error: "Missing symbol" }, { status: 400 });
   }
 
   try {
-    if (type === "crypto") {
+    // Determine asset type: use provided type or auto-detect
+    const resolvedType = type || await detectAssetType(symbol);
+
+    if (resolvedType === "crypto") {
       const prices = await fetchCryptoPrices([symbol]);
       const price = prices.get(symbol) ?? null;
-      return NextResponse.json({ symbol, price, currency: "USD" });
+      return NextResponse.json({ symbol, price, currency: "USD", detectedType: "crypto" });
     }
 
-    if (type === "stock") {
+    if (resolvedType === "stock") {
       const quote = await Promise.race([
         yf.quote(symbol),
         new Promise<never>((_, reject) =>
@@ -44,14 +51,22 @@ export async function GET(request: NextRequest) {
           symbol,
           price: quote.regularMarketPrice,
           currency: quote.currency || "USD",
+          detectedType: "stock",
         });
       }
-      return NextResponse.json({ symbol, price: null, currency: null });
+      return NextResponse.json({ symbol, price: null, currency: null, detectedType: "stock" });
     }
 
-    return NextResponse.json({ symbol, price: null, currency: null });
+    // unknown — try a quick crypto check as last resort
+    if (!type && isKnownCrypto(symbol)) {
+      const prices = await fetchCryptoPrices([symbol]);
+      const price = prices.get(symbol) ?? null;
+      return NextResponse.json({ symbol, price, currency: "USD", detectedType: "crypto" });
+    }
+
+    return NextResponse.json({ symbol, price: null, currency: null, detectedType: "unknown" });
   } catch (error) {
     console.error("Price lookup error:", error);
-    return NextResponse.json({ symbol, price: null, currency: null });
+    return NextResponse.json({ symbol, price: null, currency: null, detectedType: type || "unknown" });
   }
 }

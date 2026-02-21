@@ -12,7 +12,7 @@ export const transactionSchema = z
     name: z.string().max(100).optional().default(""),
     assetType: z.enum(ASSET_TYPES, {
       error: "Invalid asset type",
-    }),
+    }).optional(),
     tradeType: z.enum(TRADE_TYPES, {
       error: "Invalid trade type",
     }),

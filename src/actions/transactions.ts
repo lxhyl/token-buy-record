@@ -8,6 +8,7 @@ import { fetchAllPrices } from "@/lib/price-service";
 import { getUserId } from "@/lib/auth-utils";
 import { normalizeStockSymbol } from "@/lib/stock-utils";
 import { parseTransactionFormData } from "@/lib/validation";
+import { detectAssetType } from "@/lib/asset-detection";
 
 export async function createTransaction(formData: FormData): Promise<{ error: string } | void> {
   const userId = await getUserId();
@@ -20,7 +21,7 @@ export async function createTransaction(formData: FormData): Promise<{ error: st
 
   const symbol = String(v.symbol);
   const name = v.name || "";
-  const assetType = v.assetType;
+  const assetType: string = v.assetType || await detectAssetType(symbol).then(t => t === "unknown" ? "stock" : t);
   const tradeType = v.tradeType;
   const quantity = String(v.quantity);
   const price = String(v.price);
@@ -88,7 +89,7 @@ export async function updateTransaction(id: number, formData: FormData): Promise
 
   const symbol = String(v.symbol);
   const name = v.name || "";
-  const assetType = v.assetType;
+  const assetType: string = v.assetType || await detectAssetType(symbol).then(t => t === "unknown" ? "stock" : t);
   const tradeType = v.tradeType;
   const quantity = String(v.quantity);
   const price = String(v.price);

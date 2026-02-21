@@ -14,12 +14,14 @@ interface SymbolAutocompleteProps {
   defaultValue?: string;
   placeholder?: string;
   onSelect?: (symbol: string, name: string, exchange: string) => void;
+  onChange?: (value: string) => void;
 }
 
 export function SymbolAutocomplete({
   defaultValue = "",
   placeholder,
   onSelect,
+  onChange: onChangeProp,
 }: SymbolAutocompleteProps) {
   const [value, setValue] = useState(defaultValue);
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -56,6 +58,7 @@ export function SymbolAutocomplete({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setValue(val);
+    onChangeProp?.(val);
 
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => fetchResults(val), 300);

@@ -11,7 +11,7 @@ import { createTransaction, updateTransaction } from "@/actions/transactions";
 import { createDeposit, updateDeposit } from "@/actions/deposits";
 import { Transaction, Deposit } from "@/lib/schema";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
-import { Bitcoin, TrendingUp, PiggyBank, DollarSign, Coins, X } from "lucide-react";
+import { TrendingUp, PiggyBank, DollarSign, Coins, X } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/components/I18nProvider";
 import { SymbolAutocomplete } from "@/components/SymbolAutocomplete";
@@ -34,8 +34,7 @@ function exchangeToCurrency(exchange: string): SupportedCurrency | null {
 }
 
 const ASSET_TYPES = [
-  { value: "crypto", icon: Bitcoin, color: "blue" },
-  { value: "stock", icon: TrendingUp, color: "indigo" },
+  { value: "investment", icon: TrendingUp, color: "blue" },
   { value: "deposit", icon: PiggyBank, color: "green" },
 ] as const;
 
@@ -46,18 +45,22 @@ const ASSET_COLOR_MAP: Record<string, { iconBg: string; selectedBorder: string; 
     selectedBg: "bg-blue-50/50 dark:bg-blue-950/30",
     hoverBorder: "hover:border-blue-300",
   },
-  indigo: {
-    iconBg: "bg-gradient-to-br from-indigo-500 to-indigo-600",
-    selectedBorder: "border-indigo-500",
-    selectedBg: "bg-indigo-50/50 dark:bg-indigo-950/30",
-    hoverBorder: "hover:border-indigo-300",
-  },
   green: {
     iconBg: "bg-gradient-to-br from-green-500 to-emerald-500",
     selectedBorder: "border-green-500",
     selectedBg: "bg-green-50/50 dark:bg-green-950/30",
     hoverBorder: "hover:border-green-300",
   },
+};
+
+const assetLabelKey: Record<string, string> = {
+  investment: "form.investment",
+  deposit: "form.depositType",
+};
+
+const assetDescKey: Record<string, string> = {
+  investment: "form.investmentDesc",
+  deposit: "form.depositDesc",
 };
 
 export function TransactionForm({
@@ -73,9 +76,21 @@ export function TransactionForm({
   const { t } = useI18n();
   const [isPending, startTransition] = useTransition();
 
-  const initialAssetType = deposit ? "deposit" : (initialAssetTypeProp || transaction?.assetType || "crypto");
+  // Map old crypto/stock to "investment" for the UI
+  const mapToUiType = (type: string | undefined) => {
+    if (type === "crypto" || type === "stock") return "investment";
+    return type || "investment";
+  };
+
+  const initialAssetType = deposit ? "deposit" : mapToUiType(initialAssetTypeProp || transaction?.assetType);
   const [assetType, setAssetType] = useState(initialAssetType);
   const isDeposit = assetType === "deposit";
+  const isInvestment = assetType === "investment";
+
+  // Track the detected type from API (crypto/stock) for the hidden field
+  const [detectedType, setDetectedType] = useState<"crypto" | "stock" | "unknown">(
+    (transaction?.assetType as "crypto" | "stock") || "unknown"
+  );
 
   const [tradeType, setTradeType] = useState(transaction?.tradeType || "buy");
   const [incomeMode, setIncomeMode] = useState<"cash" | "asset">(
@@ -103,8 +118,8 @@ export function TransactionForm({
   const [priceLoading, setPriceLoading] = useState(false);
   const priceAbortRef = useRef<AbortController | null>(null);
 
-  const fetchMarketPrice = useCallback(async (symbol: string, type: string) => {
-    if (!symbol || (type !== "crypto" && type !== "stock")) {
+  const fetchMarketPrice = useCallback(async (symbol: string) => {
+    if (!symbol) {
       setMarketPrice(null);
       return;
     }
@@ -113,8 +128,9 @@ export function TransactionForm({
     priceAbortRef.current = controller;
     setPriceLoading(true);
     try {
+      // No type param — let API auto-detect
       const res = await fetch(
-        `/api/price-lookup?symbol=${encodeURIComponent(symbol)}&type=${type}`,
+        `/api/price-lookup?symbol=${encodeURIComponent(symbol)}`,
         { signal: controller.signal }
       );
       if (res.ok) {
@@ -122,6 +138,13 @@ export function TransactionForm({
         if (!controller.signal.aborted) {
           setMarketPrice(data.price);
           setMarketPriceCurrency(data.currency || "USD");
+          if (data.detectedType && data.detectedType !== "unknown") {
+            setDetectedType(data.detectedType);
+            // Auto-set currency for crypto
+            if (data.detectedType === "crypto") {
+              setLiveCurrency("USD");
+            }
+          }
         }
       }
     } catch {
@@ -131,16 +154,16 @@ export function TransactionForm({
     }
   }, []);
 
-  // Fetch price when symbol or asset type changes
+  // Fetch price when symbol changes (for investment type only)
   useEffect(() => {
     const sym = liveSymbol.trim().toUpperCase();
-    if (sym && (assetType === "crypto" || assetType === "stock")) {
-      const timer = setTimeout(() => fetchMarketPrice(sym, assetType), 400);
+    if (sym && isInvestment) {
+      const timer = setTimeout(() => fetchMarketPrice(sym), 400);
       return () => clearTimeout(timer);
     } else {
       setMarketPrice(null);
     }
-  }, [liveSymbol, assetType, fetchMarketPrice]);
+  }, [liveSymbol, isInvestment, fetchMarketPrice]);
 
   const isIncome = tradeType === "income";
   const isCashIncome = isIncome && incomeMode === "cash";
@@ -192,34 +215,21 @@ export function TransactionForm({
 
   const defaultCurrency = transaction?.currency || deposit?.currency || currency;
 
-  const symbolPlaceholder: Record<string, string> = {
-    crypto: t("form.symbolPlaceholderCrypto"),
-    stock: t("form.symbolPlaceholderStock"),
-    deposit: t("form.symbolPlaceholderDeposit"),
-  };
+  const symbolPlaceholder = isDeposit
+    ? t("form.symbolPlaceholderDeposit")
+    : t("form.symbolPlaceholderInvestment" as "form.symbolPlaceholderCrypto");
 
-  const namePlaceholder: Record<string, string> = {
-    crypto: t("form.namePlaceholderCrypto"),
-    stock: t("form.namePlaceholderStock"),
-    deposit: t("form.namePlaceholderDeposit"),
-  };
-
-  const assetDescKey: Record<string, string> = {
-    crypto: "form.cryptoDesc",
-    stock: "form.stockDesc",
-    deposit: "form.depositDesc",
-  };
-
-  const assetLabelKey: Record<string, string> = {
-    crypto: "form.crypto",
-    stock: "form.stock",
-    deposit: "form.depositType",
-  };
+  const namePlaceholder = isDeposit
+    ? t("form.namePlaceholderDeposit")
+    : t("form.namePlaceholderInvestment" as "form.namePlaceholderCrypto");
 
   return (
     <form action={handleSubmit} className="space-y-6 overflow-hidden">
-      {/* Hidden fields for asset/trade type */}
-      <input type="hidden" name="assetType" value={assetType} />
+      {/* Hidden fields — assetType is auto-detected for investments, not sent from UI */}
+      {isDeposit && <input type="hidden" name="assetType" value="deposit" />}
+      {!isDeposit && detectedType !== "unknown" && (
+        <input type="hidden" name="assetType" value={detectedType} />
+      )}
       {!isDeposit && <input type="hidden" name="tradeType" value={tradeType} />}
 
       {/* Section 1: Asset Type Cards */}
@@ -227,7 +237,7 @@ export function TransactionForm({
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
           {t("form.assetType")}
         </h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {ASSET_TYPES.map(({ value, icon: Icon, color }) => {
             const colors = ASSET_COLOR_MAP[color];
             const selected = assetType === value;
@@ -237,7 +247,7 @@ export function TransactionForm({
                 type="button"
                 onClick={() => {
                   setAssetType(value);
-                  if (value === "crypto") setLiveCurrency("USD");
+                  if (value === "investment") setLiveCurrency(currency);
                   else if (value !== assetType) setLiveCurrency(currency);
                 }}
                 className={`relative flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200 cursor-pointer ${
@@ -249,8 +259,8 @@ export function TransactionForm({
                 <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${colors.iconBg} text-white`}>
                   <Icon className="h-5 w-5" />
                 </div>
-                <span className="font-semibold text-sm">{t(assetLabelKey[value] as "form.crypto")}</span>
-                <span className="text-xs text-muted-foreground">{t(assetDescKey[value] as "form.cryptoDesc")}</span>
+                <span className="font-semibold text-sm">{t(assetLabelKey[value] as "form.investment")}</span>
+                <span className="text-xs text-muted-foreground">{t(assetDescKey[value] as "form.investmentDesc")}</span>
               </button>
             );
           })}
@@ -355,13 +365,14 @@ export function TransactionForm({
             : t("form.tradeDetails")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 [&>div]:min-w-0">
-          {/* Symbol */}
+          {/* Symbol — use SymbolAutocomplete for all investments */}
           <div className="space-y-2">
             <Label htmlFor="symbol">{t("form.symbol")}</Label>
-            {assetType === "stock" ? (
+            {isInvestment ? (
               <SymbolAutocomplete
                 defaultValue={transaction?.symbol || ""}
-                placeholder={symbolPlaceholder[assetType]}
+                placeholder={symbolPlaceholder}
+                onChange={(val) => setLiveSymbol(val)}
                 onSelect={(symbol, name, exchange) => {
                   setLiveSymbol(symbol);
                   if (name) setAutoName(name);
@@ -375,8 +386,8 @@ export function TransactionForm({
               <Input
                 id="symbol"
                 name="symbol"
-                placeholder={symbolPlaceholder[assetType]}
-                defaultValue={transaction?.symbol || deposit?.symbol || ""}
+                placeholder={symbolPlaceholder}
+                defaultValue={deposit?.symbol || ""}
                 onChange={(e) => setLiveSymbol(e.target.value)}
                 required
               />
@@ -389,7 +400,7 @@ export function TransactionForm({
             <Input
               id="name"
               name="name"
-              placeholder={namePlaceholder[assetType]}
+              placeholder={namePlaceholder}
               value={autoName}
               onChange={(e) => setAutoName(e.target.value)}
             />
