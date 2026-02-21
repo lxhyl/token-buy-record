@@ -308,6 +308,20 @@ const translations = {
   "analysis.longestLossStreak": { en: "Loss Streak", zh: "最长连亏" },
   "analysis.days": { en: "days", zh: "天" },
 
+  // ── Deposit Analysis ─────────────────────────────────────
+  "analysis.depositOverview": { en: "Deposit Overview", zh: "存款概览" },
+  "analysis.totalPrincipal": { en: "Total Principal", zh: "总本金" },
+  "analysis.totalInterest": { en: "Total Accrued Interest", zh: "总应计利息" },
+  "analysis.avgRate": { en: "Avg Rate", zh: "平均利率" },
+  "analysis.depositAsset": { en: "Deposit", zh: "存款" },
+  "analysis.depositPrincipal": { en: "Principal", zh: "本金" },
+  "analysis.depositRate": { en: "Rate", zh: "利率" },
+  "analysis.depositInterest": { en: "Interest", zh: "利息" },
+  "analysis.depositDays": { en: "Days", zh: "天数" },
+  "analysis.depositStatus": { en: "Status", zh: "状态" },
+  "analysis.noDeposits": { en: "No deposits to analyze", zh: "暂无存款可供分析" },
+  "analysis.depositAllocation": { en: "Deposit Allocation", zh: "存款配置" },
+
   // ── Trade Pattern ─────────────────────────────────────────
   "tradePattern.title": { en: "Trade Pattern Analysis", zh: "交易模式分析" },
   "tradePattern.market": { en: "Market", zh: "市场" },

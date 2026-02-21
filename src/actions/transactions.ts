@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { transactions, currentPrices, priceHistory } from "@/lib/schema";
-import { eq, desc, and, asc } from "drizzle-orm";
+import { eq, desc, and, asc, notInArray } from "drizzle-orm";
 import { fetchAllPrices } from "@/lib/price-service";
 import { getUserId } from "@/lib/auth-utils";
 import { normalizeStockSymbol } from "@/lib/stock-utils";
@@ -167,7 +167,10 @@ export async function getTransactions() {
   return await db
     .select()
     .from(transactions)
-    .where(eq(transactions.userId, userId))
+    .where(and(
+      eq(transactions.userId, userId),
+      notInArray(transactions.assetType, ["deposit", "bond"])
+    ))
     .orderBy(desc(transactions.tradeDate));
 }
 

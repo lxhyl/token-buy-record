@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/table";
 import { TradePatternCard } from "@/components/TradePatternCard";
 import { formatPercent, createCurrencyFormatter } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Receipt, Coins } from "lucide-react";
+import { TrendingUp, TrendingDown, Receipt, Coins, PiggyBank } from "lucide-react";
 import { getDisplayLanguage, getColorScheme } from "@/actions/settings";
 import { t } from "@/lib/i18n";
 import { AssetLogo } from "@/components/AssetLogo";
@@ -265,6 +265,108 @@ export default async function AnalysisPage() {
       })()}
 
       <TradePatternCard tradeAnalysis={tradeAnalysis} currency={currency} rates={rates} />
+
+      {/* Deposit Analysis */}
+      {depositHoldings.length > 0 && (() => {
+        const totalPrincipal = depositHoldings.reduce((sum, d) => sum + d.principal, 0);
+        const totalInterest = depositHoldings.reduce((sum, d) => sum + d.accruedInterest, 0);
+        const weightedRate = totalPrincipal > 0
+          ? depositHoldings.reduce((sum, d) => sum + d.interestRate * d.principal, 0) / totalPrincipal
+          : 0;
+        const now = new Date();
+
+        return (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 text-white">
+                  <PiggyBank className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base md:text-lg">{t(locale, "analysis.depositOverview")}</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {t(locale, "analysis.totalPrincipal")} <span className="font-semibold font-num text-green-600 dark:text-green-400">{fc(totalPrincipal)}</span>
+                    <span className="mx-2">·</span>
+                    {t(locale, "analysis.totalInterest")} <span className="font-semibold font-num text-amber-600 dark:text-amber-400">{fc(totalInterest)}</span>
+                    <span className="mx-2">·</span>
+                    {t(locale, "analysis.avgRate")} <span className="font-semibold font-num">{weightedRate.toFixed(2)}%</span>
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t(locale, "analysis.depositAsset")}</TableHead>
+                      <TableHead className="text-right">{t(locale, "analysis.depositPrincipal")}</TableHead>
+                      <TableHead className="text-right">{t(locale, "analysis.depositRate")}</TableHead>
+                      <TableHead className="text-right">{t(locale, "analysis.depositInterest")}</TableHead>
+                      <TableHead className="text-right">{t(locale, "analysis.depositDays")}</TableHead>
+                      <TableHead className="text-right">{t(locale, "analysis.depositStatus")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {depositHoldings.map((d) => {
+                      const days = Math.max(0, Math.floor((now.getTime() - d.startDate.getTime()) / (1000 * 60 * 60 * 24)));
+                      const isMatured = d.maturityDate && d.maturityDate.getTime() < now.getTime();
+                      const isMaturingSoon = d.maturityDate && !isMatured && (d.maturityDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) < 30;
+                      return (
+                        <TableRow key={d.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 text-white">
+                                <PiggyBank className="h-3.5 w-3.5" />
+                              </div>
+                              <div>
+                                <span className="font-medium">{d.symbol}</span>
+                                {d.name && <span className="text-xs text-muted-foreground ml-1.5">{d.name}</span>}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-num font-semibold">{fc(d.principal)}</TableCell>
+                          <TableCell className="text-right font-num">
+                            {d.interestRate > 0 ? `${d.interestRate.toFixed(2)}%` : "-"}
+                          </TableCell>
+                          <TableCell className="text-right font-num text-amber-600 dark:text-amber-400 font-medium">
+                            {d.accruedInterest > 0 ? fc(d.accruedInterest) : "-"}
+                          </TableCell>
+                          <TableCell className="text-right font-num">{days}</TableCell>
+                          <TableCell className="text-right">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              isMatured
+                                ? "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                                : isMaturingSoon
+                                ? "bg-yellow-50 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-300"
+                                : "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300"
+                            }`}>
+                              {isMatured
+                                ? t(locale, "deposit.matured")
+                                : isMaturingSoon
+                                ? t(locale, "deposit.maturingSoon")
+                                : t(locale, "deposit.active")}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {/* Total row */}
+                    <TableRow className="border-t-2 font-semibold">
+                      <TableCell>{t(locale, "common.total")}</TableCell>
+                      <TableCell className="text-right font-num">{fc(totalPrincipal)}</TableCell>
+                      <TableCell className="text-right font-num">{weightedRate.toFixed(2)}%</TableCell>
+                      <TableCell className="text-right font-num text-amber-600 dark:text-amber-400">{fc(totalInterest)}</TableCell>
+                      <TableCell className="text-right font-num">-</TableCell>
+                      <TableCell />
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Fee Analysis */}
       {(() => {
