@@ -1,4 +1,5 @@
 import { getTransactions } from "@/actions/transactions";
+import { getDeposits } from "@/actions/deposits";
 import { getDisplayCurrency, getDisplayLanguage } from "@/actions/settings";
 import { getExchangeRates } from "@/lib/exchange-rates";
 import { TransactionList } from "@/components/TransactionList";
@@ -7,8 +8,9 @@ import { t } from "@/lib/i18n";
 export const dynamic = "force-dynamic";
 
 export default async function TransactionsPage() {
-  const [transactions, currency, rates, locale] = await Promise.all([
+  const [transactions, deposits, currency, rates, locale] = await Promise.all([
     getTransactions(),
+    getDeposits(),
     getDisplayCurrency(),
     getExchangeRates(),
     getDisplayLanguage(),
@@ -23,7 +25,7 @@ export default async function TransactionsPage() {
         </p>
       </div>
 
-      <TransactionList transactions={transactions} currency={currency} rates={rates} />
+      <TransactionList transactions={transactions} deposits={deposits} currency={currency} rates={rates} />
     </div>
   );
 }

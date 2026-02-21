@@ -78,6 +78,44 @@ export async function updateDeposit(id: number, formData: FormData): Promise<{ e
   revalidatePath("/analysis");
 }
 
+export async function withdrawFromDeposit(id: number, amount: number): Promise<{ error: string } | void> {
+  const userId = await getUserId();
+
+  if (amount <= 0) {
+    return { error: "Withdraw amount must be greater than 0" };
+  }
+
+  const deposit = await db
+    .select()
+    .from(deposits)
+    .where(and(eq(deposits.id, id), eq(deposits.userId, userId)));
+
+  if (deposit.length === 0) {
+    return { error: "Deposit not found" };
+  }
+
+  const d = deposit[0];
+  const principal = parseFloat(d.principal);
+  const withdrawn = parseFloat(d.withdrawnAmount || "0");
+  const remaining = principal - withdrawn;
+
+  if (amount > remaining + 0.001) {
+    return { error: `Cannot withdraw more than remaining principal (${remaining.toFixed(2)})` };
+  }
+
+  const newWithdrawn = (withdrawn + amount).toFixed(2);
+
+  await db
+    .update(deposits)
+    .set({ withdrawnAmount: newWithdrawn })
+    .where(and(eq(deposits.id, id), eq(deposits.userId, userId)));
+
+  revalidatePath("/dashboard");
+  revalidatePath("/deposits");
+  revalidatePath("/transactions");
+  revalidatePath("/analysis");
+}
+
 export async function deleteDeposit(id: number) {
   const userId = await getUserId();
 

@@ -13,7 +13,7 @@ import {
 import type { AdapterAccountType } from "next-auth/adapters";
 
 export const ASSET_TYPES = ["crypto", "stock"] as const;
-export const TRADE_TYPES = ["buy", "sell", "income"] as const;
+export const TRADE_TYPES = ["buy", "sell"] as const;
 
 // ── Auth tables ──────────────────────────────────────────────
 
@@ -76,6 +76,7 @@ export const deposits = pgTable("deposits", {
   symbol: varchar("symbol", { length: 20 }).notNull(),
   name: varchar("name", { length: 100 }),
   principal: decimal("principal", { precision: 18, scale: 2 }).notNull(),
+  withdrawnAmount: decimal("withdrawn_amount", { precision: 18, scale: 2 }).default("0"),
   interestRate: decimal("interest_rate", { precision: 8, scale: 4 }).notNull(),
   currency: varchar("currency", { length: 10 }).default("USD").notNull(),
   startDate: timestamp("start_date").notNull(),

@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/table";
 import { TradePatternCard } from "@/components/TradePatternCard";
 import { formatPercent, createCurrencyFormatter } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Receipt, Coins, PiggyBank } from "lucide-react";
+import { TrendingUp, TrendingDown, Receipt, PiggyBank } from "lucide-react";
 import { getDisplayLanguage, getColorScheme } from "@/actions/settings";
 import { t } from "@/lib/i18n";
 import { AssetLogo } from "@/components/AssetLogo";
@@ -205,73 +205,14 @@ export default async function AnalysisPage() {
         </Card>
       </div>
 
-      {/* Income Summary */}
-      {(() => {
-        const totalIncome = tradeAnalysis.reduce((sum, a) => sum + a.totalIncomeUsd, 0);
-        if (totalIncome <= 0) return null;
-        const incomeBySymbol = [...tradeAnalysis]
-          .filter((a) => a.totalIncomeUsd > 0)
-          .sort((a, b) => b.totalIncomeUsd - a.totalIncomeUsd);
-        return (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 text-white">
-                  <Coins className="h-5 w-5" />
-                </div>
-                <div>
-                  <CardTitle className="text-base md:text-lg">{t(locale, "analysis.incomeSummary")}</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {t(locale, "analysis.totalIncome")} <span className="font-semibold font-num text-amber-600 dark:text-amber-400">{fc(totalIncome)}</span>
-                  </p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t(locale, "analysis.incomeAsset")}</TableHead>
-                      <TableHead className="text-right">{t(locale, "analysis.incomeEntries")}</TableHead>
-                      <TableHead className="text-right">{t(locale, "analysis.incomeAmount")}</TableHead>
-                      <TableHead className="text-right">{t(locale, "analysis.incomePercent")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {incomeBySymbol.map((a) => (
-                      <TableRow key={a.symbol}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <AssetLogo symbol={a.symbol} assetType={a.assetType} className="h-6 w-6" />
-                            <span className="font-medium">{a.symbol}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right font-num">{a.totalIncomes}</TableCell>
-                        <TableCell className="text-right font-num text-amber-600 dark:text-amber-400 font-medium">
-                          {fc(a.totalIncomeUsd)}
-                        </TableCell>
-                        <TableCell className="text-right font-num">
-                          {formatPercent((a.totalIncomeUsd / totalIncome) * 100)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })()}
-
       <TradePatternCard tradeAnalysis={tradeAnalysis} currency={currency} rates={rates} />
 
       {/* Deposit Analysis */}
       {depositHoldings.length > 0 && (() => {
-        const totalPrincipal = depositHoldings.reduce((sum, d) => sum + d.principal, 0);
+        const totalPrincipal = depositHoldings.reduce((sum, d) => sum + d.remainingPrincipal, 0);
         const totalInterest = depositHoldings.reduce((sum, d) => sum + d.accruedInterest, 0);
         const weightedRate = totalPrincipal > 0
-          ? depositHoldings.reduce((sum, d) => sum + d.interestRate * d.principal, 0) / totalPrincipal
+          ? depositHoldings.reduce((sum, d) => sum + d.interestRate * d.remainingPrincipal, 0) / totalPrincipal
           : 0;
         const now = new Date();
 
@@ -325,7 +266,7 @@ export default async function AnalysisPage() {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="text-right font-num font-semibold">{fc(d.principal)}</TableCell>
+                          <TableCell className="text-right font-num font-semibold">{fc(d.remainingPrincipal)}</TableCell>
                           <TableCell className="text-right font-num">
                             {d.interestRate > 0 ? `${d.interestRate.toFixed(2)}%` : "-"}
                           </TableCell>

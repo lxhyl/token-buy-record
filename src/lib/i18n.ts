@@ -149,6 +149,13 @@ const translations = {
   "deposit.update": { en: "Update Deposit", zh: "更新存款" },
   "deposit.created": { en: "Deposit created", zh: "存款已创建" },
   "deposit.updated": { en: "Deposit updated", zh: "存款已更新" },
+  "deposit.withdraw": { en: "Withdraw", zh: "取出" },
+  "deposit.withdrawAmount": { en: "Withdraw amount", zh: "取出金额" },
+  "deposit.withdrawn": { en: "Withdrawn", zh: "已取出" },
+  "deposit.withdrew": { en: "Withdrew", zh: "已取出" },
+  "deposit.remainingPrincipal": { en: "Remaining", zh: "剩余本金" },
+  "deposit.withdrawInvalid": { en: "Please enter a valid amount", zh: "请输入有效金额" },
+  "deposit.withdrawExceeds": { en: "Amount exceeds remaining principal", zh: "金额超过剩余本金" },
   "deposit.deleteTitle": { en: "Delete Deposit", zh: "删除存款" },
   "deposit.deleteConfirm": { en: "Delete this deposit?", zh: "确定删除此存款吗？" },
 

@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { deleteTransaction } from "@/actions/transactions";
-import { Transaction } from "@/lib/schema";
+import { deleteDeposit } from "@/actions/deposits";
+import { Transaction, Deposit } from "@/lib/schema";
 import { createCurrencyFormatter, formatNumber, formatDate } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates, toUsd } from "@/lib/currency";
 import { useToast } from "@/components/Toast";
@@ -26,12 +27,12 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   History,
-  Coins,
   Search,
   ArrowUpDown,
   Download,
   ChevronLeft,
   ChevronRight,
+  PiggyBank,
 } from "lucide-react";
 import { usePnLColors } from "@/components/ColorSchemeProvider";
 import { AssetLogo } from "@/components/AssetLogo";
@@ -39,13 +40,45 @@ import { AssetLogo } from "@/components/AssetLogo";
 type SortField = "date" | "symbol" | "total";
 type SortDir = "asc" | "desc";
 
+// Unified row type for both transactions and deposits
+type UnifiedRow = {
+  kind: "transaction";
+  id: number;
+  symbol: string;
+  name: string | null;
+  assetType: string;
+  tradeType: string;
+  quantity: string;
+  price: string;
+  totalAmount: string;
+  currency: string;
+  date: Date;
+  realizedPnl: string | null;
+  editUrl: string;
+} | {
+  kind: "deposit";
+  id: number;
+  symbol: string;
+  name: string | null;
+  assetType: "deposit";
+  tradeType: "deposit";
+  quantity: string;
+  price: string;
+  totalAmount: string;
+  currency: string;
+  date: Date;
+  realizedPnl: null;
+  editUrl: string;
+};
+
 interface TransactionListProps {
   transactions: Transaction[];
+  deposits?: Deposit[];
   currency: SupportedCurrency;
   rates: ExchangeRates;
 }
 
-export function TransactionList({ transactions, currency, rates }: TransactionListProps) {
+export function TransactionList({ transactions, deposits = [], currency, rates }: TransactionListProps) {
   const fc = createCurrencyFormatter(currency, rates);
   const { toast } = useToast();
   const { t, tInterpolate } = useI18n();
@@ -54,33 +87,73 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; symbol: string; assetType: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; symbol: string; assetType: string; kind: "transaction" | "deposit" } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
+
+  // Build unified rows
+  const allRows: UnifiedRow[] = useMemo(() => {
+    const txRows: UnifiedRow[] = transactions.map((tx) => ({
+      kind: "transaction" as const,
+      id: tx.id,
+      symbol: tx.symbol,
+      name: tx.name,
+      assetType: tx.assetType,
+      tradeType: tx.tradeType,
+      quantity: tx.quantity,
+      price: tx.price,
+      totalAmount: tx.totalAmount,
+      currency: tx.currency || "USD",
+      date: new Date(tx.tradeDate),
+      realizedPnl: tx.realizedPnl ?? null,
+      editUrl: `/transactions/${tx.id}/edit`,
+    }));
+    const depositRows: UnifiedRow[] = deposits.map((d) => ({
+      kind: "deposit" as const,
+      id: d.id,
+      symbol: d.symbol,
+      name: d.name,
+      assetType: "deposit" as const,
+      tradeType: "deposit" as const,
+      quantity: "0",
+      price: "0",
+      totalAmount: d.principal,
+      currency: d.currency || "USD",
+      date: new Date(d.startDate),
+      realizedPnl: null,
+      editUrl: `/deposits/${d.id}/edit`,
+    }));
+    return [...txRows, ...depositRows];
+  }, [transactions, deposits]);
 
   function getAssetTypeLabel(assetType: string): string {
     if (assetType === "crypto") return t("form.crypto");
     if (assetType === "stock") return t("form.stock");
+    if (assetType === "deposit") return t("form.depositType");
     return assetType;
   }
 
-  function getTradeTypeLabel(tx: Transaction): string {
-    if (tx.tradeType === "buy") return t("transactions.buy");
-    if (tx.tradeType === "sell") return t("transactions.sell");
-    if (tx.tradeType === "income") return t("transactions.incomeType");
-    return tx.tradeType.toUpperCase();
+  function getTradeTypeLabel(row: UnifiedRow): string {
+    if (row.tradeType === "buy") return t("transactions.buy");
+    if (row.tradeType === "sell") return t("transactions.sell");
+    if (row.tradeType === "deposit") return t("transactions.deposit");
+    return row.tradeType.toUpperCase();
   }
 
-  const handleDelete = (id: number, symbol: string, assetType: string) => {
-    setDeleteConfirm({ id, symbol, assetType });
+  const handleDelete = (id: number, symbol: string, assetType: string, kind: "transaction" | "deposit") => {
+    setDeleteConfirm({ id, symbol, assetType, kind });
   };
 
   const confirmDelete = () => {
     if (!deleteConfirm) return;
-    const { id, symbol } = deleteConfirm;
+    const { id, symbol, kind } = deleteConfirm;
     setDeleteConfirm(null);
     startTransition(async () => {
-      await deleteTransaction(id);
+      if (kind === "deposit") {
+        await deleteDeposit(id);
+      } else {
+        await deleteTransaction(id);
+      }
       toast(tInterpolate("transactions.deleted", { symbol }), "success");
     });
   };
@@ -95,14 +168,14 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
   };
 
   const filtered = useMemo(() => {
-    let result = [...transactions];
+    let result = [...allRows];
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
-        (tx) =>
-          tx.symbol.toLowerCase().includes(q) ||
-          (tx.name && tx.name.toLowerCase().includes(q))
+        (row) =>
+          row.symbol.toLowerCase().includes(q) ||
+          (row.name && row.name.toLowerCase().includes(q))
       );
     }
 
@@ -110,7 +183,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
       let cmp = 0;
       switch (sortField) {
         case "date":
-          cmp = new Date(a.tradeDate).getTime() - new Date(b.tradeDate).getTime();
+          cmp = a.date.getTime() - b.date.getTime();
           break;
         case "symbol":
           cmp = a.symbol.localeCompare(b.symbol);
@@ -123,7 +196,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
     });
 
     return result;
-  }, [transactions, searchQuery, sortField, sortDir]);
+  }, [allRows, searchQuery, sortField, sortDir]);
 
   // Reset to page 1 when filters change
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -137,25 +210,17 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
       t("transactions.name"),
       t("transactions.type"),
       t("transactions.assetType"),
-      t("transactions.quantity"),
-      t("transactions.price"),
       t("transactions.total"),
-      t("transactions.fee"),
       t("transactions.currency"),
-      t("transactions.notes"),
     ];
-    const rows = filtered.map((tx) => [
-      new Date(tx.tradeDate).toISOString().split("T")[0],
-      tx.symbol,
-      tx.name || "",
-      tx.tradeType,
-      tx.assetType,
-      tx.quantity,
-      tx.price,
-      tx.totalAmount,
-      tx.fee || "0",
-      tx.currency,
-      (tx.notes || "").replace(/"/g, '""'),
+    const rows = filtered.map((row) => [
+      row.date.toISOString().split("T")[0],
+      row.symbol,
+      row.name || "",
+      row.tradeType,
+      row.assetType,
+      row.totalAmount,
+      row.currency,
     ]);
 
     const csv = [
@@ -195,7 +260,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
               <CardTitle className="text-base md:text-lg truncate">{t("transactions.history")}</CardTitle>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {transactions.length > 0 && (
+              {allRows.length > 0 && (
                 <Button size="sm" variant="outline" onClick={handleExportCSV} className="hidden sm:flex gap-1.5 text-xs md:text-sm">
                   <Download className="h-3.5 w-3.5" />
                   {t("common.export")}
@@ -213,7 +278,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
         </CardHeader>
         <CardContent className="p-0">
           {/* Search */}
-          {transactions.length > 0 && (
+          {allRows.length > 0 && (
             <div className="flex items-center px-4 md:px-6 pt-4 pb-2">
               <div className="relative sm:ml-auto">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -271,52 +336,58 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginated.map((tx) => (
-                  <TableRow key={tx.id}>
+                {paginated.map((row) => (
+                  <TableRow key={`${row.kind}-${row.id}`}>
                     <TableCell className="text-muted-foreground">
-                      {formatDate(new Date(tx.tradeDate))}
+                      {formatDate(row.date)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <AssetLogo symbol={tx.symbol} assetType={tx.assetType} className="h-9 w-9" />
+                        {row.kind === "deposit" ? (
+                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 text-white shrink-0">
+                            <PiggyBank className="h-4 w-4" />
+                          </div>
+                        ) : (
+                          <AssetLogo symbol={row.symbol} assetType={row.assetType} className="h-9 w-9" />
+                        )}
                         <div>
-                          <div className="font-semibold">{tx.symbol}</div>
+                          <div className="font-semibold">{row.symbol}</div>
                           <div className="text-xs text-muted-foreground capitalize">
-                            {getAssetTypeLabel(tx.assetType)}
+                            {getAssetTypeLabel(row.assetType)}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-                        tx.tradeType === "buy"
+                        row.tradeType === "buy"
                           ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                          : tx.tradeType === "income"
-                          ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                          : row.tradeType === "deposit"
+                          ? "bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300"
                           : "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300"
                       }`}>
-                        {tx.tradeType === "buy" ? (
+                        {row.tradeType === "buy" ? (
                           <ArrowDownRight className="h-3 w-3" />
-                        ) : tx.tradeType === "income" ? (
-                          <Coins className="h-3 w-3" />
+                        ) : row.tradeType === "deposit" ? (
+                          <PiggyBank className="h-3 w-3" />
                         ) : (
                           <ArrowUpRight className="h-3 w-3" />
                         )}
-                        {getTradeTypeLabel(tx)}
+                        {getTradeTypeLabel(row)}
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-medium font-num">
-                      {parseFloat(tx.quantity) > 0 ? formatNumber(parseFloat(tx.quantity), 8) : "-"}
+                      {parseFloat(row.quantity) > 0 ? formatNumber(parseFloat(row.quantity), 8) : "-"}
                     </TableCell>
                     <TableCell className="text-right font-num">
-                      {parseFloat(tx.price) > 0 ? fc(toUsd(parseFloat(tx.price), tx.currency || "USD", rates)) : "-"}
+                      {parseFloat(row.price) > 0 ? fc(toUsd(parseFloat(row.price), row.currency, rates)) : "-"}
                     </TableCell>
                     <TableCell className="text-right font-semibold font-num">
-                      {fc(toUsd(parseFloat(tx.totalAmount), tx.currency || "USD", rates))}
+                      {fc(toUsd(parseFloat(row.totalAmount), row.currency, rates))}
                     </TableCell>
                     <TableCell className="text-right">
-                      {tx.tradeType === "sell" && tx.realizedPnl ? (() => {
-                        const pnlUsd = toUsd(parseFloat(tx.realizedPnl), tx.currency || "USD", rates);
+                      {row.tradeType === "sell" && row.realizedPnl ? (() => {
+                        const pnlUsd = toUsd(parseFloat(row.realizedPnl), row.currency, rates);
                         const isProfit = pnlUsd >= 0;
                         return (
                           <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold font-num leading-none ${
@@ -334,7 +405,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Link href={`/transactions/${tx.id}/edit`}>
+                        <Link href={row.editUrl}>
                           <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t("common.edit")}>
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -343,7 +414,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => handleDelete(tx.id, tx.symbol, tx.assetType)}
+                          onClick={() => handleDelete(row.id, row.symbol, row.assetType, row.kind)}
                           disabled={isPending}
                           aria-label={t("common.delete")}
                         >
@@ -388,7 +459,7 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
           )}
 
           {/* Mobile export button */}
-          {transactions.length > 0 && (
+          {allRows.length > 0 && (
             <div className="sm:hidden px-4 py-3 border-t">
               <Button size="sm" variant="outline" onClick={handleExportCSV} className="w-full gap-1.5 text-xs">
                 <Download className="h-3.5 w-3.5" />
@@ -407,7 +478,13 @@ export function TransactionList({ transactions, currency, rates }: TransactionLi
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4">
-              <AssetLogo symbol={deleteConfirm.symbol} assetType={deleteConfirm.assetType} className="h-10 w-10" />
+              {deleteConfirm.kind === "deposit" ? (
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 text-white">
+                  <PiggyBank className="h-5 w-5" />
+                </div>
+              ) : (
+                <AssetLogo symbol={deleteConfirm.symbol} assetType={deleteConfirm.assetType} className="h-10 w-10" />
+              )}
               <div>
                 <h3 className="font-semibold">{t("transactions.deleteTitle")}</h3>
                 <p className="text-sm text-muted-foreground">

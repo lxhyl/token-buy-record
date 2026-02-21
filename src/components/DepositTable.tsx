@@ -15,10 +15,11 @@ import { Button } from "@/components/ui/button";
 import { DepositHolding } from "@/lib/calculations";
 import { createCurrencyFormatter, formatDate } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
-import { PiggyBank, Plus, Pencil, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { PiggyBank, Plus, Pencil, Trash2, ArrowUpRight } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { TranslationKey } from "@/lib/i18n";
-import { deleteDeposit } from "@/actions/deposits";
+import { deleteDeposit, withdrawFromDeposit } from "@/actions/deposits";
 import { useToast } from "@/components/Toast";
 import { useState } from "react";
 
@@ -59,6 +60,8 @@ export function DepositTable({
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; symbol: string } | null>(null);
+  const [withdrawDialog, setWithdrawDialog] = useState<{ id: number; symbol: string; remaining: number } | null>(null);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
 
   const confirmDelete = () => {
     if (!deleteConfirm) return;
@@ -67,6 +70,30 @@ export function DepositTable({
     startTransition(async () => {
       await deleteDeposit(id);
       toast(`${t("common.delete")} ${symbol}`, "success");
+    });
+  };
+
+  const confirmWithdraw = () => {
+    if (!withdrawDialog) return;
+    const amount = parseFloat(withdrawAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast(t("deposit.withdrawInvalid"), "error");
+      return;
+    }
+    if (amount > withdrawDialog.remaining + 0.001) {
+      toast(t("deposit.withdrawExceeds"), "error");
+      return;
+    }
+    const { id, symbol } = withdrawDialog;
+    setWithdrawDialog(null);
+    setWithdrawAmount("");
+    startTransition(async () => {
+      const result = await withdrawFromDeposit(id, amount);
+      if (result && "error" in result) {
+        toast(result.error, "error");
+        return;
+      }
+      toast(`${t("deposit.withdrew")} ${amount.toFixed(2)} — ${symbol}`, "success");
     });
   };
 
@@ -147,8 +174,13 @@ export function DepositTable({
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-right font-semibold font-num">
-                          {fc(h.principal)}
+                        <TableCell className="text-right font-num">
+                          <div className="font-semibold">{fc(h.remainingPrincipal)}</div>
+                          {h.withdrawnAmount > 0 && (
+                            <div className="text-xs text-muted-foreground">
+                              {t("deposit.withdrawn")}: {fc(h.withdrawnAmount)}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell className="text-right font-num">
                           {h.interestRate > 0
@@ -184,6 +216,21 @@ export function DepositTable({
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
+                            {h.remainingPrincipal > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950/30"
+                                onClick={() => {
+                                  setWithdrawDialog({ id: h.id, symbol: h.symbol, remaining: h.remainingPrincipal });
+                                  setWithdrawAmount("");
+                                }}
+                                disabled={isPending}
+                                aria-label={t("deposit.withdraw")}
+                              >
+                                <ArrowUpRight className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Link href={`/deposits/${h.id}/edit`}>
                               <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t("common.edit")}>
                                 <Pencil className="h-4 w-4" />
@@ -241,6 +288,52 @@ export function DepositTable({
                 <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                 {t("common.delete")}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Withdraw Dialog */}
+      {withdrawDialog && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setWithdrawDialog(null)}>
+          <div
+            className="bg-popover text-popover-foreground border rounded-2xl shadow-xl p-6 mx-4 max-w-sm w-full animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white">
+                <ArrowUpRight className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold">{t("deposit.withdraw")}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {withdrawDialog.symbol} — {t("deposit.remainingPrincipal")}: {fc(withdrawDialog.remaining)}
+                </p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <Input
+                type="number"
+                step="0.01"
+                placeholder={t("deposit.withdrawAmount")}
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                autoFocus
+              />
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={() => setWithdrawDialog(null)}>
+                  {t("common.cancel")}
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-gradient-to-r from-orange-500 to-amber-500 text-white"
+                  onClick={confirmWithdraw}
+                  disabled={isPending}
+                >
+                  <ArrowUpRight className="h-3.5 w-3.5 mr-1.5" />
+                  {t("deposit.withdraw")}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

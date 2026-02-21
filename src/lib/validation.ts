@@ -26,10 +26,6 @@ export const transactionSchema = z
       .number({ error: "Fee must be a number" })
       .min(0, "Fee cannot be negative")
       .default(0),
-    incomeAmount: z.coerce
-      .number({ error: "Amount must be a number" })
-      .positive("Amount must be greater than 0")
-      .optional(),
     currency: z.enum(CURRENCIES, {
       error: "Invalid currency",
     }),
@@ -46,19 +42,7 @@ export const transactionSchema = z
       }, "Trade date cannot be in the future"),
     notes: z.string().optional().default(""),
   })
-  .refine(
-    (data) => {
-      const isCashIncome =
-        data.tradeType === "income" && data.quantity === 0;
-      if (isCashIncome) {
-        return (
-          data.incomeAmount !== undefined && data.incomeAmount > 0
-        );
-      }
-      return true;
-    },
-    { message: "Amount is required and must be greater than 0", path: ["incomeAmount"] }
-  );
+;
 
 export type TransactionFormData = z.infer<typeof transactionSchema>;
 
@@ -77,9 +61,6 @@ export function parseTransactionFormData(formData: FormData): {
     quantity: formData.get("quantity") ?? "0",
     price: formData.get("price") ?? "0",
     fee: formData.get("fee") ?? "0",
-    incomeAmount: formData.get("incomeAmount")
-      ? Number(formData.get("incomeAmount"))
-      : undefined,
     currency: formData.get("currency") ?? "USD",
     tradeDate: formData.get("tradeDate") ?? "",
     notes: formData.get("notes") ?? "",

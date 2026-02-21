@@ -13,7 +13,6 @@ export interface Holding {
   unrealizedPnL: number;
   unrealizedPnLPercent: number;
   realizedPnL: number;
-  totalIncome: number;
   firstBuyDate: Date;
 }
 
@@ -22,6 +21,8 @@ export interface DepositHolding {
   symbol: string;
   name: string | null;
   principal: number;
+  withdrawnAmount: number;
+  remainingPrincipal: number;
   interestRate: number;
   currency: string;
   startDate: Date;
@@ -35,7 +36,7 @@ export interface PortfolioSummary {
   totalCurrentValue: number;
   totalUnrealizedPnL: number;
   totalRealizedPnL: number;
-  totalIncome: number;
+  totalDepositInterest: number;
   totalPnL: number;
   totalPnLPercent: number;
 }
@@ -59,7 +60,6 @@ export function calculateHoldings(
       buys: { quantity: number; priceUsd: number; date: Date }[];
       sells: { quantity: number; priceUsd: number }[];
       storedRealizedPnl: number;
-      incomeTotal: number;
       firstBuyDate: Date | null;
     }
   >();
@@ -74,7 +74,6 @@ export function calculateHoldings(
         buys: [],
         sells: [],
         storedRealizedPnl: 0,
-        incomeTotal: 0,
         firstBuyDate: null,
       });
     }
@@ -86,18 +85,7 @@ export function calculateHoldings(
     const priceUsd = toUsd(rawPrice, txCurrency, rates);
     const date = new Date(t.tradeDate);
 
-    if (t.tradeType === "income") {
-      // Income: add totalAmount as income
-      const rawTotal = parseFloat(t.totalAmount);
-      holding.incomeTotal += toUsd(rawTotal, txCurrency, rates);
-      // Asset income (staking rewards etc.) — quantity > 0 means tokens received
-      if (quantity > 0) {
-        holding.buys.push({ quantity, priceUsd, date });
-        if (!holding.firstBuyDate || date < holding.firstBuyDate) {
-          holding.firstBuyDate = date;
-        }
-      }
-    } else if (t.tradeType === "buy") {
+    if (t.tradeType === "buy") {
       holding.buys.push({ quantity, priceUsd, date });
       if (!holding.firstBuyDate || date < holding.firstBuyDate) {
         holding.firstBuyDate = date;
@@ -118,7 +106,7 @@ export function calculateHoldings(
     const totalSold = data.sells.reduce((sum, s) => sum + s.quantity, 0);
     const remainingQty = totalBought - totalSold;
 
-    if (remainingQty <= 0.00000001 && data.incomeTotal <= 0) return; // Skip if no holdings and no income
+    if (remainingQty <= 0.00000001) return; // Skip if no holdings
 
     // Calculate average cost using FIFO for remaining shares
     let totalCost = 0;
@@ -193,7 +181,6 @@ export function calculateHoldings(
       unrealizedPnL,
       unrealizedPnLPercent,
       realizedPnL,
-      totalIncome: data.incomeTotal,
       firstBuyDate: data.firstBuyDate || new Date(),
     });
   });
@@ -209,19 +196,23 @@ export function calculateDepositHoldings(
 
   return deposits.map((d) => {
     const principal = toUsd(parseFloat(d.principal), d.currency || "USD", rates);
+    const withdrawnAmount = toUsd(parseFloat(d.withdrawnAmount || "0"), d.currency || "USD", rates);
+    const remainingPrincipal = principal - withdrawnAmount;
     const interestRate = parseFloat(d.interestRate);
     const startDate = new Date(d.startDate);
 
-    // Calculate accrued interest: principal × rate% × days / 365
+    // Calculate accrued interest based on remaining principal
     const daysSinceStart = Math.max(0, (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    const accruedInterest = principal * (interestRate / 100) * (daysSinceStart / 365);
-    const currentValue = principal + accruedInterest;
+    const accruedInterest = remainingPrincipal * (interestRate / 100) * (daysSinceStart / 365);
+    const currentValue = remainingPrincipal + accruedInterest;
 
     return {
       id: d.id,
       symbol: d.symbol,
       name: d.name,
       principal,
+      withdrawnAmount,
+      remainingPrincipal,
       interestRate,
       currency: d.currency || "USD",
       startDate,
@@ -229,25 +220,25 @@ export function calculateDepositHoldings(
       accruedInterest,
       currentValue,
     };
-  }).sort((a, b) => b.principal - a.principal);
+  }).sort((a, b) => b.remainingPrincipal - a.remainingPrincipal);
 }
 
 export function calculatePortfolioSummary(
   holdings: Holding[],
   depositHoldings: DepositHolding[] = []
 ): PortfolioSummary {
-  const depositPrincipal = depositHoldings.reduce((sum, h) => sum + h.principal, 0);
+  const depositRemainingPrincipal = depositHoldings.reduce((sum, h) => sum + h.remainingPrincipal, 0);
   const depositInterest = depositHoldings.reduce((sum, h) => sum + h.accruedInterest, 0);
 
-  const totalInvested = holdings.reduce((sum, h) => sum + h.totalCost, 0) + depositPrincipal;
-  const totalCurrentValue = holdings.reduce((sum, h) => sum + h.currentValue, 0) + depositPrincipal + depositInterest;
+  const totalInvested = holdings.reduce((sum, h) => sum + h.totalCost, 0) + depositRemainingPrincipal;
+  const totalCurrentValue = holdings.reduce((sum, h) => sum + h.currentValue, 0) + depositRemainingPrincipal + depositInterest;
   const totalUnrealizedPnL = holdings.reduce(
     (sum, h) => sum + h.unrealizedPnL,
     0
   );
   const totalRealizedPnL = holdings.reduce((sum, h) => sum + h.realizedPnL, 0);
-  const totalIncome = holdings.reduce((sum, h) => sum + h.totalIncome, 0) + depositInterest;
-  const totalPnL = totalUnrealizedPnL + totalRealizedPnL + totalIncome;
+  const totalDepositInterest = depositInterest;
+  const totalPnL = totalUnrealizedPnL + totalRealizedPnL + totalDepositInterest;
   const totalPnLPercent =
     totalInvested > 0 ? (totalUnrealizedPnL / totalInvested) * 100 : 0;
 
@@ -256,7 +247,7 @@ export function calculatePortfolioSummary(
     totalCurrentValue,
     totalUnrealizedPnL,
     totalRealizedPnL,
-    totalIncome,
+    totalDepositInterest,
     totalPnL,
     totalPnLPercent,
   };
@@ -290,7 +281,6 @@ export interface TradeAnalysis {
   assetType: string;
   totalBuys: number;
   totalSells: number;
-  totalIncomes: number;
   avgBuyPrice: number;
   avgSellPrice: number;
   buyVolume: number;
@@ -298,7 +288,6 @@ export interface TradeAnalysis {
   buyVolumeUsd: number;
   sellVolumeUsd: number;
   totalFees: number;
-  totalIncomeUsd: number;
   buyTotalAmountUsd: number;
   sellTotalAmountUsd: number;
   realizedPnl: number;
@@ -316,8 +305,6 @@ export function analyzeTradePatterns(
       buys: { quantity: number; priceUsd: number }[];
       sells: { quantity: number; priceUsd: number }[];
       fees: number;
-      incomeCount: number;
-      incomeUsd: number;
       buyTotalAmountUsd: number;
       sellTotalAmountUsd: number;
       realizedPnl: number;
@@ -332,8 +319,6 @@ export function analyzeTradePatterns(
         buys: [],
         sells: [],
         fees: 0,
-        incomeCount: 0,
-        incomeUsd: 0,
         buyTotalAmountUsd: 0,
         sellTotalAmountUsd: 0,
         realizedPnl: 0,
@@ -352,10 +337,7 @@ export function analyzeTradePatterns(
 
     analysis.fees += feeUsd;
 
-    if (t.tradeType === "income") {
-      analysis.incomeCount++;
-      analysis.incomeUsd += totalUsd;
-    } else if (t.tradeType === "buy") {
+    if (t.tradeType === "buy") {
       analysis.buys.push({ quantity, priceUsd });
       analysis.buyTotalAmountUsd += totalUsd;
     } else {
@@ -383,7 +365,6 @@ export function analyzeTradePatterns(
       assetType: data.assetType,
       totalBuys: data.buys.length,
       totalSells: data.sells.length,
-      totalIncomes: data.incomeCount,
       avgBuyPrice,
       avgSellPrice,
       buyVolume,
@@ -391,7 +372,6 @@ export function analyzeTradePatterns(
       buyVolumeUsd,
       sellVolumeUsd,
       totalFees: data.fees,
-      totalIncomeUsd: data.incomeUsd,
       buyTotalAmountUsd: data.buyTotalAmountUsd,
       sellTotalAmountUsd: data.sellTotalAmountUsd,
       realizedPnl: data.realizedPnl,

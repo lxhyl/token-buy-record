@@ -30,12 +30,7 @@ export async function createTransaction(formData: FormData): Promise<{ error: st
   const tradeDate = v.tradeDate;
   const notes = v.notes || "";
 
-  let totalAmount: string;
-  if (tradeType === "income" && v.quantity === 0) {
-    totalAmount = (v.incomeAmount || 0).toFixed(2);
-  } else {
-    totalAmount = (v.quantity * v.price + v.fee).toFixed(2);
-  }
+  const totalAmount = (v.quantity * v.price + v.fee).toFixed(2);
 
   // Calculate realized P&L for sell transactions using FIFO
   let realizedPnl: string | null = null;
@@ -98,12 +93,7 @@ export async function updateTransaction(id: number, formData: FormData): Promise
   const tradeDate = v.tradeDate;
   const notes = v.notes || "";
 
-  let totalAmount: string;
-  if (tradeType === "income" && v.quantity === 0) {
-    totalAmount = (v.incomeAmount || 0).toFixed(2);
-  } else {
-    totalAmount = (v.quantity * v.price + v.fee).toFixed(2);
-  }
+  const totalAmount = (v.quantity * v.price + v.fee).toFixed(2);
 
   const normalizedSymbol = normalizeStockSymbol(symbol, assetType);
 
@@ -340,9 +330,9 @@ async function calculateFifoRealizedPnl(
     )
     .orderBy(asc(transactions.tradeDate), asc(transactions.id));
 
-  // Build FIFO lot queue from buys/income
+  // Build FIFO lot queue from buys
   const lots = allTxs
-    .filter(t => t.tradeType === "buy" || t.tradeType === "income")
+    .filter(t => t.tradeType === "buy")
     .map(t => ({
       remaining: parseFloat(t.quantity),
       price: parseFloat(t.price),
@@ -403,7 +393,7 @@ async function getAvailableQuantity(
   for (const tx of allTxs) {
     if (excludeTxId !== undefined && tx.id === excludeTxId) continue;
     const qty = parseFloat(tx.quantity);
-    if (tx.tradeType === "buy" || tx.tradeType === "income") {
+    if (tx.tradeType === "buy") {
       available += qty;
     } else if (tx.tradeType === "sell") {
       available -= qty;

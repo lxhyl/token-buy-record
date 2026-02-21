@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Holding } from "@/lib/calculations";
 import { createCurrencyFormatter, formatNumber, formatPercent } from "@/lib/utils";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
-import { TrendingUp, TrendingDown, Wallet, Zap, Loader2, Check, AlertCircle, Coins } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Zap, Loader2, Check, AlertCircle } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { usePnLColors } from "@/components/ColorSchemeProvider";
 import { AssetLogo } from "@/components/AssetLogo";
@@ -31,7 +31,6 @@ type RefreshStatus = "idle" | "loading" | "success" | "error";
 export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps) {
   const fc = createCurrencyFormatter(currency, rates);
   const c = usePnLColors();
-  const hasIncome = holdings.some((h) => h.totalIncome > 0);
   const [refreshStatus, setRefreshStatus] = useState<RefreshStatus>("idle");
   const [refreshInfo, setRefreshInfo] = useState("");
   const router = useRouter();
@@ -132,7 +131,6 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                 <TableHead className="text-right">{t("holdings.avgCost")}</TableHead>
                 <TableHead className="text-right">{t("holdings.currentPrice")}</TableHead>
                 <TableHead className="text-right">{t("holdings.value")}</TableHead>
-                {hasIncome && <TableHead className="text-right">{t("holdings.income")}</TableHead>}
                 <TableHead className="text-right">{t("holdings.pnl")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -164,16 +162,6 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
                   <TableCell className="text-right font-semibold font-num">
                     {h.currentValue > 0 ? fc(h.currentValue) : "-"}
                   </TableCell>
-                  {hasIncome && (
-                    <TableCell className="text-right">
-                      {h.totalIncome > 0 ? (
-                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm font-medium font-num bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300">
-                          <Coins className="h-3.5 w-3.5" />
-                          {fc(h.totalIncome)}
-                        </div>
-                      ) : "-"}
-                    </TableCell>
-                  )}
                   <TableCell className="text-right">
                     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium font-num whitespace-nowrap ${
                       h.unrealizedPnL >= 0 ? c.gainPill : c.lossPill

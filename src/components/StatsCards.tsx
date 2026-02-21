@@ -62,11 +62,11 @@ export function StatsCards({ summary, currency, rates }: StatsCardsProps) {
       iconColor: summary.totalRealizedPnL >= 0 ? "text-amber-600 dark:text-amber-400" : c.lossIcon,
       valueColor: summary.totalRealizedPnL >= 0 ? "text-amber-600 dark:text-amber-400" : c.lossIcon,
     },
-    ...(summary.totalIncome > 0
+    ...(summary.totalDepositInterest > 0
       ? [
           {
             title: t("stats.totalIncome"),
-            value: `+${fc(summary.totalIncome)}`,
+            value: `+${fc(summary.totalDepositInterest)}`,
             icon: Coins,
             gradient: "from-amber-500 to-yellow-500",
             shadowColor: "shadow-amber-500/25",

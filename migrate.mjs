@@ -267,13 +267,13 @@ if (sellsToBackfill.length > 0) {
   for (const [key, sells] of groups) {
     const [userId, symbol] = key.split("::");
 
-    // Get all buy/income transactions for this user+symbol, ordered by date
+    // Get all buy transactions for this user+symbol, ordered by date
     const buys = await sql`
       SELECT quantity, price, currency, trade_date
       FROM transactions
       WHERE user_id = ${userId}
         AND symbol = ${symbol}
-        AND trade_type IN ('buy', 'income')
+        AND trade_type = 'buy'
         AND asset_type NOT IN ('deposit', 'bond')
       ORDER BY trade_date ASC, id ASC
     `;
@@ -401,5 +401,21 @@ if (depositTxGroups.length > 0) {
 
   console.log("Deposit migration complete.");
 }
+
+// ── Add withdrawn_amount column to deposits if missing ───────────────
+await sql`
+  DO $$ BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'deposits' AND column_name = 'withdrawn_amount'
+    ) THEN
+      ALTER TABLE "deposits"
+        ADD COLUMN "withdrawn_amount" numeric(18, 2) DEFAULT '0';
+    END IF;
+  END $$
+`;
+
+// ── Delete income transactions (trade type removed) ──────────────────
+await sql`DELETE FROM transactions WHERE trade_type = 'income'`;
 
 console.log("Migrations complete");

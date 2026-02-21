@@ -11,7 +11,7 @@ import { createTransaction, updateTransaction } from "@/actions/transactions";
 import { createDeposit, updateDeposit } from "@/actions/deposits";
 import { Transaction, Deposit } from "@/lib/schema";
 import { SupportedCurrency, ExchangeRates } from "@/lib/currency";
-import { TrendingUp, PiggyBank, DollarSign, Coins, X } from "lucide-react";
+import { TrendingUp, PiggyBank, X } from "lucide-react";
 import { useToast } from "@/components/Toast";
 import { useI18n } from "@/components/I18nProvider";
 import { SymbolAutocomplete } from "@/components/SymbolAutocomplete";
@@ -93,20 +93,10 @@ export function TransactionForm({
   );
 
   const [tradeType, setTradeType] = useState(transaction?.tradeType || "buy");
-  const [incomeMode, setIncomeMode] = useState<"cash" | "asset">(
-    transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
-      ? "cash"
-      : "asset"
-  );
   const [autoName, setAutoName] = useState(transaction?.name || deposit?.name || "");
   const [liveSymbol, setLiveSymbol] = useState(transaction?.symbol || deposit?.symbol || "");
   const [liveQuantity, setLiveQuantity] = useState(transaction?.quantity || "");
   const [livePrice, setLivePrice] = useState(transaction?.price || "");
-  const [liveAmount, setLiveAmount] = useState(
-    transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
-      ? transaction?.totalAmount || ""
-      : ""
-  );
   const [liveCurrency, setLiveCurrency] = useState(transaction?.currency || deposit?.currency || currency);
 
   // Deposit-specific state
@@ -164,9 +154,6 @@ export function TransactionForm({
       setMarketPrice(null);
     }
   }, [liveSymbol, isInvestment, fetchMarketPrice]);
-
-  const isIncome = tradeType === "income";
-  const isCashIncome = isIncome && incomeMode === "cash";
 
   const handleSubmit = async (formData: FormData) => {
     startTransition(async () => {
@@ -274,18 +261,14 @@ export function TransactionForm({
             {t("form.tradeType")}
           </h3>
           <div className="flex gap-2">
-            {(["buy", "sell", "income"] as const).map((type) => {
+            {(["buy", "sell"] as const).map((type) => {
               const selected = tradeType === type;
               const label = type === "buy"
                 ? t("form.buy")
-                : type === "sell"
-                ? t("form.sell")
-                : t("form.income");
+                : t("form.sell");
               const selectedClass = type === "buy"
                 ? "bg-emerald-500 text-white"
-                : type === "sell"
-                ? "bg-red-500 text-white"
-                : "bg-amber-500 text-white";
+                : "bg-red-500 text-white";
               return (
                 <button
                   key={type}
@@ -303,65 +286,14 @@ export function TransactionForm({
         </div>
       )}
 
-      {/* Income Mode Toggle */}
-      {!isDeposit && isIncome && (
-        <div className="animate-section-reveal space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            {t("form.incomeTypeSection")}
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setIncomeMode("cash")}
-              className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
-                incomeMode === "cash"
-                  ? "border-amber-500 bg-amber-50 dark:bg-amber-950/40"
-                  : "border-muted hover:border-amber-300"
-              }`}
-            >
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                incomeMode === "cash" ? "bg-amber-500 text-white" : "bg-muted text-muted-foreground"
-              }`}>
-                <DollarSign className="h-5 w-5" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-sm">{t("form.cashIncome")}</p>
-                <p className="text-xs text-muted-foreground">{t("form.cashIncomeDesc")}</p>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => setIncomeMode("asset")}
-              className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
-                incomeMode === "asset"
-                  ? "border-amber-500 bg-amber-50 dark:bg-amber-950/40"
-                  : "border-muted hover:border-amber-300"
-              }`}
-            >
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                incomeMode === "asset" ? "bg-amber-500 text-white" : "bg-muted text-muted-foreground"
-              }`}>
-                <Coins className="h-5 w-5" />
-              </div>
-              <div className="text-left">
-                <p className="font-semibold text-sm">{t("form.assetIncome")}</p>
-                <p className="text-xs text-muted-foreground">{t("form.assetIncomeDesc")}</p>
-              </div>
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Section 3: Form Fields */}
       <div
-        key={`${assetType}-${tradeType}-${incomeMode}`}
+        key={`${assetType}-${tradeType}`}
         className="animate-section-reveal space-y-4"
       >
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
           {isDeposit
             ? t("form.depositDetails")
-            : isIncome
-            ? t("form.incomeDetails")
             : t("form.tradeDetails")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 [&>div]:min-w-0">
@@ -486,34 +418,10 @@ export function TransactionForm({
           ) : (
             <>
               {/* ── Transaction-specific fields ── */}
-              {isCashIncome ? (
-                <>
-                  <input type="hidden" name="quantity" value="0" />
-                  <input type="hidden" name="price" value="0" />
-                  <div className="space-y-2">
-                    <Label htmlFor="incomeAmount">{t("form.incomeAmount")}</Label>
-                    <Input
-                      id="incomeAmount"
-                      name="incomeAmount"
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      defaultValue={
-                        transaction?.tradeType === "income" && parseFloat(transaction?.quantity || "0") === 0
-                          ? transaction?.totalAmount || ""
-                          : ""
-                      }
-                      onChange={(e) => setLiveAmount(e.target.value)}
-                      required
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-2">
+              <div className="space-y-2">
                     <div className="flex items-center h-5">
                       <Label htmlFor="quantity">
-                        {isIncome ? t("form.quantityReceived") : t("form.quantity")}
+                        {t("form.quantity")}
                       </Label>
                     </div>
                     <Input
@@ -531,7 +439,7 @@ export function TransactionForm({
                   <div className="space-y-2">
                     <div className="flex items-center justify-between h-5">
                       <Label htmlFor="price">
-                        {isIncome ? t("form.marketPriceAtReceipt") : t("form.price")}
+                        {t("form.price")}
                       </Label>
                       {liveSymbol.trim() && (
                         priceLoading ? (
@@ -568,9 +476,7 @@ export function TransactionForm({
                       onChange={(e) => setLivePrice(e.target.value)}
                       required
                     />
-                  </div>
-                </>
-              )}
+              </div>
 
               {/* Currency */}
               <div className="space-y-2">
@@ -589,25 +495,22 @@ export function TransactionForm({
               </div>
 
               {/* Fee */}
-              {!isCashIncome && (
-                <div className="space-y-2">
-                  <Label htmlFor="fee">{t("form.fee")}</Label>
-                  <Input
-                    id="fee"
-                    name="fee"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    defaultValue={transaction?.fee || "0"}
-                  />
-                </div>
-              )}
-              {isCashIncome && <input type="hidden" name="fee" value="0" />}
+              <div className="space-y-2">
+                <Label htmlFor="fee">{t("form.fee")}</Label>
+                <Input
+                  id="fee"
+                  name="fee"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  defaultValue={transaction?.fee || "0"}
+                />
+              </div>
 
               {/* Trade Date */}
               <div className="space-y-2">
                 <Label htmlFor="tradeDate">
-                  {isIncome ? t("form.incomeDate") : t("form.tradeDate")}
+                  {t("form.tradeDate")}
                 </Label>
                 <Input
                   id="tradeDate"
@@ -669,18 +572,14 @@ export function TransactionForm({
 
           const qty = parseFloat(liveQuantity);
           const prc = parseFloat(livePrice);
-          const amt = parseFloat(liveAmount);
           const sym = liveSymbol.toUpperCase();
           const cur = liveCurrency || defaultCurrency;
 
           const hasQtyPrice = !isNaN(qty) && qty > 0 && !isNaN(prc) && prc > 0 && sym;
-          const hasAmount = !isNaN(amt) && amt > 0 && sym;
 
           const tradeLabel = tradeType === "buy"
             ? t("form.buy")
-            : tradeType === "sell"
-            ? t("form.sell")
-            : t("form.income");
+            : t("form.sell");
 
           if (hasQtyPrice) {
             const total = qty * prc;
@@ -693,14 +592,6 @@ export function TransactionForm({
                 <span className="font-num">{fmtQty}</span> {sym} x{" "}
                 <span className="font-num">{fmtPrice}</span> ={" "}
                 <span className="font-num font-bold">{fmtTotal}</span> {cur}
-              </p>
-            );
-          } else if (hasAmount) {
-            const fmtAmount = amt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            return (
-              <p className="text-sm font-medium text-foreground">
-                {tradeLabel}{" "}
-                <span className="font-num font-bold">{fmtAmount}</span> {cur} — {sym}
               </p>
             );
           } else {
@@ -720,17 +611,13 @@ export function TransactionForm({
                 ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
                 : tradeType === "buy"
                 ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
-                : tradeType === "sell"
-                ? "bg-gradient-to-r from-red-500 to-rose-500 text-white"
-                : "bg-gradient-to-r from-amber-500 to-orange-500 text-white"
+                : "bg-gradient-to-r from-red-500 to-rose-500 text-white"
             }`}
           >
             {isPending
               ? t("form.saving")
               : isDeposit
               ? (mode === "edit" ? t("deposit.update") : t("deposit.confirm"))
-              : isIncome
-              ? t("form.confirmIncome")
               : t("form.confirmTransaction")}
           </Button>
           <Button
