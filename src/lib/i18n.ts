@@ -194,6 +194,14 @@ const translations = {
   "transactions.sell": { en: "SELL", zh: "卖出" },
   "transactions.incomeType": { en: "INCOME", zh: "收入" },
   "transactions.realizedPnl": { en: "Realized P&L", zh: "已实现盈亏" },
+  "transactions.investments": { en: "Investment Transactions", zh: "投资交易" },
+  "transactions.depositsHistory": { en: "Deposits", zh: "存款记录" },
+  "transactions.addDeposit": { en: "Add Deposit", zh: "添加存款" },
+  "transactions.noDeposits": { en: "No deposits yet", zh: "暂无存款记录" },
+  "transactions.addDepositFirst": { en: "Add your first deposit to get started", zh: "添加您的第一笔存款开始使用" },
+  "transactions.institution": { en: "Institution", zh: "机构" },
+  "transactions.principal": { en: "Principal", zh: "本金" },
+  "transactions.interestRate": { en: "Interest Rate", zh: "利率" },
 
   // ── Form ──────────────────────────────────────────────────
   "form.addTitle": { en: "Add Transaction", zh: "添加交易" },
