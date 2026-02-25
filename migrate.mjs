@@ -322,6 +322,17 @@ if (sellsToBackfill.length > 0) {
   console.log("Backfill complete.");
 }
 
+// ── Verification tokens table (for email magic link) ─────────────
+
+await sql`
+  CREATE TABLE IF NOT EXISTS "verificationToken" (
+    "identifier" text NOT NULL,
+    "token" text NOT NULL,
+    "expires" timestamp NOT NULL,
+    PRIMARY KEY ("identifier", "token")
+  )
+`;
+
 // ── Asset logos table ────────────────────────────────────────────
 
 await sql`

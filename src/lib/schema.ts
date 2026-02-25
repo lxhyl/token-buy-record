@@ -47,6 +47,16 @@ export const accounts = pgTable(
   ]
 );
 
+export const verificationTokens = pgTable(
+  "verificationToken",
+  {
+    identifier: text("identifier").notNull(),
+    token: text("token").notNull(),
+    expires: timestamp("expires", { mode: "date" }).notNull(),
+  },
+  (vt) => [primaryKey({ columns: [vt.identifier, vt.token] })]
+);
+
 // ── App tables ───────────────────────────────────────────────
 
 export const transactions = pgTable("transactions", {
