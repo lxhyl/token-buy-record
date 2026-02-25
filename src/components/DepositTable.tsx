@@ -27,6 +27,7 @@ interface DepositTableProps {
   holdings: DepositHolding[];
   currency: SupportedCurrency;
   rates: ExchangeRates;
+  readOnly?: boolean;
 }
 
 function getStatus(maturityDate: Date | null): {
@@ -54,6 +55,7 @@ export function DepositTable({
   holdings,
   currency,
   rates,
+  readOnly,
 }: DepositTableProps) {
   const fc = createCurrencyFormatter(currency, rates);
   const { t } = useI18n();
@@ -110,13 +112,15 @@ export function DepositTable({
                 {t("deposit.title")}
               </CardTitle>
             </div>
-            <Link href="/transactions/new?type=deposit">
-              <Button size="sm" className="md:h-10 md:px-4">
-                <Plus className="h-4 w-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">{t("deposit.addDeposit")}</span>
-                <span className="sm:hidden">{t("common.add")}</span>
-              </Button>
-            </Link>
+            {!readOnly && (
+              <Link href="/transactions/new?type=deposit">
+                <Button size="sm" className="md:h-10 md:px-4">
+                  <Plus className="h-4 w-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">{t("deposit.addDeposit")}</span>
+                  <span className="sm:hidden">{t("common.add")}</span>
+                </Button>
+              </Link>
+            )}
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -131,12 +135,14 @@ export function DepositTable({
               <p className="text-sm text-muted-foreground mt-1 mb-4">
                 {t("deposit.emptyHint")}
               </p>
-              <Link href="/transactions/new?type=deposit">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t("deposit.addDeposit")}
-                </Button>
-              </Link>
+              {!readOnly && (
+                <Link href="/transactions/new?type=deposit">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t("deposit.addDeposit")}
+                  </Button>
+                </Link>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -151,7 +157,7 @@ export function DepositTable({
                     <TableHead className="text-right">{t("deposit.startDateCol")}</TableHead>
                     <TableHead className="text-right">{t("deposit.maturity")}</TableHead>
                     <TableHead className="text-right">{t("deposit.status")}</TableHead>
-                    <TableHead className="text-right">{t("deposit.actions")}</TableHead>
+                    {!readOnly && <TableHead className="text-right">{t("deposit.actions")}</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -214,40 +220,42 @@ export function DepositTable({
                             {t(status.labelKey)}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            {h.remainingPrincipal > 0 && (
+                        {!readOnly && (
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              {h.remainingPrincipal > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950/30"
+                                  onClick={() => {
+                                    setWithdrawDialog({ id: h.id, symbol: h.symbol, remaining: h.remainingPrincipal });
+                                    setWithdrawAmount("");
+                                  }}
+                                  disabled={isPending}
+                                  aria-label={t("deposit.withdraw")}
+                                >
+                                  <ArrowUpRight className="h-4 w-4" />
+                                </Button>
+                              )}
+                              <Link href={`/deposits/${h.id}/edit`}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t("common.edit")}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </Link>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950/30"
-                                onClick={() => {
-                                  setWithdrawDialog({ id: h.id, symbol: h.symbol, remaining: h.remainingPrincipal });
-                                  setWithdrawAmount("");
-                                }}
+                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => setDeleteConfirm({ id: h.id, symbol: h.symbol })}
                                 disabled={isPending}
-                                aria-label={t("deposit.withdraw")}
+                                aria-label={t("common.delete")}
                               >
-                                <ArrowUpRight className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4" />
                               </Button>
-                            )}
-                            <Link href={`/deposits/${h.id}/edit`}>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t("common.edit")}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => setDeleteConfirm({ id: h.id, symbol: h.symbol })}
-                              disabled={isPending}
-                              aria-label={t("common.delete")}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                            </div>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}

@@ -24,11 +24,12 @@ interface HoldingsTableProps {
   holdings: Holding[];
   currency: SupportedCurrency;
   rates: ExchangeRates;
+  readOnly?: boolean;
 }
 
 type RefreshStatus = "idle" | "loading" | "success" | "error";
 
-export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps) {
+export function HoldingsTable({ holdings, currency, rates, readOnly }: HoldingsTableProps) {
   const fc = createCurrencyFormatter(currency, rates);
   const c = usePnLColors();
   const [refreshStatus, setRefreshStatus] = useState<RefreshStatus>("idle");
@@ -77,7 +78,7 @@ export function HoldingsTable({ holdings, currency, rates }: HoldingsTableProps)
             </div>
             <CardTitle className="text-base md:text-lg truncate">{t("holdings.title")}</CardTitle>
           </div>
-          {holdings.length > 0 && (
+          {holdings.length > 0 && !readOnly && (
             <div className="flex items-center gap-2 shrink-0">
               {refreshInfo && (
                 <span className={`text-xs md:text-sm hidden sm:inline ${

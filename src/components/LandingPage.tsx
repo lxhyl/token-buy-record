@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   TrendingUp,
-  TrendingDown,
   BarChart3,
   Shield,
   Smartphone,
@@ -16,22 +15,8 @@ import {
 import { useI18n } from "@/components/I18nProvider";
 import { LandingLanguageToggle } from "@/components/LandingLanguageToggle";
 import { LoginModal } from "@/components/LoginModal";
+import { LandingDashboard } from "@/components/LandingDashboard";
 import { TranslationKey } from "@/lib/i18n";
-
-// ── Mock holdings (cost basis fixed, price/change updated from live API) ──
-const BASE_HOLDINGS = [
-  { symbol: "AAPL", name: "Apple Inc.",      qty: 150, cost: 172.5  },
-  { symbol: "BTC",  name: "Bitcoin",         qty: 2.5,  cost: 42100  },
-  { symbol: "NVDA", name: "NVIDIA Corp.",    qty: 80,   cost: 480.0  },
-  { symbol: "MSFT", name: "Microsoft Corp.", qty: 60,   cost: 310.0  },
-  { symbol: "ETH",  name: "Ethereum",        qty: 15,   cost: 2200   },
-  { symbol: "TSLA", name: "Tesla Inc.",      qty: 45,   cost: 295.0  },
-];
-
-const MOCK_CHART_DATA = [
-  12000, 14500, 13800, 16200, 18900, 17800, 21500, 24100, 22800, 26400, 29100, 31500,
-  28900, 32600, 35800, 38200, 41500, 39800, 43200, 46800, 45100, 48500, 52100, 56800,
-];
 
 const FEATURE_ITEMS: { icon: typeof BarChart3; titleKey: TranslationKey; descKey: TranslationKey; gradient: string }[] = [
   { icon: BarChart3,   titleKey: "landing.featureAnalyticsTitle",    descKey: "landing.featureAnalyticsDesc",    gradient: "from-blue-500 to-cyan-500"    },
@@ -42,76 +27,10 @@ const FEATURE_ITEMS: { icon: typeof BarChart3; titleKey: TranslationKey; descKey
   { icon: Zap,         titleKey: "landing.featureFastTitle",         descKey: "landing.featureFastDesc",         gradient: "from-amber-500 to-yellow-500"  },
 ];
 
-// ── Sparkline mini-chart (SVG) ─────────────────────────────
-function MiniChart({ data, color }: { data: number[]; color: string }) {
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const w = 200, h = 60;
-  const points = data
-    .map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`)
-    .join(" ");
-
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id={`grad-${color}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={0.25} />
-          <stop offset="100%" stopColor={color} stopOpacity={0} />
-        </linearGradient>
-      </defs>
-      <polyline fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={points} />
-      <polygon fill={`url(#grad-${color})`} points={`0,${h} ${points} ${w},${h}`} />
-    </svg>
-  );
-}
-
 // ── Landing page ───────────────────────────────────────────
 export function LandingPage() {
   const { t } = useI18n();
   const [loginOpen, setLoginOpen] = useState(false);
-  const [prices, setPrices] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    fetch("/api/landing-prices")
-      .then((r) => r.json())
-      .then((data) => setPrices(data))
-      .catch(() => {});
-  }, []);
-
-  const holdings = BASE_HOLDINGS.map((h) => {
-    const price = prices[h.symbol] ?? null;
-    const change = price !== null ? ((price - h.cost) / h.cost) * 100 : null;
-    return { ...h, price, change };
-  });
-
-  const totalValue = holdings.reduce((sum, h) => sum + (h.price !== null ? h.price * h.qty : h.cost * h.qty), 0);
-  const totalCost  = holdings.reduce((sum, h) => sum + h.cost * h.qty, 0);
-  const totalReturn = totalValue - totalCost;
-  const totalReturnPct = (totalReturn / totalCost) * 100;
-  const hasPrices = Object.keys(prices).length > 0;
-
-  const fmt = (n: number, decimals = 2) =>
-    n.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-
-  const STATS: { labelKey: TranslationKey; value: string; change: string; up: boolean }[] = hasPrices
-    ? [
-        { labelKey: "landing.statPortfolioValue", value: `$${fmt(totalValue, 0)}`,                                       change: `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%`, up: totalReturnPct >= 0 },
-        { labelKey: "landing.statTodayPnL",       value: `${totalReturn >= 0 ? "+" : ""}$${fmt(Math.abs(totalReturn), 0)}`, change: `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%`, up: totalReturn >= 0     },
-        { labelKey: "landing.statTotalReturn",    value: `${totalReturn >= 0 ? "+" : "-"}$${fmt(Math.abs(totalReturn), 0)}`,change: `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%`, up: totalReturn >= 0     },
-      ]
-    : [
-        { labelKey: "landing.statPortfolioValue", value: "$—", change: "—", up: true },
-        { labelKey: "landing.statTodayPnL",       value: "$—", change: "—", up: true },
-        { labelKey: "landing.statTotalReturn",    value: "$—", change: "—", up: true },
-      ];
-
-  const ALLOCATION_ITEMS: { labelKey: TranslationKey; color: string; pct: string }[] = [
-    { labelKey: "landing.stocks",   color: "bg-blue-500",    pct: "42%" },
-    { labelKey: "landing.crypto",   color: "bg-teal-500",    pct: "28%" },
-    { labelKey: "landing.bonds",    color: "bg-amber-500",   pct: "18%" },
-    { labelKey: "landing.deposits", color: "bg-emerald-500", pct: "12%" },
-  ];
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -177,135 +96,24 @@ export function LandingPage() {
             </div>
           </div>
 
-          {/* Stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto mb-12">
-            {STATS.map((s, i) => (
-              <div
-                key={s.labelKey}
-                className="relative rounded-xl border bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm p-5 animate-fade-in"
-                style={{ animationDelay: `${0.3 + i * 0.1}s` }}
-              >
-                <p className="text-sm text-muted-foreground">{t(s.labelKey)}</p>
-                <p className="text-2xl font-bold font-num mt-1">{s.value}</p>
-                <span className={`text-sm font-medium font-num ${s.up ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
-                  {s.change}
-                </span>
+          {/* Real dashboard preview */}
+          <div className="animate-fade-in" style={{ animationDelay: "0.4s" }}>
+            {/* Browser chrome */}
+            <div className="rounded-t-xl border border-b-0 bg-gray-50/80 dark:bg-gray-800/80 px-4 py-2.5 flex items-center gap-2">
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
               </div>
-            ))}
-          </div>
-
-          {/* Mock dashboard preview */}
-          <div className="max-w-5xl mx-auto animate-fade-in" style={{ animationDelay: "0.5s" }}>
-            <div className="rounded-xl border bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm shadow-2xl shadow-black/5 dark:shadow-black/20 overflow-hidden">
-              {/* Browser chrome */}
-              <div className="flex items-center gap-2 border-b px-4 py-2.5 bg-gray-50/80 dark:bg-gray-800/80">
-                <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                </div>
-                <div className="flex-1 flex justify-center">
-                  <div className="flex items-center gap-2 rounded-md bg-white dark:bg-gray-900 border px-4 py-1 text-xs text-muted-foreground">
-                    <Shield className="h-3 w-3 text-emerald-500" />
-                    tradetracker.app/dashboard
-                  </div>
+              <div className="flex-1 flex justify-center">
+                <div className="flex items-center gap-2 rounded-md bg-white dark:bg-gray-900 border px-4 py-1 text-xs text-muted-foreground">
+                  <Shield className="h-3 w-3 text-emerald-500" />
+                  tradetracker.app/dashboard
                 </div>
               </div>
-
-              {/* Dashboard content */}
-              <div className="p-4 md:p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-                  <div className="lg:col-span-2 rounded-lg border bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t("landing.portfolioValue")}</p>
-                        <p className="text-2xl font-bold font-num">
-                          {hasPrices ? `$${fmt(totalValue, 0)}` : "$—"}
-                        </p>
-                      </div>
-                      <span className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold font-num ${totalReturn >= 0 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400"}`}>
-                        {totalReturn >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                        {hasPrices ? `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%` : "—"}
-                      </span>
-                    </div>
-                    <div className="h-32 md:h-40">
-                      <MiniChart data={MOCK_CHART_DATA} color="#2563eb" />
-                    </div>
-                  </div>
-                  <div className="rounded-lg border bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 p-4">
-                    <p className="text-sm text-muted-foreground mb-3">{t("landing.allocation")}</p>
-                    <div className="flex items-center justify-center py-2">
-                      <div className="relative w-28 h-28">
-                        <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                          <circle cx="18" cy="18" r="14" fill="none" stroke="#2563eb" strokeWidth="4" strokeDasharray="30 70" strokeDashoffset="0" />
-                          <circle cx="18" cy="18" r="14" fill="none" stroke="#14b8a6" strokeWidth="4" strokeDasharray="25 75" strokeDashoffset="-30" />
-                          <circle cx="18" cy="18" r="14" fill="none" stroke="#f59e0b" strokeWidth="4" strokeDasharray="20 80" strokeDashoffset="-55" />
-                          <circle cx="18" cy="18" r="14" fill="none" stroke="#10b981" strokeWidth="4" strokeDasharray="15 85" strokeDashoffset="-75" />
-                          <circle cx="18" cy="18" r="14" fill="none" stroke="#ef4444" strokeWidth="4" strokeDasharray="10 90" strokeDashoffset="-90" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-1 text-xs mt-2">
-                      {ALLOCATION_ITEMS.map((item) => (
-                        <div key={item.labelKey} className="flex items-center gap-1.5">
-                          <div className={`w-2 h-2 rounded-full ${item.color}`} />
-                          <span className="text-muted-foreground">{t(item.labelKey)}</span>
-                          <span className="font-medium font-num ml-auto">{item.pct}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Holdings table */}
-                <div className="rounded-lg border overflow-hidden">
-                  <div className="bg-gray-50/80 dark:bg-gray-800/80 px-4 py-2.5 border-b">
-                    <p className="text-sm font-semibold">{t("landing.holdings")}</p>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b text-muted-foreground">
-                          <th className="text-left px-4 py-2 font-medium">{t("landing.asset")}</th>
-                          <th className="text-right px-4 py-2 font-medium hidden sm:table-cell">{t("landing.qty")}</th>
-                          <th className="text-right px-4 py-2 font-medium">{t("landing.price")}</th>
-                          <th className="text-right px-4 py-2 font-medium hidden md:table-cell">{t("landing.avgCost")}</th>
-                          <th className="text-right px-4 py-2 font-medium">{t("landing.pnlPercent")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {holdings.map((h) => (
-                          <tr key={h.symbol} className="border-b last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                            <td className="px-4 py-2.5">
-                              <div>
-                                <span className="font-semibold">{h.symbol}</span>
-                                <p className="text-xs text-muted-foreground hidden sm:block">{h.name}</p>
-                              </div>
-                            </td>
-                            <td className="text-right px-4 py-2.5 font-num hidden sm:table-cell">{h.qty.toLocaleString()}</td>
-                            <td className="text-right px-4 py-2.5 font-medium font-num">
-                              {h.price !== null ? h.price.toLocaleString(undefined, { minimumFractionDigits: 2 }) : "—"}
-                            </td>
-                            <td className="text-right px-4 py-2.5 text-muted-foreground font-num hidden md:table-cell">
-                              {h.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                            </td>
-                            <td className="text-right px-4 py-2.5">
-                              {h.change !== null ? (
-                                <span className={`inline-flex items-center gap-1 font-semibold font-num ${h.change >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
-                                  {h.change >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                                  {h.change >= 0 ? "+" : ""}{h.change.toFixed(2)}%
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground font-num">—</span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
+            </div>
+            <div className="rounded-b-xl border bg-background shadow-2xl shadow-black/5 dark:shadow-black/20 p-4 md:p-8">
+              <LandingDashboard onLogin={() => setLoginOpen(true)} />
             </div>
           </div>
         </div>
