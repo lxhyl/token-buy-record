@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -68,14 +68,14 @@ function MagicLinkForm() {
   );
 }
 
-// ── Mock data ──────────────────────────────────────────────
-const MOCK_HOLDINGS = [
-  { symbol: "AAPL", name: "Apple Inc.", qty: 150, price: 198.11, cost: 172.5, change: +14.85 },
-  { symbol: "BTC", name: "Bitcoin", qty: 2.5, price: 68420, cost: 42100, change: +62.52 },
-  { symbol: "NVDA", name: "NVIDIA Corp.", qty: 80, price: 875.28, cost: 480.0, change: +82.35 },
-  { symbol: "MSFT", name: "Microsoft Corp.", qty: 60, price: 425.52, cost: 310.0, change: +37.26 },
-  { symbol: "ETH", name: "Ethereum", qty: 15, price: 3850, cost: 2200, change: +75.0 },
-  { symbol: "TSLA", name: "Tesla Inc.", qty: 45, price: 248.42, cost: 295.0, change: -15.79 },
+// ── Mock holdings (cost basis fixed, price/change updated from live API) ──
+const BASE_HOLDINGS = [
+  { symbol: "AAPL", name: "Apple Inc.",     qty: 150, cost: 172.5  },
+  { symbol: "BTC",  name: "Bitcoin",        qty: 2.5,  cost: 42100  },
+  { symbol: "NVDA", name: "NVIDIA Corp.",   qty: 80,   cost: 480.0  },
+  { symbol: "MSFT", name: "Microsoft Corp.", qty: 60,  cost: 310.0  },
+  { symbol: "ETH",  name: "Ethereum",       qty: 15,   cost: 2200   },
+  { symbol: "TSLA", name: "Tesla Inc.",     qty: 45,   cost: 295.0  },
 ];
 
 const MOCK_CHART_DATA = [
@@ -124,12 +124,43 @@ function MiniChart({ data, color }: { data: number[]; color: string }) {
 // ── Landing page ───────────────────────────────────────────
 export function LandingPage() {
   const { t } = useI18n();
+  const [prices, setPrices] = useState<Record<string, number>>({});
 
-  const STATS: { labelKey: TranslationKey; value: string; change: string; up: boolean }[] = [
-    { labelKey: "landing.statPortfolioValue", value: "$284,520", change: "+12.4%", up: true },
-    { labelKey: "landing.statTodayPnL", value: "+$3,842", change: "+1.37%", up: true },
-    { labelKey: "landing.statTotalReturn", value: "+$68,210", change: "+31.5%", up: true },
-  ];
+  useEffect(() => {
+    fetch("/api/landing-prices")
+      .then((r) => r.json())
+      .then((data) => setPrices(data))
+      .catch(() => {});
+  }, []);
+
+  const holdings = BASE_HOLDINGS.map((h) => {
+    const price = prices[h.symbol] ?? null;
+    const change = price !== null ? ((price - h.cost) / h.cost) * 100 : null;
+    return { ...h, price, change };
+  });
+
+  const totalValue = holdings.reduce((sum, h) => {
+    return sum + (h.price !== null ? h.price * h.qty : h.cost * h.qty);
+  }, 0);
+  const totalCost = holdings.reduce((sum, h) => sum + h.cost * h.qty, 0);
+  const totalReturn = totalValue - totalCost;
+  const totalReturnPct = (totalReturn / totalCost) * 100;
+  const hasPrices = Object.keys(prices).length > 0;
+
+  const fmt = (n: number, decimals = 2) =>
+    n.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+
+  const STATS: { labelKey: TranslationKey; value: string; change: string; up: boolean }[] = hasPrices
+    ? [
+        { labelKey: "landing.statPortfolioValue", value: `$${fmt(totalValue, 0)}`, change: `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%`, up: totalReturnPct >= 0 },
+        { labelKey: "landing.statTodayPnL", value: `${totalReturn >= 0 ? "+" : ""}$${fmt(Math.abs(totalReturn), 0)}`, change: `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%`, up: totalReturn >= 0 },
+        { labelKey: "landing.statTotalReturn", value: `${totalReturn >= 0 ? "+" : "-"}$${fmt(Math.abs(totalReturn), 0)}`, change: `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%`, up: totalReturn >= 0 },
+      ]
+    : [
+        { labelKey: "landing.statPortfolioValue", value: "$—", change: "—", up: true },
+        { labelKey: "landing.statTodayPnL", value: "$—", change: "—", up: true },
+        { labelKey: "landing.statTotalReturn", value: "$—", change: "—", up: true },
+      ];
 
   const ALLOCATION_ITEMS: { labelKey: TranslationKey; color: string; pct: string }[] = [
     { labelKey: "landing.stocks", color: "bg-blue-500", pct: "42%" },
@@ -262,11 +293,13 @@ export function LandingPage() {
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <p className="text-sm text-muted-foreground">{t("landing.portfolioValue")}</p>
-                        <p className="text-2xl font-bold font-num">$284,520.00</p>
+                        <p className="text-2xl font-bold font-num">
+                          {hasPrices ? `$${fmt(totalValue, 0)}` : "$—"}
+                        </p>
                       </div>
-                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 text-xs font-semibold font-num text-emerald-600 dark:text-emerald-400">
-                        <TrendingUp className="h-3 w-3" />
-                        +31.5%
+                      <span className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold font-num ${totalReturn >= 0 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400"}`}>
+                        {totalReturn >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                        {hasPrices ? `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%` : "—"}
                       </span>
                     </div>
                     <div className="h-32 md:h-40">
@@ -316,7 +349,7 @@ export function LandingPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {MOCK_HOLDINGS.map((h) => (
+                        {holdings.map((h) => (
                           <tr key={h.symbol} className="border-b last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
                             <td className="px-4 py-2.5">
                               <div>
@@ -326,27 +359,33 @@ export function LandingPage() {
                             </td>
                             <td className="text-right px-4 py-2.5 font-num hidden sm:table-cell">{h.qty.toLocaleString()}</td>
                             <td className="text-right px-4 py-2.5 font-medium font-num">
-                              {h.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              {h.price !== null
+                                ? h.price.toLocaleString(undefined, { minimumFractionDigits: 2 })
+                                : "—"}
                             </td>
                             <td className="text-right px-4 py-2.5 text-muted-foreground font-num hidden md:table-cell">
                               {h.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                             </td>
                             <td className="text-right px-4 py-2.5">
-                              <span
-                                className={`inline-flex items-center gap-1 font-semibold font-num ${
-                                  h.change >= 0
-                                    ? "text-emerald-600 dark:text-emerald-400"
-                                    : "text-red-600 dark:text-red-400"
-                                }`}
-                              >
-                                {h.change >= 0 ? (
-                                  <TrendingUp className="h-3.5 w-3.5" />
-                                ) : (
-                                  <TrendingDown className="h-3.5 w-3.5" />
-                                )}
-                                {h.change >= 0 ? "+" : ""}
-                                {h.change.toFixed(2)}%
-                              </span>
+                              {h.change !== null ? (
+                                <span
+                                  className={`inline-flex items-center gap-1 font-semibold font-num ${
+                                    h.change >= 0
+                                      ? "text-emerald-600 dark:text-emerald-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {h.change >= 0 ? (
+                                    <TrendingUp className="h-3.5 w-3.5" />
+                                  ) : (
+                                    <TrendingDown className="h-3.5 w-3.5" />
+                                  )}
+                                  {h.change >= 0 ? "+" : ""}
+                                  {h.change.toFixed(2)}%
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground font-num">—</span>
+                              )}
                             </td>
                           </tr>
                         ))}
