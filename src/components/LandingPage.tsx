@@ -1,6 +1,5 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useState, useEffect } from "react";
 import {
   TrendingUp,
@@ -13,69 +12,20 @@ import {
   ChevronRight,
   Zap,
   Globe,
-  Mail,
-  CheckCircle,
 } from "lucide-react";
 import { useI18n } from "@/components/I18nProvider";
 import { LandingLanguageToggle } from "@/components/LandingLanguageToggle";
+import { LoginModal } from "@/components/LoginModal";
 import { TranslationKey } from "@/lib/i18n";
-
-// ── Email Magic Link Form ──────────────────────────────────
-function MagicLinkForm() {
-  const { t, tInterpolate } = useI18n();
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email || status !== "idle") return;
-    setStatus("sending");
-    await signIn("resend", { email, callbackUrl: "/dashboard", redirect: false });
-    setStatus("sent");
-  }
-
-  if (status === "sent") {
-    return (
-      <div className="flex flex-col items-center gap-2 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 px-6 py-4 text-center">
-        <CheckCircle className="h-6 w-6 text-emerald-500" />
-        <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">{t("common.checkEmail")}</p>
-        <p className="text-xs text-muted-foreground">{tInterpolate("common.magicLinkSent", { email })}</p>
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-sm gap-2">
-      <div className="relative flex-1">
-        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder={t("common.emailPlaceholder")}
-          className="w-full rounded-lg border bg-background pl-9 pr-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
-        />
-      </div>
-      <button
-        type="submit"
-        disabled={status === "sending"}
-        className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 px-4 py-2.5 text-sm font-medium text-blue-600 dark:text-blue-400 transition-all hover:bg-blue-100 dark:hover:bg-blue-900/40 disabled:opacity-60"
-      >
-        {status === "sending" ? t("common.sending") : t("common.sendMagicLink")}
-      </button>
-    </form>
-  );
-}
 
 // ── Mock holdings (cost basis fixed, price/change updated from live API) ──
 const BASE_HOLDINGS = [
-  { symbol: "AAPL", name: "Apple Inc.",     qty: 150, cost: 172.5  },
-  { symbol: "BTC",  name: "Bitcoin",        qty: 2.5,  cost: 42100  },
-  { symbol: "NVDA", name: "NVIDIA Corp.",   qty: 80,   cost: 480.0  },
-  { symbol: "MSFT", name: "Microsoft Corp.", qty: 60,  cost: 310.0  },
-  { symbol: "ETH",  name: "Ethereum",       qty: 15,   cost: 2200   },
-  { symbol: "TSLA", name: "Tesla Inc.",     qty: 45,   cost: 295.0  },
+  { symbol: "AAPL", name: "Apple Inc.",      qty: 150, cost: 172.5  },
+  { symbol: "BTC",  name: "Bitcoin",         qty: 2.5,  cost: 42100  },
+  { symbol: "NVDA", name: "NVIDIA Corp.",    qty: 80,   cost: 480.0  },
+  { symbol: "MSFT", name: "Microsoft Corp.", qty: 60,   cost: 310.0  },
+  { symbol: "ETH",  name: "Ethereum",        qty: 15,   cost: 2200   },
+  { symbol: "TSLA", name: "Tesla Inc.",      qty: 45,   cost: 295.0  },
 ];
 
 const MOCK_CHART_DATA = [
@@ -84,12 +34,12 @@ const MOCK_CHART_DATA = [
 ];
 
 const FEATURE_ITEMS: { icon: typeof BarChart3; titleKey: TranslationKey; descKey: TranslationKey; gradient: string }[] = [
-  { icon: BarChart3, titleKey: "landing.featureAnalyticsTitle", descKey: "landing.featureAnalyticsDesc", gradient: "from-blue-500 to-cyan-500" },
-  { icon: PieChart, titleKey: "landing.featureMultiAssetTitle", descKey: "landing.featureMultiAssetDesc", gradient: "from-teal-500 to-emerald-500" },
-  { icon: Globe, titleKey: "landing.featureMultiCurrencyTitle", descKey: "landing.featureMultiCurrencyDesc", gradient: "from-sky-500 to-blue-500" },
-  { icon: Smartphone, titleKey: "landing.featurePWATitle", descKey: "landing.featurePWADesc", gradient: "from-orange-500 to-amber-500" },
-  { icon: Shield, titleKey: "landing.featureSecureTitle", descKey: "landing.featureSecureDesc", gradient: "from-slate-600 to-slate-800" },
-  { icon: Zap, titleKey: "landing.featureFastTitle", descKey: "landing.featureFastDesc", gradient: "from-amber-500 to-yellow-500" },
+  { icon: BarChart3,   titleKey: "landing.featureAnalyticsTitle",    descKey: "landing.featureAnalyticsDesc",    gradient: "from-blue-500 to-cyan-500"    },
+  { icon: PieChart,    titleKey: "landing.featureMultiAssetTitle",   descKey: "landing.featureMultiAssetDesc",   gradient: "from-teal-500 to-emerald-500"  },
+  { icon: Globe,       titleKey: "landing.featureMultiCurrencyTitle",descKey: "landing.featureMultiCurrencyDesc",gradient: "from-sky-500 to-blue-500"      },
+  { icon: Smartphone,  titleKey: "landing.featurePWATitle",          descKey: "landing.featurePWADesc",          gradient: "from-orange-500 to-amber-500"  },
+  { icon: Shield,      titleKey: "landing.featureSecureTitle",       descKey: "landing.featureSecureDesc",       gradient: "from-slate-600 to-slate-800"   },
+  { icon: Zap,         titleKey: "landing.featureFastTitle",         descKey: "landing.featureFastDesc",         gradient: "from-amber-500 to-yellow-500"  },
 ];
 
 // ── Sparkline mini-chart (SVG) ─────────────────────────────
@@ -97,14 +47,9 @@ function MiniChart({ data, color }: { data: number[]; color: string }) {
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1;
-  const w = 200;
-  const h = 60;
+  const w = 200, h = 60;
   const points = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1)) * w;
-      const y = h - ((v - min) / range) * h;
-      return `${x},${y}`;
-    })
+    .map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`)
     .join(" ");
 
   return (
@@ -124,6 +69,7 @@ function MiniChart({ data, color }: { data: number[]; color: string }) {
 // ── Landing page ───────────────────────────────────────────
 export function LandingPage() {
   const { t } = useI18n();
+  const [loginOpen, setLoginOpen] = useState(false);
   const [prices, setPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -139,10 +85,8 @@ export function LandingPage() {
     return { ...h, price, change };
   });
 
-  const totalValue = holdings.reduce((sum, h) => {
-    return sum + (h.price !== null ? h.price * h.qty : h.cost * h.qty);
-  }, 0);
-  const totalCost = holdings.reduce((sum, h) => sum + h.cost * h.qty, 0);
+  const totalValue = holdings.reduce((sum, h) => sum + (h.price !== null ? h.price * h.qty : h.cost * h.qty), 0);
+  const totalCost  = holdings.reduce((sum, h) => sum + h.cost * h.qty, 0);
   const totalReturn = totalValue - totalCost;
   const totalReturnPct = (totalReturn / totalCost) * 100;
   const hasPrices = Object.keys(prices).length > 0;
@@ -152,25 +96,27 @@ export function LandingPage() {
 
   const STATS: { labelKey: TranslationKey; value: string; change: string; up: boolean }[] = hasPrices
     ? [
-        { labelKey: "landing.statPortfolioValue", value: `$${fmt(totalValue, 0)}`, change: `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%`, up: totalReturnPct >= 0 },
-        { labelKey: "landing.statTodayPnL", value: `${totalReturn >= 0 ? "+" : ""}$${fmt(Math.abs(totalReturn), 0)}`, change: `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%`, up: totalReturn >= 0 },
-        { labelKey: "landing.statTotalReturn", value: `${totalReturn >= 0 ? "+" : "-"}$${fmt(Math.abs(totalReturn), 0)}`, change: `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%`, up: totalReturn >= 0 },
+        { labelKey: "landing.statPortfolioValue", value: `$${fmt(totalValue, 0)}`,                                       change: `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%`, up: totalReturnPct >= 0 },
+        { labelKey: "landing.statTodayPnL",       value: `${totalReturn >= 0 ? "+" : ""}$${fmt(Math.abs(totalReturn), 0)}`, change: `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%`, up: totalReturn >= 0     },
+        { labelKey: "landing.statTotalReturn",    value: `${totalReturn >= 0 ? "+" : "-"}$${fmt(Math.abs(totalReturn), 0)}`,change: `${totalReturnPct >= 0 ? "+" : ""}${fmt(totalReturnPct)}%`, up: totalReturn >= 0     },
       ]
     : [
         { labelKey: "landing.statPortfolioValue", value: "$—", change: "—", up: true },
-        { labelKey: "landing.statTodayPnL", value: "$—", change: "—", up: true },
-        { labelKey: "landing.statTotalReturn", value: "$—", change: "—", up: true },
+        { labelKey: "landing.statTodayPnL",       value: "$—", change: "—", up: true },
+        { labelKey: "landing.statTotalReturn",    value: "$—", change: "—", up: true },
       ];
 
   const ALLOCATION_ITEMS: { labelKey: TranslationKey; color: string; pct: string }[] = [
-    { labelKey: "landing.stocks", color: "bg-blue-500", pct: "42%" },
-    { labelKey: "landing.crypto", color: "bg-teal-500", pct: "28%" },
-    { labelKey: "landing.bonds", color: "bg-amber-500", pct: "18%" },
+    { labelKey: "landing.stocks",   color: "bg-blue-500",    pct: "42%" },
+    { labelKey: "landing.crypto",   color: "bg-teal-500",    pct: "28%" },
+    { labelKey: "landing.bonds",    color: "bg-amber-500",   pct: "18%" },
     { labelKey: "landing.deposits", color: "bg-emerald-500", pct: "12%" },
   ];
 
   return (
     <div className="min-h-screen overflow-x-hidden">
+      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+
       {/* Top nav bar */}
       <header className="sticky top-0 z-50 border-b bg-white/85 dark:bg-gray-950/85 backdrop-blur-xl">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
@@ -178,14 +124,12 @@ export function LandingPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-teal-500 text-white shadow-md shadow-blue-600/20">
               <TrendingUp className="h-4 w-4" />
             </div>
-            <span className="text-lg font-bold text-gradient">
-              TradeTracker
-            </span>
+            <span className="text-lg font-bold text-gradient">TradeTracker</span>
           </div>
           <div className="flex items-center gap-3">
             <LandingLanguageToggle />
             <button
-              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              onClick={() => setLoginOpen(true)}
               className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition-all hover:shadow-lg hover:shadow-blue-600/25 hover:-translate-y-0.5 active:translate-y-0"
             >
               {t("common.getStarted")}
@@ -197,7 +141,6 @@ export function LandingPage() {
 
       {/* ── Hero Section ─────────────────────────────── */}
       <section className="relative py-20 md:py-28">
-        {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-blue-500/8 blur-3xl" />
           <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-teal-500/8 blur-3xl" />
@@ -211,42 +154,26 @@ export function LandingPage() {
             </div>
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
               {t("landing.heroTitle1")}{" "}
-              <span className="text-gradient">
-                {t("landing.heroTitle2")}
-              </span>
+              <span className="text-gradient">{t("landing.heroTitle2")}</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
               {t("landing.heroDesc")}
             </p>
-            <div className="flex flex-col items-center gap-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-teal-500 px-8 py-3.5 text-base font-semibold text-white shadow-md shadow-blue-600/20 transition-all hover:shadow-lg hover:shadow-blue-600/25 hover:-translate-y-0.5 active:translate-y-0"
-                >
-                  <svg className="h-5 w-5" viewBox="0 0 24 24">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#fff" fillOpacity={0.9} />
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#fff" fillOpacity={0.8} />
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#fff" fillOpacity={0.7} />
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#fff" fillOpacity={0.9} />
-                  </svg>
-                  {t("common.signInWithGoogle")}
-                </button>
-                <a
-                  href="#features"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-8 py-3.5 text-base font-semibold text-foreground transition-all hover:bg-secondary/50 hover:-translate-y-0.5 active:translate-y-0"
-                >
-                  {t("common.learnMore")}
-                  <ChevronRight className="h-4 w-4" />
-                </a>
-              </div>
-              {/* Email magic link */}
-              <div className="flex items-center gap-3 w-full max-w-sm">
-                <div className="h-px flex-1 bg-border" />
-                <span className="text-xs text-muted-foreground">{t("common.orDivider")}</span>
-                <div className="h-px flex-1 bg-border" />
-              </div>
-              <MagicLinkForm />
+            <div className="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
+              <button
+                onClick={() => setLoginOpen(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-teal-500 px-8 py-3.5 text-base font-semibold text-white shadow-md shadow-blue-600/20 transition-all hover:shadow-lg hover:shadow-blue-600/25 hover:-translate-y-0.5 active:translate-y-0"
+              >
+                {t("common.getStarted")}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <a
+                href="#features"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-8 py-3.5 text-base font-semibold text-foreground transition-all hover:bg-secondary/50 hover:-translate-y-0.5 active:translate-y-0"
+              >
+                {t("common.learnMore")}
+                <ChevronRight className="h-4 w-4" />
+              </a>
             </div>
           </div>
 
@@ -287,7 +214,6 @@ export function LandingPage() {
 
               {/* Dashboard content */}
               <div className="p-4 md:p-6">
-                {/* Chart area */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
                   <div className="lg:col-span-2 rounded-lg border bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 p-4">
                     <div className="flex items-center justify-between mb-3">
@@ -308,7 +234,6 @@ export function LandingPage() {
                   </div>
                   <div className="rounded-lg border bg-gradient-to-br from-gray-50 to-white dark:from-gray-800/50 dark:to-gray-900/50 p-4">
                     <p className="text-sm text-muted-foreground mb-3">{t("landing.allocation")}</p>
-                    {/* Donut chart mock */}
                     <div className="flex items-center justify-center py-2">
                       <div className="relative w-28 h-28">
                         <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
@@ -359,29 +284,16 @@ export function LandingPage() {
                             </td>
                             <td className="text-right px-4 py-2.5 font-num hidden sm:table-cell">{h.qty.toLocaleString()}</td>
                             <td className="text-right px-4 py-2.5 font-medium font-num">
-                              {h.price !== null
-                                ? h.price.toLocaleString(undefined, { minimumFractionDigits: 2 })
-                                : "—"}
+                              {h.price !== null ? h.price.toLocaleString(undefined, { minimumFractionDigits: 2 }) : "—"}
                             </td>
                             <td className="text-right px-4 py-2.5 text-muted-foreground font-num hidden md:table-cell">
                               {h.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                             </td>
                             <td className="text-right px-4 py-2.5">
                               {h.change !== null ? (
-                                <span
-                                  className={`inline-flex items-center gap-1 font-semibold font-num ${
-                                    h.change >= 0
-                                      ? "text-emerald-600 dark:text-emerald-400"
-                                      : "text-red-600 dark:text-red-400"
-                                  }`}
-                                >
-                                  {h.change >= 0 ? (
-                                    <TrendingUp className="h-3.5 w-3.5" />
-                                  ) : (
-                                    <TrendingDown className="h-3.5 w-3.5" />
-                                  )}
-                                  {h.change >= 0 ? "+" : ""}
-                                  {h.change.toFixed(2)}%
+                                <span className={`inline-flex items-center gap-1 font-semibold font-num ${h.change >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                                  {h.change >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                                  {h.change >= 0 ? "+" : ""}{h.change.toFixed(2)}%
                                 </span>
                               ) : (
                                 <span className="text-muted-foreground font-num">—</span>
@@ -405,9 +317,7 @@ export function LandingPage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">
               {t("landing.featuresTitle1")}{" "}
-              <span className="text-gradient">
-                {t("landing.featuresTitle2")}
-              </span>
+              <span className="text-gradient">{t("landing.featuresTitle2")}</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               {t("landing.featuresSubtitle")}
@@ -438,32 +348,20 @@ export function LandingPage() {
       {/* ── CTA Section ──────────────────────────────── */}
       <section className="py-20 md:py-28 border-t">
         <div className="container mx-auto px-4 text-center">
-          <div className="max-w-2xl mx-auto flex flex-col items-center gap-6">
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-0">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">
               {t("landing.ctaTitle")}
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-muted-foreground mb-8">
               {t("landing.ctaDesc")}
             </p>
             <button
-              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              onClick={() => setLoginOpen(true)}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-teal-500 px-8 py-4 text-base font-semibold text-white shadow-md shadow-blue-600/20 transition-all hover:shadow-lg hover:shadow-blue-600/25 hover:-translate-y-0.5 active:translate-y-0"
             >
-              <svg className="h-5 w-5" viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#fff" fillOpacity={0.9} />
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#fff" fillOpacity={0.8} />
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#fff" fillOpacity={0.7} />
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#fff" fillOpacity={0.9} />
-              </svg>
-              {t("common.getStartedWithGoogle")}
+              {t("common.getStarted")}
               <ArrowRight className="h-4 w-4" />
             </button>
-            <div className="flex items-center gap-3 w-full max-w-sm">
-              <div className="h-px flex-1 bg-border" />
-              <span className="text-xs text-muted-foreground">{t("common.orDivider")}</span>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-            <MagicLinkForm />
           </div>
         </div>
       </section>
