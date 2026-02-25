@@ -108,7 +108,7 @@ export function LandingPage() {
               <div className="flex-1 flex justify-center">
                 <div className="flex items-center gap-2 rounded-md bg-white dark:bg-gray-900 border px-4 py-1 text-xs text-muted-foreground">
                   <Shield className="h-3 w-3 text-emerald-500" />
-                  tradetracker.app/dashboard
+                  trade.ozlab.xyz
                 </div>
               </div>
             </div>
