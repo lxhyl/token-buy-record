@@ -10,6 +10,19 @@ const assetGradient = (assetType: string) => {
   }
 };
 
+function getLogoSources(symbol: string, assetType: string): string[] {
+  if (assetType === "crypto") {
+    return [
+      `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`,
+      `/api/logo/${encodeURIComponent(symbol)}`,
+    ];
+  }
+  return [
+    `https://financialmodelingprep.com/image-stock/${symbol}.png`,
+    `/api/logo/${encodeURIComponent(symbol)}`,
+  ];
+}
+
 interface AssetLogoProps {
   symbol: string;
   assetType: string;
@@ -17,10 +30,20 @@ interface AssetLogoProps {
 }
 
 export function AssetLogo({ symbol, assetType, className = "h-10 w-10" }: AssetLogoProps) {
-  const [failed, setFailed] = useState(false);
+  const sources = getLogoSources(symbol, assetType);
+  const [srcIndex, setSrcIndex] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
+  const failed = srcIndex >= sources.length;
   const showFallback = failed || !loaded;
+
+  const handleError = () => {
+    if (srcIndex < sources.length - 1) {
+      setSrcIndex(srcIndex + 1);
+    } else {
+      setSrcIndex(sources.length); // mark as fully failed
+    }
+  };
 
   return (
     <div className={`relative ${className} shrink-0`}>
@@ -33,12 +56,12 @@ export function AssetLogo({ symbol, assetType, className = "h-10 w-10" }: AssetL
       {/* Actual logo image */}
       {!failed && (
         <img
-          src={`/api/logo/${encodeURIComponent(symbol)}`}
+          src={sources[srcIndex]}
           alt={symbol}
           className={`${className} rounded-xl object-cover ${showFallback ? "absolute inset-0" : ""}`}
           style={showFallback ? { opacity: 0 } : undefined}
           onLoad={() => setLoaded(true)}
-          onError={() => setFailed(true)}
+          onError={handleError}
         />
       )}
     </div>
