@@ -10,19 +10,6 @@ const assetGradient = (assetType: string) => {
   }
 };
 
-function getLogoSources(symbol: string, assetType: string): string[] {
-  if (assetType === "crypto") {
-    return [
-      `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`,
-      `/api/logo/${encodeURIComponent(symbol)}`,
-    ];
-  }
-  return [
-    `https://financialmodelingprep.com/image-stock/${symbol}.png`,
-    `/api/logo/${encodeURIComponent(symbol)}`,
-  ];
-}
-
 interface AssetLogoProps {
   symbol: string;
   assetType: string;
@@ -30,14 +17,9 @@ interface AssetLogoProps {
 }
 
 export function AssetLogo({ symbol, assetType, className = "h-10 w-10" }: AssetLogoProps) {
-  const sources = getLogoSources(symbol, assetType);
-  const [srcIndex, setSrcIndex] = useState(0);
+  const [failed, setFailed] = useState(false);
 
-  const failed = srcIndex >= sources.length;
-
-  const handleError = () => {
-    setSrcIndex((i) => i + 1);
-  };
+  const src = `/api/logo/${encodeURIComponent(symbol)}?type=${encodeURIComponent(assetType)}`;
 
   return (
     // Gradient is always the background; image overlays it once loaded
@@ -45,10 +27,10 @@ export function AssetLogo({ symbol, assetType, className = "h-10 w-10" }: AssetL
       {symbol.slice(0, 2)}
       {!failed && (
         <img
-          src={sources[srcIndex]}
+          src={src}
           alt={symbol}
           className="absolute inset-0 h-full w-full rounded-xl object-cover"
-          onError={handleError}
+          onError={() => setFailed(true)}
         />
       )}
     </div>

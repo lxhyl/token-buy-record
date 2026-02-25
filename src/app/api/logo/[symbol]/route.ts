@@ -5,20 +5,55 @@ import { eq } from "drizzle-orm";
 
 const TWELVE_DATA_API_KEY = process.env.TWELVE_DATA_API_KEY;
 
-async function fetchLogoUrl(symbol: string): Promise<string | null> {
-  const res = await fetch(
-    `https://api.twelvedata.com/logo?symbol=${encodeURIComponent(symbol)}&apikey=${TWELVE_DATA_API_KEY}`
-  );
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.url || data.logo_base || null;
+async function fetchFromTwelveData(symbol: string): Promise<string | null> {
+  if (!TWELVE_DATA_API_KEY) return null;
+  try {
+    // Try as-is first (stocks), then as crypto pair (BTC → BTC/USD)
+    for (const s of [symbol, `${symbol}/USD`]) {
+      const res = await fetch(
+        `https://api.twelvedata.com/logo?symbol=${encodeURIComponent(s)}&apikey=${TWELVE_DATA_API_KEY}`
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      const url = data.url || data.logo_base;
+      if (url) return url;
+    }
+  } catch {}
+  return null;
+}
+
+function getFreeLogoUrl(symbol: string, assetType: string): string {
+  if (assetType === "crypto") {
+    return `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
+  }
+  return `https://financialmodelingprep.com/image-stock/${symbol}.png`;
+}
+
+async function urlIsReachable(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(url, { method: "HEAD" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+function cacheLogoUrl(symbol: string, url: string) {
+  db.insert(assetLogos)
+    .values({ symbol, url })
+    .onConflictDoUpdate({
+      target: assetLogos.symbol,
+      set: { url, updatedAt: new Date() },
+    })
+    .catch((err) => console.error(`[Logo] Failed to cache URL for ${symbol}:`, err));
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { symbol: string } }
 ) {
   const symbol = params.symbol.toUpperCase();
+  const assetType = request.nextUrl.searchParams.get("type") ?? "stock";
 
   // Validate symbol: alphanumeric, dots, hyphens, 1-10 chars
   if (!/^[A-Z0-9.\-]{1,10}$/.test(symbol)) {
@@ -39,37 +74,25 @@ export async function GET(
     });
   }
 
-  // 2. Fetch from Twelve Data
-  if (!TWELVE_DATA_API_KEY) {
-    return NextResponse.json({ error: "API key not configured" }, { status: 500 });
-  }
-
-  try {
-    // Try as-is first (works for stocks), then try as crypto pair (BTC → BTC/USD)
-    let logoUrl = await fetchLogoUrl(symbol);
-    if (!logoUrl) {
-      logoUrl = await fetchLogoUrl(`${symbol}/USD`);
-    }
-    if (!logoUrl) {
-      return NextResponse.json({ error: "No logo URL" }, { status: 404 });
-    }
-
-    // 3. Save URL to DB (fire and forget)
-    db.insert(assetLogos)
-      .values({ symbol, url: logoUrl })
-      .onConflictDoUpdate({
-        target: assetLogos.symbol,
-        set: { url: logoUrl, updatedAt: new Date() },
-      })
-      .catch((err) => {
-        console.error(`[Logo] Failed to cache URL for ${symbol}:`, err);
-      });
-
-    return NextResponse.redirect(logoUrl, {
+  // 2. Try free CDN (CoinCap for crypto, FMP for stocks)
+  const freeUrl = getFreeLogoUrl(symbol, assetType);
+  if (await urlIsReachable(freeUrl)) {
+    cacheLogoUrl(symbol, freeUrl);
+    return NextResponse.redirect(freeUrl, {
       status: 302,
       headers: { "Cache-Control": "public, max-age=604800, immutable" },
     });
-  } catch {
-    return NextResponse.json({ error: "Failed to fetch logo" }, { status: 404 });
   }
+
+  // 3. Fallback to Twelve Data
+  const twelveUrl = await fetchFromTwelveData(symbol);
+  if (twelveUrl) {
+    cacheLogoUrl(symbol, twelveUrl);
+    return NextResponse.redirect(twelveUrl, {
+      status: 302,
+      headers: { "Cache-Control": "public, max-age=604800, immutable" },
+    });
+  }
+
+  return NextResponse.json({ error: "No logo found" }, { status: 404 });
 }
