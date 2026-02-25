@@ -32,35 +32,22 @@ interface AssetLogoProps {
 export function AssetLogo({ symbol, assetType, className = "h-10 w-10" }: AssetLogoProps) {
   const sources = getLogoSources(symbol, assetType);
   const [srcIndex, setSrcIndex] = useState(0);
-  const [loaded, setLoaded] = useState(false);
 
   const failed = srcIndex >= sources.length;
-  const showFallback = failed || !loaded;
 
   const handleError = () => {
-    if (srcIndex < sources.length - 1) {
-      setSrcIndex(srcIndex + 1);
-    } else {
-      setSrcIndex(sources.length); // mark as fully failed
-    }
+    setSrcIndex((i) => i + 1);
   };
 
   return (
-    <div className={`relative ${className} shrink-0`}>
-      {/* Gradient fallback — shown while loading or on error */}
-      {showFallback && (
-        <div className={`flex ${className} items-center justify-center rounded-xl font-bold text-white ${assetGradient(assetType)}`}>
-          {symbol.slice(0, 2)}
-        </div>
-      )}
-      {/* Actual logo image */}
+    // Gradient is always the background; image overlays it once loaded
+    <div className={`relative ${className} shrink-0 rounded-xl flex items-center justify-center font-bold text-white text-xs ${assetGradient(assetType)}`}>
+      {symbol.slice(0, 2)}
       {!failed && (
         <img
           src={sources[srcIndex]}
           alt={symbol}
-          className={`${className} rounded-xl object-cover ${showFallback ? "absolute inset-0" : ""}`}
-          style={showFallback ? { opacity: 0 } : undefined}
-          onLoad={() => setLoaded(true)}
+          className="absolute inset-0 h-full w-full rounded-xl object-cover"
           onError={handleError}
         />
       )}
