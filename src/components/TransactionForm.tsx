@@ -86,10 +86,12 @@ export function TransactionForm({
   const [marketPriceName, setMarketPriceName] = useState<string>("");
   const [priceLoading, setPriceLoading] = useState(false);
   const priceAbortRef = useRef<AbortController | null>(null);
-  const autoNameRef = useRef(autoName);
-  useEffect(() => {
-    autoNameRef.current = autoName;
-  }, [autoName]);
+  // True when the user has typed in the name field; suppresses auto-refill
+  // from symbol lookup. Edit mode starts true so we don't overwrite the
+  // saved name. Selecting from the autocomplete list resets it to false.
+  const nameManuallyEditedRef = useRef<boolean>(
+    !!(transaction?.name || deposit?.name)
+  );
 
   const fetchMarketPrice = useCallback(async (symbol: string) => {
     if (!symbol) {
@@ -114,7 +116,7 @@ export function TransactionForm({
           setMarketPriceCurrency(data.currency || "USD");
           setMarketPriceSymbol(data.symbol || symbol);
           setMarketPriceName(data.name || "");
-          if (data.name && !autoNameRef.current) setAutoName(data.name);
+          if (data.name && !nameManuallyEditedRef.current) setAutoName(data.name);
           if (data.detectedType && data.detectedType !== "unknown") {
             setDetectedType(data.detectedType);
             if (data.detectedType === "crypto") setLiveCurrency("USD");
@@ -347,7 +349,12 @@ export function TransactionForm({
                 onChange={(val) => setLiveSymbol(val)}
                 onSelect={(symbol, name, exchange) => {
                   setLiveSymbol(symbol);
-                  if (name) setAutoName(name);
+                  if (name) {
+                    setAutoName(name);
+                    // Treat dropdown picks as authoritative: subsequent symbol
+                    // changes are free to refill the name automatically.
+                    nameManuallyEditedRef.current = false;
+                  }
                   if (exchange) {
                     const inferred = exchangeToCurrency(exchange);
                     if (inferred) setLiveCurrency(inferred);
@@ -374,7 +381,10 @@ export function TransactionForm({
               name="name"
               placeholder={namePlaceholder}
               value={autoName}
-              onChange={(e) => setAutoName(e.target.value)}
+              onChange={(e) => {
+                setAutoName(e.target.value);
+                nameManuallyEditedRef.current = true;
+              }}
             />
           </div>
 

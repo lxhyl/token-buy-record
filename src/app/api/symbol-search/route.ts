@@ -18,12 +18,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const result = await Promise.race([
-      yf.search(query, { quotesCount: 8, newsCount: 0 }),
+    // Yahoo's response often fails yahoo-finance2's strict schema validation
+    // (e.g. typeDisp "equity" vs schema's "Equity"), which would otherwise
+    // throw and leave the dropdown empty. Skip validation to keep results.
+    const result = (await Promise.race([
+      yf.search(
+        query,
+        { quotesCount: 8, newsCount: 0 },
+        { validateResult: false }
+      ),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("Search timeout")), 5000)
       ),
-    ]);
+    ])) as { quotes?: Array<Record<string, unknown>> };
 
     const ALLOWED_TYPES = new Set([
       "EQUITY",
@@ -35,23 +42,19 @@ export async function GET(request: NextRequest) {
     ]);
 
     const quotes = (result.quotes || [])
-      .filter((q) => {
-        const rec = q as Record<string, unknown>;
+      .filter((rec) => {
         const type = rec.quoteType as string | undefined;
         // Allow well-known types, but also keep entries that have a usable symbol
         // even if Yahoo doesn't classify them — better to show than hide.
         return !!rec.symbol && (!type || ALLOWED_TYPES.has(type));
       })
       .slice(0, 8)
-      .map((q) => {
-        const rec = q as Record<string, unknown>;
-        return {
-          symbol: rec.symbol as string,
-          name: (rec.shortname || rec.longname || "") as string,
-          exchange: (rec.exchDisp || rec.exchange || "") as string,
-          type: rec.quoteType as string,
-        };
-      });
+      .map((rec) => ({
+        symbol: rec.symbol as string,
+        name: (rec.shortname || rec.longname || "") as string,
+        exchange: (rec.exchDisp || rec.exchange || "") as string,
+        type: rec.quoteType as string,
+      }));
 
     return NextResponse.json(quotes);
   } catch (error) {
