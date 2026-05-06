@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     if (resolvedType === "crypto") {
       const prices = await fetchCryptoPrices([symbol]);
       const price = prices.get(symbol) ?? null;
-      return NextResponse.json({ symbol, price, currency: "USD", detectedType: "crypto" });
+      return NextResponse.json({ symbol, price, currency: "USD", detectedType: "crypto", name: null });
     }
 
     if (resolvedType === "stock") {
@@ -46,27 +46,30 @@ export async function GET(request: NextRequest) {
           setTimeout(() => reject(new Error("timeout")), API_TIMEOUT_MS)
         ),
       ]);
+      const q = quote as Record<string, unknown>;
+      const name = (q.longName || q.shortName || null) as string | null;
       if (quote.regularMarketPrice) {
         return NextResponse.json({
           symbol,
           price: quote.regularMarketPrice,
           currency: quote.currency || "USD",
           detectedType: "stock",
+          name,
         });
       }
-      return NextResponse.json({ symbol, price: null, currency: null, detectedType: "stock" });
+      return NextResponse.json({ symbol, price: null, currency: null, detectedType: "stock", name });
     }
 
     // unknown — try a quick crypto check as last resort
     if (!type && isKnownCrypto(symbol)) {
       const prices = await fetchCryptoPrices([symbol]);
       const price = prices.get(symbol) ?? null;
-      return NextResponse.json({ symbol, price, currency: "USD", detectedType: "crypto" });
+      return NextResponse.json({ symbol, price, currency: "USD", detectedType: "crypto", name: null });
     }
 
-    return NextResponse.json({ symbol, price: null, currency: null, detectedType: "unknown" });
+    return NextResponse.json({ symbol, price: null, currency: null, detectedType: "unknown", name: null });
   } catch (error) {
     console.error("Price lookup error:", error);
-    return NextResponse.json({ symbol, price: null, currency: null, detectedType: type || "unknown" });
+    return NextResponse.json({ symbol, price: null, currency: null, detectedType: type || "unknown", name: null });
   }
 }

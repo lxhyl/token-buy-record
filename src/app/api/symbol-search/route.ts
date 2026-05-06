@@ -25,12 +25,24 @@ export async function GET(request: NextRequest) {
       ),
     ]);
 
+    const ALLOWED_TYPES = new Set([
+      "EQUITY",
+      "ETF",
+      "CRYPTOCURRENCY",
+      "MUTUALFUND",
+      "INDEX",
+      "CURRENCY",
+    ]);
+
     const quotes = (result.quotes || [])
       .filter((q) => {
-        const type = (q as Record<string, unknown>).quoteType as string | undefined;
-        return type === "EQUITY" || type === "ETF";
+        const rec = q as Record<string, unknown>;
+        const type = rec.quoteType as string | undefined;
+        // Allow well-known types, but also keep entries that have a usable symbol
+        // even if Yahoo doesn't classify them — better to show than hide.
+        return !!rec.symbol && (!type || ALLOWED_TYPES.has(type));
       })
-      .slice(0, 6)
+      .slice(0, 8)
       .map((q) => {
         const rec = q as Record<string, unknown>;
         return {

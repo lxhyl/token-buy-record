@@ -82,12 +82,20 @@ export function TransactionForm({
 
   const [marketPrice, setMarketPrice] = useState<number | null>(null);
   const [marketPriceCurrency, setMarketPriceCurrency] = useState<string>("USD");
+  const [marketPriceSymbol, setMarketPriceSymbol] = useState<string>("");
+  const [marketPriceName, setMarketPriceName] = useState<string>("");
   const [priceLoading, setPriceLoading] = useState(false);
   const priceAbortRef = useRef<AbortController | null>(null);
+  const autoNameRef = useRef(autoName);
+  useEffect(() => {
+    autoNameRef.current = autoName;
+  }, [autoName]);
 
   const fetchMarketPrice = useCallback(async (symbol: string) => {
     if (!symbol) {
       setMarketPrice(null);
+      setMarketPriceSymbol("");
+      setMarketPriceName("");
       return;
     }
     priceAbortRef.current?.abort();
@@ -104,6 +112,9 @@ export function TransactionForm({
         if (!controller.signal.aborted) {
           setMarketPrice(data.price);
           setMarketPriceCurrency(data.currency || "USD");
+          setMarketPriceSymbol(data.symbol || symbol);
+          setMarketPriceName(data.name || "");
+          if (data.name && !autoNameRef.current) setAutoName(data.name);
           if (data.detectedType && data.detectedType !== "unknown") {
             setDetectedType(data.detectedType);
             if (data.detectedType === "crypto") setLiveCurrency("USD");
@@ -457,7 +468,7 @@ export function TransactionForm({
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between h-5">
+                <div className="flex items-center justify-between gap-2 min-h-5">
                   <Label htmlFor="price">{t("form.price")}</Label>
                   {liveSymbol.trim() && (
                     priceLoading ? (
@@ -473,10 +484,18 @@ export function TransactionForm({
                           const el = document.getElementById("price") as HTMLInputElement;
                           if (el) el.value = String(marketPrice);
                         }}
-                        className="text-xs font-medium text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
-                        title={t("form.useMarketPrice")}
+                        className="text-xs font-medium text-primary hover:text-primary/80 transition-colors underline underline-offset-2 text-right truncate max-w-[70%]"
+                        title={
+                          marketPriceName
+                            ? `${marketPriceSymbol} — ${marketPriceName} · ${t("form.useMarketPrice")}`
+                            : `${marketPriceSymbol} · ${t("form.useMarketPrice")}`
+                        }
                       >
-                        {t("form.currentPrice")}{" "}
+                        <span className="font-semibold">{marketPriceSymbol}</span>
+                        {marketPriceName && (
+                          <span className="text-muted-foreground"> · {marketPriceName}</span>
+                        )}
+                        {": "}
                         <span className="font-num">
                           {marketPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
                         </span>
