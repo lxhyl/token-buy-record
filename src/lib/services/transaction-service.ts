@@ -184,6 +184,18 @@ export async function deleteTransactionForUser(userId: string, id: number) {
 
 const PRICE_STALE_MS = 60 * 1000;
 
+/**
+ * Fast path used during SSR: returns DB-cached prices instantly without
+ * blocking on external APIs. Stale prices are refreshed by a client-side
+ * call to /api/prices after the page has rendered.
+ */
+export async function getCachedPricesForUser(userId: string) {
+  const dbPrices = await db.select().from(currentPrices);
+  // userId param kept for API symmetry with getLatestPricesForUser.
+  void userId;
+  return dbPrices;
+}
+
 export async function getLatestPricesForUser(userId: string) {
   const allTx = await db
     .select()

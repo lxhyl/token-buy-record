@@ -2,7 +2,7 @@
   "name": "TradeTracker",
   "short_name": "TradeTracker",
   "description": "Track your stock and cryptocurrency trades",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#3b82f6",

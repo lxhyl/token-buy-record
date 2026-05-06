@@ -19,6 +19,7 @@ import { Plus, Sparkles, TrendingUp, Coins, BarChart3, PiggyBank } from "lucide-
 import { getDisplayLanguage } from "@/actions/settings";
 import { t } from "@/lib/i18n";
 import { PencilText } from "@/components/PencilText";
+import { PriceRefresher } from "@/components/PriceRefresher";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <PriceRefresher />
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>

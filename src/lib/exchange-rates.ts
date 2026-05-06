@@ -13,13 +13,16 @@ const HARDCODED_FALLBACK: ExchangeRates = {
 
 const SYSTEM_USER_ID = "system";
 const RATES_KEY = "_system_exchange_rates";
+const RATES_UPDATED_KEY = "_system_exchange_rates_updated_at";
 
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const FETCH_TIMEOUT_MS = 1500; // Don't block SSR for more than this on cold start
 
 let cachedRates: ExchangeRates | null = null;
 let cachedAt = 0;
+let inflightRefresh: Promise<ExchangeRates> | null = null;
 
-async function loadRatesFromDb(): Promise<ExchangeRates | null> {
+async function loadRatesFromDb(): Promise<{ rates: ExchangeRates; updatedAt: number } | null> {
   try {
     const result = await db
       .select()
@@ -31,7 +34,11 @@ async function loadRatesFromDb(): Promise<ExchangeRates | null> {
         )
       );
     if (result[0]?.value) {
-      return JSON.parse(result[0].value) as ExchangeRates;
+      const rates = JSON.parse(result[0].value) as ExchangeRates;
+      const updatedAt = result[0].updatedAt
+        ? new Date(result[0].updatedAt).getTime()
+        : 0;
+      return { rates, updatedAt };
     }
   } catch (e) {
     console.warn("Failed to load cached exchange rates from DB:", e);
@@ -56,22 +63,17 @@ async function saveRatesToDb(rates: ExchangeRates): Promise<void> {
   } catch (e) {
     console.warn("Failed to save exchange rates to DB:", e);
   }
+  void RATES_UPDATED_KEY;
 }
 
-export async function getExchangeRates(): Promise<ExchangeRates> {
-  const now = Date.now();
-  if (cachedRates && now - cachedAt < CACHE_TTL_MS) {
-    return cachedRates;
-  }
-
+async function fetchFromUpstream(): Promise<ExchangeRates> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
     const res = await fetch("https://open.er-api.com/v6/latest/USD", {
       next: { revalidate: 1800 },
       signal: controller.signal,
     });
-    clearTimeout(timer);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const rates: ExchangeRates = {
@@ -79,25 +81,58 @@ export async function getExchangeRates(): Promise<ExchangeRates> {
       ...(data.rates ?? {}),
     };
     cachedRates = rates;
-    cachedAt = now;
-
-    // Persist to DB for future fallback
+    cachedAt = Date.now();
     saveRatesToDb(rates).catch(() => {});
-
     return rates;
-  } catch (error) {
-    console.error("Failed to fetch exchange rates, trying DB cache:", error);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
-    // Try DB-cached rates
-    const dbRates = await loadRatesFromDb();
-    if (dbRates) {
-      cachedRates = dbRates;
-      cachedAt = now;
-      return dbRates;
+function refreshInBackground() {
+  if (inflightRefresh) return;
+  inflightRefresh = fetchFromUpstream()
+    .catch(() => cachedRates ?? HARDCODED_FALLBACK)
+    .finally(() => {
+      inflightRefresh = null;
+    });
+}
+
+/**
+ * Returns exchange rates fast — never blocks SSR on a slow upstream.
+ * 1. In-memory cache (instant)
+ * 2. DB-cached rates (~1 query)
+ * 3. Short-timeout upstream fetch
+ * 4. Hardcoded fallback
+ *
+ * Stale-while-revalidate: if the in-memory or DB cache is older than the
+ * TTL, kick off a background refresh but still return the cached value.
+ */
+export async function getExchangeRates(): Promise<ExchangeRates> {
+  const now = Date.now();
+
+  if (cachedRates && now - cachedAt < CACHE_TTL_MS) {
+    return cachedRates;
+  }
+
+  // Try DB cache before going to network
+  const fromDb = await loadRatesFromDb();
+  if (fromDb) {
+    cachedRates = fromDb.rates;
+    cachedAt = fromDb.updatedAt || now;
+
+    // If the DB copy is stale, refresh upstream in the background.
+    if (now - cachedAt >= CACHE_TTL_MS) {
+      refreshInBackground();
     }
+    return fromDb.rates;
+  }
 
-    // Absolute last resort
-    console.warn("No cached exchange rates in DB, using hardcoded fallback");
+  // No cache anywhere — must hit upstream synchronously, but with short timeout.
+  try {
+    return await fetchFromUpstream();
+  } catch (error) {
+    console.error("Exchange-rate fetch failed; using hardcoded fallback:", error);
     cachedRates = HARDCODED_FALLBACK;
     cachedAt = now;
     return HARDCODED_FALLBACK;

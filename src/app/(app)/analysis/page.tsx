@@ -32,6 +32,7 @@ import { getDisplayLanguage, getColorScheme } from "@/actions/settings";
 import { t } from "@/lib/i18n";
 import { AssetLogo } from "@/components/AssetLogo";
 import { PencilText } from "@/components/PencilText";
+import { PriceRefresher } from "@/components/PriceRefresher";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,7 @@ export default async function AnalysisPage() {
 
   return (
     <div className="space-y-6 md:space-y-8">
+      <PriceRefresher />
       <div>
         <PencilText as="h1" className="text-2xl md:text-3xl font-bold">{t(locale, "analysis.title")}</PencilText>
         <p className="text-sm md:text-base text-muted-foreground">

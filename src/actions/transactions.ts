@@ -12,7 +12,7 @@ import {
   createTransactionForUser,
   updateTransactionForUser,
   deleteTransactionForUser,
-  getLatestPricesForUser,
+  getCachedPricesForUser,
   getAllCurrentPrices,
 } from "@/lib/services/transaction-service";
 
@@ -107,6 +107,9 @@ export async function updateMultiplePrices(
 }
 
 export async function getLatestPrices() {
+  // Fast SSR path: return DB-cached prices immediately. The dashboard
+  // mounts a client-side <PriceRefresher /> that hits /api/prices to
+  // refresh stale prices in the background, then triggers router.refresh().
   const userId = await getUserId();
-  return await getLatestPricesForUser(userId);
+  return await getCachedPricesForUser(userId);
 }

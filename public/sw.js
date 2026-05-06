@@ -1,24 +1,21 @@
-const CACHE_NAME = "tradetracker-v3";
+const CACHE_NAME = "tradetracker-v4";
 
-// App shell resources to pre-cache on install
+// Pre-cache static-ish assets only. Authenticated HTML pages get cached
+// at runtime (first visit) — pre-fetching them here would cache the
+// auth-redirect HTML for unauthenticated installs.
 const APP_SHELL = [
-  "/",
-  "/transactions",
-  "/holdings",
-  "/analysis",
   "/manifest.json",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
 
-// Install: pre-cache app shell for instant PWA startup
+// Install: pre-cache app shell so PWA cold start can render instantly from cache
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
-      // Use individual fetches so one failure doesn't block all
       Promise.allSettled(
         APP_SHELL.map((url) =>
-          fetch(url).then((response) => {
+          fetch(url, { credentials: "same-origin" }).then((response) => {
             if (response.ok) {
               return cache.put(url, response);
             }
@@ -30,7 +27,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Activate: clean old caches
+// Activate: drop old caches, take control of open pages
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((names) =>
@@ -44,20 +41,18 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch handler with optimized strategies
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
   if (request.method !== "GET") return;
 
-  // Skip API and data routes - always go to network
+  // Always go to network for API and Next data routes
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/data/")) {
     return;
   }
 
-  // For static assets: cache-first (immutable hashed files)
+  // Static assets: cache-first (immutable, hashed)
   if (
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.match(/\.(png|jpg|jpeg|svg|ico|woff2?)$/)
@@ -77,33 +72,35 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // For page navigations: network-first with cache fallback
-  // Always fetch fresh HTML to avoid version mismatch after deploys
+  // HTML navigations: stale-while-revalidate
+  // → instant paint from cache (critical for PWA cold start)
+  // → fresh HTML fetched in background, used on next navigation
   if (request.mode === "navigate" || request.headers.get("accept")?.includes("text/html")) {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(() => {
-          // Network failed, return cached version or a basic offline fallback
-          return caches.match(request).then((cached) => {
+      caches.match(request).then((cached) => {
+        const fetchPromise = fetch(request)
+          .then((response) => {
+            if (response.ok && response.type === "basic") {
+              const clone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            }
+            return response;
+          })
+          .catch(() => {
             if (cached) return cached;
             return new Response(
               '<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width"><title>TradeTracker</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:system-ui;color:#64748b"><p>Offline - please check your connection</p></body></html>',
               { headers: { "Content-Type": "text/html" } }
             );
           });
-        })
+
+        return cached || fetchPromise;
+      })
     );
     return;
   }
 
-  // For other resources: network-first with cache fallback
+  // Other resources: network-first with cache fallback
   event.respondWith(
     fetch(request)
       .then((response) => {
