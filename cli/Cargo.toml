@@ -1,10 +1,13 @@
 [package]
 name = "tradetracker"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 description = "CLI for TradeTracker - manage your trading portfolio from the terminal"
 license = "MIT"
-repository = "https://github.com/oliverzhang42/trade-tracker"
+readme = "README.md"
+repository = "https://github.com/lxhyl/trade-tracker"
+homepage = "https://tt.ozlab.xyz"
+documentation = "https://github.com/lxhyl/trade-tracker/blob/main/cli/README.md"
 keywords = ["trading", "portfolio", "cli", "finance"]
 categories = ["command-line-utilities", "finance"]
 

@@ -16,6 +16,7 @@ import {
 import { useI18n } from "@/components/I18nProvider";
 import { LoginModal } from "@/components/LoginModal";
 import { LandingDashboard } from "@/components/LandingDashboard";
+import { LandingCliSection } from "@/components/LandingCliSection";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { TranslationKey } from "@/lib/i18n";
 
@@ -145,6 +146,9 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── CLI Section ──────────────────────────────── */}
+      <LandingCliSection />
 
       {/* ── CTA Section ──────────────────────────────── */}
       <section className="py-20 md:py-28 border-t">

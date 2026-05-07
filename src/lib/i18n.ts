@@ -72,6 +72,27 @@ const translations = {
   "landing.footer": { en: "Personal portfolio tracking. Free and open source.", zh: "个人投资组合追踪。免费且开源。" },
   "landing.customizeTitle": { en: "Make it yours", zh: "先试试，再登录" },
   "landing.customizeDesc": { en: "Adjust appearance, language, and color preferences — settings apply instantly and persist across visits.", zh: "调整外观、语言和颜色偏好——设置即时生效并在下次访问时保留。" },
+
+  // ── CLI Section ─────────────────────────────────────────
+  "landing.cliBadge": { en: "Built for terminals too", zh: "终端友好" },
+  "landing.cliTitle1": { en: "Or stay in your", zh: "也可以留在" },
+  "landing.cliTitle2": { en: "terminal", zh: "终端" },
+  "landing.cliDesc": {
+    en: "A native Rust CLI talks to the same account. List holdings, log trades, refresh prices, and tweak settings without leaving your shell.",
+    zh: "原生 Rust 命令行工具，连接同一个账号。在 shell 里查看持仓、记录交易、刷新价格、调整设置，无需打开浏览器。",
+  },
+  "landing.cliInstallLabel": { en: "Install", zh: "安装" },
+  "landing.cliRunLabel": { en: "Then run", zh: "然后运行" },
+  "landing.cliCopy": { en: "Copy", zh: "复制" },
+  "landing.cliCopied": { en: "Copied!", zh: "已复制！" },
+  "landing.cliViewOnCrates": { en: "View on crates.io", zh: "在 crates.io 上查看" },
+  "landing.cliReadDocs": { en: "Read the CLI docs", zh: "查看 CLI 文档" },
+  "landing.cliFeatureLoginTitle": { en: "Browser-based login", zh: "浏览器登录" },
+  "landing.cliFeatureLoginDesc": { en: "OAuth flow opens in your browser; the token is stored locally.", zh: "OAuth 流程在浏览器中完成，token 自动保存到本地。" },
+  "landing.cliFeaturePortfolioTitle": { en: "Portfolio at a glance", zh: "持仓一览" },
+  "landing.cliFeaturePortfolioDesc": { en: "Holdings, cost basis, and unrealized P&L printed as a clean table.", zh: "持仓、成本和未实现盈亏，整齐输出为表格。" },
+  "landing.cliFeatureCrudTitle": { en: "Full CRUD", zh: "完整增删改查" },
+  "landing.cliFeatureCrudDesc": { en: "Add, update, and delete transactions or deposits — scriptable for your records.", zh: "增删改查交易和存款，可脚本化批量管理。" },
   // Mock dashboard preview strings
   "landing.portfolioValue": { en: "Portfolio Value", zh: "投资组合价值" },
   "landing.allocation": { en: "Allocation", zh: "资产配置" },
