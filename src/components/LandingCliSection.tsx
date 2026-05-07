@@ -135,10 +135,6 @@ export function LandingCliSection() {
                   <div className="pl-3 text-xs">→ holdings, cost, P&amp;L as a table</div>
                   <div className="mt-2">
                     <span className="select-none text-muted-foreground/70">$ </span>
-                    <span className="text-foreground">tradetracker prices refresh</span>
-                  </div>
-                  <div className="mt-2">
-                    <span className="select-none text-muted-foreground/70">$ </span>
                     <span className="text-foreground">tradetracker transactions add \</span>
                   </div>
                   <div className="pl-4 text-foreground">--symbol AAPL --trade-type buy \</div>
